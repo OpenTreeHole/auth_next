@@ -1,0 +1,45 @@
+basePath: /api
+definitions:
+  apis.Info:
+    properties:
+      author:
+        type: string
+      description:
+        type: string
+      email:
+        type: string
+      homepage:
+        type: string
+      license:
+        type: string
+      name:
+        type: string
+      repository:
+        type: string
+      version:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact:
+    email: dev@fduhole.com
+    name: Maintainer Chen Ke
+    url: https://danxi.fduhole.com/about
+  description: Next Generation of Auth microservice integrated with kong for registration
+    and issuing tokens
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Open Tree Hole Auth
+  version: "2.0"
+paths:
+  /:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apis.Info'
+swagger: "2.0"
