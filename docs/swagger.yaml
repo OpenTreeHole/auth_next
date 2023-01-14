@@ -1,5 +1,22 @@
 basePath: /api
 definitions:
+  account.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    type: object
+  account.LoginResponse:
+    properties:
+      access:
+        type: string
+      message:
+        type: string
+      refresh:
+        type: string
+    type: object
   apis.Info:
     properties:
       author:
@@ -17,6 +34,11 @@ definitions:
       repository:
         type: string
       version:
+        type: string
+    type: object
+  utils.MessageResponse:
+    properties:
+      message:
         type: string
     type: object
 host: localhost:8000
@@ -42,4 +64,63 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/apis.Info'
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Login with email and password, return jwt token
+      parameters:
+      - description: json
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/account.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/account.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "404":
+          description: user not found
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: Login an account
+      tags:
+      - token
+  /logout:
+    get:
+      description: Logout, clear jwt credential and return successful message
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: Logout
+      tags:
+      - token
+  /refresh:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/account.LoginResponse'
+      summary: Refresh jwt token
+      tags:
+      - token
 swagger: "2.0"

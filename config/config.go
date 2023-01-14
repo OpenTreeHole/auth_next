@@ -19,10 +19,10 @@ var Config struct {
 	EmailUseTLS     bool   `env:"EMAIL_USE_TLS" envDefault:"true"`
 
 	// get from docker secret
-	RegisterApikeySeed string `env:"REGISTER_APIKEY_SEED,file" envDefault:"/var/run/secret/register_apikey_seed"`
-	KongToken          string `env:"KONG_TOKEN,file" envDefault:"/var/run/secret/kong_token"`
-	IdentifierSalt     string `env:"IDENTIFIER_SALT,file" envDefault:"/var/run/secret/identifier_salt"`
-	ProvisionKey       string `env:"PROVISION_KEY,file" envDefault:"/var/run/secret/provision_key"`
+	//RegisterApikeySeed string `env:"REGISTER_APIKEY_SEED,file" envDefault:"/var/run/secret/register_apikey_seed"`
+	//KongToken          string `env:"KONG_TOKEN,file" envDefault:"/var/run/secret/kong_token"`
+	//IdentifierSalt     string `env:"IDENTIFIER_SALT,file" envDefault:"/var/run/secret/identifier_salt"`
+	//ProvisionKey       string `env:"PROVISION_KEY,file" envDefault:"/var/run/secret/provision_key"`
 }
 
 func init() {

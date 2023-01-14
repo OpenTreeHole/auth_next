@@ -1,16 +1,16 @@
-// @title           Open Tree Hole Auth
-// @version         2.0
-// @description     Next Generation of Auth microservice integrated with kong for registration and issuing tokens
+//	@title			Open Tree Hole Auth
+//	@version		2.0
+//	@description	Next Generation of Auth microservice integrated with kong for registration and issuing tokens
 
-// @contact.name   Maintainer Chen Ke
-// @contact.url    https://danxi.fduhole.com/about
-// @contact.email  dev@fduhole.com
+//	@contact.name	Maintainer Chen Ke
+//	@contact.url	https://danxi.fduhole.com/about
+//	@contact.email	dev@fduhole.com
 
-// @license.name  Apache 2.0
-// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      localhost:8000
-// @BasePath  /api
+//	@host		localhost:8000
+//	@BasePath	/api
 
 package main
 

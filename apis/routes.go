@@ -1,6 +1,7 @@
 package apis
 
 import (
+	"auth_next/apis/account"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
 )
@@ -16,4 +17,5 @@ func RegisterRoutes(app *fiber.App) {
 
 	routes := app.Group("/api")
 	routes.Get("/", Index)
+	account.RegisterRoutes(routes)
 }

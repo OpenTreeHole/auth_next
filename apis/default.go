@@ -14,9 +14,10 @@ type Info struct {
 }
 
 // Index
-// @Produce application/json
-// @Success 200 {object} Info
-// @Router / [get]
+//
+//	@Produce	application/json
+//	@Success	200	{object}	Info
+//	@Router		/ [get]
 func Index(c *fiber.Ctx) error {
 	return c.JSON(Info{
 		Name:        "Open Tree Hole Auth",
