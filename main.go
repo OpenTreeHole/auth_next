@@ -1,17 +1,3 @@
-package main
-
-import (
-	"auth_next/apis"
-	_ "auth_next/docs"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/fiber/v2/middleware/recover"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
-)
-
 // @title           Open Tree Hole Auth
 // @version         2.0
 // @description     Next Generation of Auth microservice integrated with kong for registration and issuing tokens
@@ -26,10 +12,22 @@ import (
 // @host      localhost:8000
 // @BasePath  /api
 
+package main
+
+import (
+	"auth_next/apis"
+	_ "auth_next/docs"
+	"auth_next/middlewares"
+	"github.com/gofiber/fiber/v2"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+)
+
 func main() {
 	app := fiber.New()
-	app.Use(recover.New(recover.Config{EnableStackTrace: true}))
-	app.Use(logger.New())
+	middlewares.RegisterMiddlewares(app)
 	apis.RegisterRoutes(app)
 
 	go func() {
