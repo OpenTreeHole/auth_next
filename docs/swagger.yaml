@@ -250,7 +250,7 @@ paths:
               $ref: '#/definitions/models.User'
             type: array
         "403":
-          description: 不是管理员“
+          description: 不是管理员
           schema:
             $ref: '#/definitions/utils.MessageResponse'
         "500":
@@ -277,11 +277,11 @@ paths:
           schema:
             $ref: '#/definitions/models.User'
         "403":
-          description: 不是该用户或管理员“
+          description: 不是该用户或管理员
           schema:
             $ref: '#/definitions/utils.MessageResponse'
         "404":
-          description: 用户不存在“
+          description: 用户不存在
           schema:
             $ref: '#/definitions/utils.MessageResponse'
         "500":
@@ -307,7 +307,7 @@ paths:
           schema:
             $ref: '#/definitions/models.User'
         "403":
-          description: 不是管理员“
+          description: 不是管理员
           schema:
             $ref: '#/definitions/utils.MessageResponse'
         "500":
@@ -355,7 +355,7 @@ paths:
           schema:
             $ref: '#/definitions/models.User'
         "404":
-          description: 用户不存在“
+          description: 用户不存在
           schema:
             $ref: '#/definitions/utils.MessageResponse'
         "500":

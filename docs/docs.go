@@ -250,7 +250,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "不是管理员“",
+                        "description": "不是管理员",
                         "schema": {
                             "$ref": "#/definitions/utils.MessageResponse"
                         }
@@ -282,7 +282,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "用户不存在“",
+                        "description": "用户不存在",
                         "schema": {
                             "$ref": "#/definitions/utils.MessageResponse"
                         }
@@ -364,13 +364,13 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "不是该用户或管理员“",
+                        "description": "不是该用户或管理员",
                         "schema": {
                             "$ref": "#/definitions/utils.MessageResponse"
                         }
                     },
                     "404": {
-                        "description": "用户不存在“",
+                        "description": "用户不存在",
                         "schema": {
                             "$ref": "#/definitions/utils.MessageResponse"
                         }
@@ -409,7 +409,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "不是管理员“",
+                        "description": "不是管理员",
                         "schema": {
                             "$ref": "#/definitions/utils.MessageResponse"
                         }
