@@ -1,8 +1,8 @@
-package account
+package apis
 
 type EmailModel struct {
 	// email in email blacklist
-	Email string `json:"email" example:"example@example.com"`
+	Email string `json:"email"`
 }
 
 type LoginRequest struct {

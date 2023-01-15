@@ -1,20 +1,25 @@
 basePath: /api
 definitions:
-  account.LoginRequest:
+  apis.ApikeyResponse:
     properties:
-      email:
-        type: string
-      password:
-        minLength: 8
-        type: string
-    type: object
-  account.LoginResponse:
-    properties:
-      access:
+      code:
         type: string
       message:
         type: string
-      refresh:
+      scope:
+        enum:
+        - register
+        - reset
+        type: string
+    type: object
+  apis.EmailVerifyResponse:
+    properties:
+      message:
+        type: string
+      scope:
+        enum:
+        - register
+        - reset
         type: string
     type: object
   apis.Info:
@@ -34,6 +39,50 @@ definitions:
       repository:
         type: string
       version:
+        type: string
+    type: object
+  apis.LoginRequest:
+    properties:
+      email:
+        description: email in email blacklist
+        type: string
+      password:
+        minLength: 8
+        type: string
+    type: object
+  apis.RegisterRequest:
+    properties:
+      email:
+        description: email in email blacklist
+        type: string
+      password:
+        minLength: 8
+        type: string
+      verification:
+        maxLength: 6
+        minLength: 6
+        type: string
+    type: object
+  apis.TokenResponse:
+    properties:
+      access:
+        type: string
+      message:
+        type: string
+      refresh:
+        type: string
+    type: object
+  models.User:
+    properties:
+      id:
+        type: integer
+      is_admin:
+        type: boolean
+      joined_time:
+        type: string
+      last_login:
+        type: string
+      nickname:
         type: string
     type: object
   utils.MessageResponse:
@@ -75,20 +124,20 @@ paths:
         name: json
         required: true
         schema:
-          $ref: '#/definitions/account.LoginRequest'
+          $ref: '#/definitions/apis.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/account.LoginResponse'
+            $ref: '#/definitions/apis.TokenResponse'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/utils.MessageResponse'
         "404":
-          description: user not found
+          description: User Not Found
           schema:
             $ref: '#/definitions/utils.MessageResponse'
         "500":
@@ -119,8 +168,298 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/account.LoginResponse'
+            $ref: '#/definitions/apis.TokenResponse'
       summary: Refresh jwt token
       tags:
       - token
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: register with email, password and verification code
+      parameters:
+      - description: json
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/apis.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apis.TokenResponse'
+        "400":
+          description: 验证码错误、用户已注册“
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: register
+      tags:
+      - account
+    put:
+      consumes:
+      - application/json
+      description: reset password, reset jwt credential
+      parameters:
+      - description: json
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/apis.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apis.TokenResponse'
+        "400":
+          description: 验证码错误“
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: reset password
+      tags:
+      - account
+  /users:
+    get:
+      description: list all users, admin only
+      parameters:
+      - description: UserID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.User'
+            type: array
+        "403":
+          description: 不是管理员“
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: list all users
+      tags:
+      - user
+  /users/{user_id}:
+    get:
+      description: get user by id in path, owner or admin
+      parameters:
+      - description: UserID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "403":
+          description: 不是该用户或管理员“
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "404":
+          description: 用户不存在“
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: get user by id
+      tags:
+      - user
+    put:
+      description: modify user, owner or admin
+      parameters:
+      - description: UserID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.User'
+        "403":
+          description: 不是管理员“
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: modify user
+      tags:
+      - user
+  /users/me:
+    delete:
+      description: delete user and related jwt credentials
+      parameters:
+      - description: email, password
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/apis.LoginRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: 密码错误“
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "404":
+          description: 用户不存在“
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: delete user
+      tags:
+      - account
+    get:
+      description: get user by verifying user token or header
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "404":
+          description: 用户不存在“
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: get current user
+      tags:
+      - user
+  /verify/apikey:
+    get:
+      description: verify with email in query, return verification code
+      parameters:
+      - in: query
+        name: apikey
+        type: string
+      - default: false
+        description: if true, return whether registered
+        in: query
+        name: check_register
+        type: boolean
+      - description: email in email blacklist
+        in: query
+        name: email
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户未注册“
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "403":
+          description: apikey不正确“
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "409":
+          description: 用户已注册“
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: verify with email in query and apikey
+      tags:
+      - account
+  /verify/email:
+    get:
+      description: verify with email in query, Send verification email
+      parameters:
+      - description: email
+        in: query
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apis.EmailVerifyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: verify with email in query
+      tags:
+      - account
+  /verify/email/{email}:
+    get:
+      deprecated: true
+      description: verify with email in path, send verification email
+      parameters:
+      - description: email
+        in: path
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apis.EmailVerifyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: verify with email in path
+      tags:
+      - account
 swagger: "2.0"
