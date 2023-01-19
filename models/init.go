@@ -2,6 +2,7 @@ package models
 
 import (
 	"auth_next/config"
+	"errors"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -10,7 +11,25 @@ import (
 )
 
 func init() {
-	initDB()
+	var err error
+
+	// connect to database and auto migrate models
+	err = initDB()
+	if err != nil {
+		panic(err)
+	}
+
+	// get admin list for admin check
+	err = GetAdminList()
+	if err != nil {
+		panic(err)
+	}
+
+	// get pgp public key for register
+	err = LoadShamirPublicKey()
+	if err != nil {
+		panic(err)
+	}
 }
 
 var DB *gorm.DB
@@ -21,7 +40,7 @@ var gormConfig = &gorm.Config{
 	},
 }
 
-func initDB() {
+func initDB() error {
 	mysqlDB := func() (*gorm.DB, error) {
 		return gorm.Open(mysql.Open(config.Config.DbUrl), gormConfig)
 	}
@@ -35,6 +54,7 @@ func initDB() {
 	memoryDB := func() (*gorm.DB, error) {
 		return gorm.Open(sqlite.Open("file::memory:?cache=shared"), gormConfig)
 	}
+
 	var err error
 
 	// connect to database with different mode
@@ -56,19 +76,26 @@ func initDB() {
 			DB, err = mysqlDB()
 		}
 	default:
-		panic(err)
+		return errors.New("unsupported mode")
 	}
+
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	if config.Config.Mode == "dev" || config.Config.Mode == "test" {
 		DB = DB.Debug()
 	}
 
-	err = DB.AutoMigrate()
-
+	// migrate database
+	err = DB.AutoMigrate(User{}, ShamirEmail{})
 	if err != nil {
-		panic(err)
+		return err
 	}
+	if config.Config.ShamirFeature {
+		return DB.AutoMigrate(ShamirPublicKey{})
+	} else {
+		return nil
+	}
+
 }

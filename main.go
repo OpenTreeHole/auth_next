@@ -18,6 +18,8 @@ import (
 	"auth_next/apis"
 	_ "auth_next/docs"
 	"auth_next/middlewares"
+	"auth_next/utils"
+	"encoding/json"
 	"github.com/gofiber/fiber/v2"
 	"log"
 	"os"
@@ -26,7 +28,11 @@ import (
 )
 
 func main() {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		ErrorHandler: utils.MyErrorHandler,
+		JSONEncoder:  json.Marshal,
+		JSONDecoder:  json.Unmarshal,
+	})
 	middlewares.RegisterMiddlewares(app)
 	apis.RegisterRoutes(app)
 

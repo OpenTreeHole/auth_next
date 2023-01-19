@@ -26,7 +26,7 @@ func RegisterRoutes(app *fiber.App) {
 
 	// account management
 	routes.Get("/verify/email", VerifyWithEmail)
-	routes.Get("/verify/email/{email}", VerifyWithEmailOld)
+	routes.Get("/verify/email/:email", VerifyWithEmailOld)
 	routes.Get("/verify/apikey", VerifyWithApikey)
 	routes.Post("/register", Register)
 	routes.Put("/register", ChangePassword)
@@ -34,7 +34,15 @@ func RegisterRoutes(app *fiber.App) {
 
 	// user info
 	routes.Get("/users/me", GetCurrentUser)
-	routes.Get("/users/{id}", GetUserByID)
+	routes.Get("/users/:id", GetUserByID)
 	routes.Get("/users", ListUsers)
 	routes.Put("/users/me", ModifyUser)
+
+	// shamir
+	routes.Get("/shamir/:id", GetPGPMessageByUserID)
+	routes.Get("/shamir", ListPGPMessages)
+	routes.Post("/shamir/shares", UploadAllShares)
+	routes.Post("/shamir/key", UploadPublicKey)
+	routes.Get("/shamir/status", GetShamirStatus)
+	routes.Post("/shamir/update", UpdateShamir)
 }

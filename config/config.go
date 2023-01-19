@@ -7,16 +7,17 @@ import (
 )
 
 var Config struct {
-	Mode            string `env:"MODE" envDefault:"dev"`
-	DbUrl           string `env:"DB_URL"`
-	KongUrl         string `env:"KONG_URL"`
-	NotificationUrl string `env:"NOTIFICATION_URL"`
-	EmailWhitelist  string `env:"EMAIL_WHITELIST"`
-	EmailHost       string `env:"EMAIL_HOST"`
-	EmailUsername   string `env:"EMAIL_USERNAME"`
-	EmailPassword   string `env:"EMAIL_PASSWORD"`
-	EmailPort       int    `env:"EMAIL_PORT" envDefault:"465"`
-	EmailUseTLS     bool   `env:"EMAIL_USE_TLS" envDefault:"true"`
+	Mode            string   `env:"MODE" envDefault:"dev"`
+	DbUrl           string   `env:"DB_URL"`
+	KongUrl         string   `env:"KONG_URL"`
+	NotificationUrl string   `env:"NOTIFICATION_URL"`
+	EmailWhitelist  []string `env:"EMAIL_WHITELIST"`
+	EmailHost       string   `env:"EMAIL_HOST"`
+	EmailUsername   string   `env:"EMAIL_USERNAME"`
+	EmailPassword   string   `env:"EMAIL_PASSWORD"`
+	EmailPort       int      `env:"EMAIL_PORT" envDefault:"465"`
+	EmailUseTLS     bool     `env:"EMAIL_USE_TLS" envDefault:"true"`
+	ShamirFeature   bool     `env:"SHAMIR_FEATURE" envDefault:"true"`
 
 	// get from docker secret
 	//RegisterApikeySeed string `env:"REGISTER_APIKEY_SEED,file" envDefault:"/var/run/secret/register_apikey_seed"`

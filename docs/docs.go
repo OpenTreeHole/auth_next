@@ -162,7 +162,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "验证码错误“",
+                        "description": "验证码错误",
                         "schema": {
                             "$ref": "#/definitions/utils.MessageResponse"
                         }
@@ -206,7 +206,322 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "验证码错误、用户已注册“",
+                        "description": "验证码错误、用户已注册",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/shamir": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "shamir"
+                ],
+                "summary": "list related shamir PGP messages, admin only",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "recipient uid",
+                        "name": "identity_name",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/apis.PGPMessageResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "非管理员",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/shamir/key": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "shamir"
+                ],
+                "summary": "upload all PGP PublicKeys for encryption, admin only",
+                "parameters": [
+                    {
+                        "description": "public keys",
+                        "name": "public_keys",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apis.UploadPublicKeyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/definitions/utils.MessageResponse"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "data": {
+                                                "$ref": "#/definitions/apis.IdentityNameResponse"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "非管理员",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/shamir/shares": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "shamir"
+                ],
+                "summary": "upload all shares of all users, cached",
+                "parameters": [
+                    {
+                        "description": "shares",
+                        "name": "shares",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apis.UploadSharesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.MessageResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/apis.IdentityNameResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.MessageResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/apis.IdentityNameResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "非管理员",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/shamir/status": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "shamir"
+                ],
+                "summary": "get shamir info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apis.ShamirStatusResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "非管理员",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/shamir/update": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "shamir"
+                ],
+                "summary": "trigger for updating shamir",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "非管理员",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/shamir/{user_id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "shamir"
+                ],
+                "summary": "get shamir PGP message, admin only",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Target UserID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "identity_name",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apis.PGPMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "非管理员",
                         "schema": {
                             "$ref": "#/definitions/utils.MessageResponse"
                         }
@@ -605,6 +920,17 @@ const docTemplate = `{
                 }
             }
         },
+        "apis.IdentityNameResponse": {
+            "type": "object",
+            "properties": {
+                "identity_names": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "apis.Info": {
             "type": "object",
             "properties": {
@@ -647,6 +973,17 @@ const docTemplate = `{
                 }
             }
         },
+        "apis.PGPMessageResponse": {
+            "type": "object",
+            "properties": {
+                "pgp_message": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "apis.RegisterRequest": {
             "type": "object",
             "properties": {
@@ -665,6 +1002,35 @@ const docTemplate = `{
                 }
             }
         },
+        "apis.ShamirStatusResponse": {
+            "type": "object",
+            "properties": {
+                "fail_message": {
+                    "type": "string"
+                },
+                "new_public_keys": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ShamirPublicKey"
+                    }
+                },
+                "now_user_id": {
+                    "type": "integer"
+                },
+                "shamir_update_ready": {
+                    "type": "boolean"
+                },
+                "shamir_updating": {
+                    "type": "boolean"
+                },
+                "uploaded_shares_identity_names": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "apis.TokenResponse": {
             "type": "object",
             "properties": {
@@ -675,6 +1041,29 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "refresh": {
+                    "type": "string"
+                }
+            }
+        },
+        "apis.UploadPublicKeyRequest": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "all standalone public keys",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "apis.UploadSharesRequest": {
+            "type": "object"
+        },
+        "models.ShamirPublicKey": {
+            "type": "object",
+            "properties": {
+                "identity_name": {
                     "type": "string"
                 }
             }
@@ -702,6 +1091,7 @@ const docTemplate = `{
         "utils.MessageResponse": {
             "type": "object",
             "properties": {
+                "data": {},
                 "message": {
                     "type": "string"
                 }

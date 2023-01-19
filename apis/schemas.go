@@ -1,5 +1,12 @@
 package apis
 
+import (
+	"auth_next/models"
+	"auth_next/utils/shamir"
+)
+
+/* account */
+
 type EmailModel struct {
 	// email in email blacklist
 	Email string `json:"email"`
@@ -35,4 +42,43 @@ type ApikeyRequest struct {
 type ApikeyResponse struct {
 	EmailVerifyResponse
 	Code string `json:"code"`
+}
+
+/* shamir */
+
+type PGPMessageRequest struct {
+	IdentityName string `json:"identity_name"`
+}
+
+type PGPMessageResponse struct {
+	UserID     int    `json:"user_id"`
+	PGPMessage string `json:"pgp_message" gorm:"column:key"`
+}
+
+type UserShare struct {
+	UserID int          `json:"user_id"`
+	Share  shamir.Share `json:"share"`
+}
+
+type UploadSharesRequest struct {
+	IdentityName string      `json:"identity_name"`
+	Shares       []UserShare `json:"shares"`
+}
+
+type UploadPublicKeyRequest struct {
+	Data []string `json:"data"` // all standalone public keys
+}
+
+type IdentityNameResponse struct {
+	IdentityNames []string `json:"identity_names"`
+}
+
+type ShamirStatusResponse struct {
+	ShamirUpdateReady           bool                     `json:"shamir_update_ready"`
+	UploadedSharesIdentityNames []string                 `json:"uploaded_shares_identity_names,omitempty"`
+	UploadedShares              map[int]shamir.Shares    `json:"-"`
+	NewPublicKeys               []models.ShamirPublicKey `json:"new_public_keys"`
+	ShamirUpdating              bool                     `json:"shamir_updating,omitempty"`
+	NowUserID                   int                      `json:"now_user_id,omitempty"`
+	FailMessage                 string                   `json:"fail_message,omitempty"`
 }

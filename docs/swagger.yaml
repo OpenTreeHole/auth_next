@@ -22,6 +22,13 @@ definitions:
         - reset
         type: string
     type: object
+  apis.IdentityNameResponse:
+    properties:
+      identity_names:
+        items:
+          type: string
+        type: array
+    type: object
   apis.Info:
     properties:
       author:
@@ -50,6 +57,13 @@ definitions:
         minLength: 8
         type: string
     type: object
+  apis.PGPMessageResponse:
+    properties:
+      pgp_message:
+        type: string
+      user_id:
+        type: integer
+    type: object
   apis.RegisterRequest:
     properties:
       email:
@@ -63,6 +77,25 @@ definitions:
         minLength: 6
         type: string
     type: object
+  apis.ShamirStatusResponse:
+    properties:
+      fail_message:
+        type: string
+      new_public_keys:
+        items:
+          $ref: '#/definitions/models.ShamirPublicKey'
+        type: array
+      now_user_id:
+        type: integer
+      shamir_update_ready:
+        type: boolean
+      shamir_updating:
+        type: boolean
+      uploaded_shares_identity_names:
+        items:
+          type: string
+        type: array
+    type: object
   apis.TokenResponse:
     properties:
       access:
@@ -70,6 +103,21 @@ definitions:
       message:
         type: string
       refresh:
+        type: string
+    type: object
+  apis.UploadPublicKeyRequest:
+    properties:
+      data:
+        description: all standalone public keys
+        items:
+          type: string
+        type: array
+    type: object
+  apis.UploadSharesRequest:
+    type: object
+  models.ShamirPublicKey:
+    properties:
+      identity_name:
         type: string
     type: object
   models.User:
@@ -87,6 +135,7 @@ definitions:
     type: object
   utils.MessageResponse:
     properties:
+      data: {}
       message:
         type: string
     type: object
@@ -192,7 +241,7 @@ paths:
           schema:
             $ref: '#/definitions/apis.TokenResponse'
         "400":
-          description: 验证码错误、用户已注册“
+          description: 验证码错误、用户已注册
           schema:
             $ref: '#/definitions/utils.MessageResponse'
         "500":
@@ -221,7 +270,7 @@ paths:
           schema:
             $ref: '#/definitions/apis.TokenResponse'
         "400":
-          description: 验证码错误“
+          description: 验证码错误
           schema:
             $ref: '#/definitions/utils.MessageResponse'
         "500":
@@ -231,6 +280,202 @@ paths:
       summary: reset password
       tags:
       - account
+  /shamir:
+    get:
+      parameters:
+      - description: recipient uid
+        in: query
+        name: identity_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/apis.PGPMessageResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: list related shamir PGP messages, admin only
+      tags:
+      - shamir
+  /shamir/{user_id}:
+    get:
+      parameters:
+      - description: Target UserID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - in: query
+        name: identity_name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apis.PGPMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: get shamir PGP message, admin only
+      tags:
+      - shamir
+  /shamir/key:
+    post:
+      parameters:
+      - description: public keys
+        in: body
+        name: public_keys
+        required: true
+        schema:
+          $ref: '#/definitions/apis.UploadPublicKeyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              allOf:
+              - $ref: '#/definitions/utils.MessageResponse'
+              - properties:
+                  data:
+                    $ref: '#/definitions/apis.IdentityNameResponse'
+                type: object
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: upload all PGP PublicKeys for encryption, admin only
+      tags:
+      - shamir
+  /shamir/shares:
+    post:
+      parameters:
+      - description: shares
+        in: body
+        name: shares
+        required: true
+        schema:
+          $ref: '#/definitions/apis.UploadSharesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.MessageResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/apis.IdentityNameResponse'
+              type: object
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.MessageResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/apis.IdentityNameResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: upload all shares of all users, cached
+      tags:
+      - shamir
+  /shamir/status:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apis.ShamirStatusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: get shamir info
+      tags:
+      - shamir
+  /shamir/update:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: trigger for updating shamir
+      tags:
+      - shamir
   /users:
     get:
       description: list all users, admin only

@@ -12,7 +12,7 @@ import "github.com/gofiber/fiber/v2"
 //	@Router			/register [post]
 //	@Param			json	body		RegisterRequest	true	"json"
 //	@Success		201		{object}	TokenResponse
-//	@Failure		400		{object}	utils.MessageResponse	"验证码错误、用户已注册“
+//	@Failure		400		{object}	utils.MessageResponse	"验证码错误、用户已注册"
 //	@Failure		500		{object}	utils.MessageResponse
 func Register(c *fiber.Ctx) error {
 	return c.JSON(TokenResponse{Message: "register successful"})
@@ -28,7 +28,7 @@ func Register(c *fiber.Ctx) error {
 //	@Router			/register [put]
 //	@Param			json	body		RegisterRequest	true	"json"
 //	@Success		200		{object}	TokenResponse
-//	@Failure		400		{object}	utils.MessageResponse	"验证码错误“
+//	@Failure		400		{object}	utils.MessageResponse	"验证码错误"
 //	@Failure		500		{object}	utils.MessageResponse
 func ChangePassword(c *fiber.Ctx) error {
 	return c.JSON(TokenResponse{Message: "reset password successful"})
