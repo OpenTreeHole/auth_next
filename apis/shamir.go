@@ -1,9 +1,11 @@
 package apis
 
 import (
+	"auth_next/config"
 	"auth_next/models"
 	"auth_next/utils"
 	"auth_next/utils/shamir"
+	"encoding/json"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/exp/slices"
@@ -355,15 +357,33 @@ func updateShamir() {
 	status.NewPublicKeys = nil
 	status.NowUserID = 0
 
+	var subject string
+	var content []byte
+
 	if err != nil {
 		// rollback
 		status.FailMessage = err.Error()
 		status.NewPublicKeys = models.ShamirPublicKeys
 		status.CurrentPublicKeys = oldShamirPublicKey
 		models.ShamirPublicKeys = oldShamirPublicKey
+
+		subject = "shamir update failed"
+	} else {
+		subject = "shamir update success"
+	}
+
+	content, err = json.Marshal(&status)
+	if err != nil {
+		content = []byte(err.Error())
 	}
 
 	GlobalUploadShamirStatus.Unlock()
 
-	// TODO: send email to database administrator
+	// send email to update
+	err = utils.SendEmail(subject, string(content), []string{config.Config.EmailDev})
+	if err != nil {
+		log.Printf("error sending emails: %v\nsubject: %v\ncontent: %v", err.Error(), subject, string(content))
+	}
+
+	log.Println("updateShamir function finished")
 }

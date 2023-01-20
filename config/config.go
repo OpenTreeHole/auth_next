@@ -18,6 +18,8 @@ var Config struct {
 	EmailPort       int      `env:"EMAIL_PORT" envDefault:"465"`
 	EmailUseTLS     bool     `env:"EMAIL_USE_TLS" envDefault:"true"`
 	ShamirFeature   bool     `env:"SHAMIR_FEATURE" envDefault:"true"`
+	// send email to dev team when errors happen or tasks finish
+	EmailDev string `env:"EMAIL_DEV" envDefault:"dev@fduhole.com"`
 
 	// get from docker secret
 	//RegisterApikeySeed string `env:"REGISTER_APIKEY_SEED,file" envDefault:"/var/run/secret/register_apikey_seed"`
