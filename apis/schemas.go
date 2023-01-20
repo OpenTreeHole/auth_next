@@ -75,10 +75,12 @@ type IdentityNameResponse struct {
 
 type ShamirStatusResponse struct {
 	ShamirUpdateReady           bool                     `json:"shamir_update_ready"`
-	UploadedSharesIdentityNames []string                 `json:"uploaded_shares_identity_names,omitempty"`
+	ShamirUpdating              bool                     `json:"shamir_updating"`
+	UploadedSharesIdentityNames []string                 `json:"uploaded_shares_identity_names"`
 	UploadedShares              map[int]shamir.Shares    `json:"-"`
+	CurrentPublicKeys           []models.ShamirPublicKey `json:"current_public_keys"`
 	NewPublicKeys               []models.ShamirPublicKey `json:"new_public_keys"`
-	ShamirUpdating              bool                     `json:"shamir_updating,omitempty"`
 	NowUserID                   int                      `json:"now_user_id,omitempty"`
 	FailMessage                 string                   `json:"fail_message,omitempty"`
+	WarningMessage              string                   `json:"warning_message,omitempty"`
 }

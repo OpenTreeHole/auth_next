@@ -51,7 +51,7 @@ const docTemplate = `{
                 "tags": [
                     "token"
                 ],
-                "summary": "Login an account",
+                "summary": "Login",
                 "parameters": [
                     {
                         "description": "json",
@@ -93,7 +93,7 @@ const docTemplate = `{
         },
         "/logout": {
             "get": {
-                "description": "Logout, clear jwt credential and return successful message",
+                "description": "Logout, clear jwt credential and return successful message, logout",
                 "produces": [
                     "application/json"
                 ],
@@ -113,6 +113,7 @@ const docTemplate = `{
         },
         "/refresh": {
             "post": {
+                "description": "Refresh jwt token with refresh token in header, login required",
                 "produces": [
                     "application/json"
                 ],
@@ -1005,6 +1006,12 @@ const docTemplate = `{
         "apis.ShamirStatusResponse": {
             "type": "object",
             "properties": {
+                "current_public_keys": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ShamirPublicKey"
+                    }
+                },
                 "fail_message": {
                     "type": "string"
                 },
@@ -1028,6 +1035,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "warning_message": {
+                    "type": "string"
                 }
             }
         },

@@ -39,10 +39,10 @@ func RegisterRoutes(app *fiber.App) {
 	routes.Put("/users/me", ModifyUser)
 
 	// shamir
+	routes.Get("/shamir/status", GetShamirStatus)
 	routes.Get("/shamir/:id", GetPGPMessageByUserID)
 	routes.Get("/shamir", ListPGPMessages)
 	routes.Post("/shamir/shares", UploadAllShares)
 	routes.Post("/shamir/key", UploadPublicKey)
-	routes.Get("/shamir/status", GetShamirStatus)
 	routes.Post("/shamir/update", UpdateShamir)
 }

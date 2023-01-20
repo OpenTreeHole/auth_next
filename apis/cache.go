@@ -13,11 +13,7 @@ var GlobalUploadShamirStatus struct {
 
 func init() {
 	GlobalUploadShamirStatus.ShamirStatusResponse = ShamirStatusResponse{
-		ShamirUpdateReady:           false,
-		UploadedSharesIdentityNames: make([]string, 0, 7),
-		UploadedShares:              make(map[int]shamir.Shares, 0),
-		NewPublicKeys:               make([]models.ShamirPublicKey, 0, 7),
-		ShamirUpdating:              false,
-		NowUserID:                   0,
+		UploadedShares:    make(map[int]shamir.Shares, 0),
+		CurrentPublicKeys: models.ShamirPublicKeys,
 	}
 }

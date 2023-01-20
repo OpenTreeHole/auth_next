@@ -97,3 +97,8 @@ func ValidateEmail(email string) bool {
 	}
 	return InUnorderedSlice(config.Config.EmailWhitelist, emailSplit[1])
 }
+
+func IsEmail(email string) bool {
+	emailSplit := strings.Split(email, "@")
+	return len(emailSplit) == 2
+}

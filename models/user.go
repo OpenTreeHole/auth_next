@@ -28,6 +28,9 @@ func GetAdminList() error {
 }
 
 func IsAdmin(userID int) bool {
+	if config.Config.Mode == "dev" {
+		return true
+	}
 	if AdminIDList == nil {
 		return false
 	}

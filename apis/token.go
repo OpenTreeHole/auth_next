@@ -7,7 +7,7 @@ import (
 
 // Login godoc
 //
-//	@Summary		Login an account
+//	@Summary		Login
 //	@Description	Login with email and password, return jwt token
 //	@Tags			token
 //	@Accept			json
@@ -26,7 +26,7 @@ func Login(c *fiber.Ctx) error {
 // Logout
 //
 //	@Summary		Logout
-//	@Description	Logout, clear jwt credential and return successful message
+//	@Description	Logout, clear jwt credential and return successful message, logout
 //	@Tags			token
 //	@Produce		json
 //	@Router			/logout [get]
@@ -37,11 +37,12 @@ func Logout(c *fiber.Ctx) error {
 
 // Refresh
 //
-//	@Summary	Refresh jwt token
-//	@Tags		token
-//	@Produce	json
-//	@Router		/refresh [post]
-//	@Success	200	{object}	TokenResponse
+//	@Summary		Refresh jwt token
+//	@Description	Refresh jwt token with refresh token in header, login required
+//	@Tags			token
+//	@Produce		json
+//	@Router			/refresh [post]
+//	@Success		200	{object}	TokenResponse
 func Refresh(c *fiber.Ctx) error {
 	return c.JSON(TokenResponse{Message: "refresh successful"})
 }

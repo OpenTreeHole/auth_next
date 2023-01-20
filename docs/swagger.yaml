@@ -79,6 +79,10 @@ definitions:
     type: object
   apis.ShamirStatusResponse:
     properties:
+      current_public_keys:
+        items:
+          $ref: '#/definitions/models.ShamirPublicKey'
+        type: array
       fail_message:
         type: string
       new_public_keys:
@@ -95,6 +99,8 @@ definitions:
         items:
           type: string
         type: array
+      warning_message:
+        type: string
     type: object
   apis.TokenResponse:
     properties:
@@ -193,12 +199,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/utils.MessageResponse'
-      summary: Login an account
+      summary: Login
       tags:
       - token
   /logout:
     get:
-      description: Logout, clear jwt credential and return successful message
+      description: Logout, clear jwt credential and return successful message, logout
       produces:
       - application/json
       responses:
@@ -211,6 +217,7 @@ paths:
       - token
   /refresh:
     post:
+      description: Refresh jwt token with refresh token in header, login required
       produces:
       - application/json
       responses:

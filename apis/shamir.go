@@ -101,7 +101,7 @@ func ListPGPMessages(c *fiber.Ctx) error {
 		return result.Error
 	}
 	if len(messages) == 0 {
-		return utils.Forbidden("获取Shamir信息失败")
+		return c.Status(404).JSON(utils.Message("获取Shamir信息失败"))
 	}
 
 	return c.JSON(messages)
@@ -139,7 +139,6 @@ func UploadAllShares(c *fiber.Ctx) error {
 	// lock
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
-
 	status := &GlobalUploadShamirStatus
 
 	if status.ShamirUpdating {
@@ -154,16 +153,12 @@ func UploadAllShares(c *fiber.Ctx) error {
 	// save shares
 	for _, userShare := range body.Shares {
 		userID := userShare.UserID
-		_, ok := status.UploadedShares[userID]
-		if !ok {
-			status.UploadedShares[userID] = shamir.Shares{userShare.Share}
-		} else {
-			status.UploadedShares[userID] = append(status.UploadedShares[userID], userShare.Share)
-		}
+		// also correct if status.UploadedShares[userID] = nil
+		status.UploadedShares[userID] = append(status.UploadedShares[userID], userShare.Share)
 	}
 
-	if len(GlobalUploadShamirStatus.UploadedSharesIdentityNames) >= 4 {
-		GlobalUploadShamirStatus.ShamirUpdateReady = true
+	if len(status.UploadedSharesIdentityNames) >= 4 {
+		status.ShamirUpdateReady = true
 	}
 
 	return c.JSON(utils.MessageResponse{
@@ -234,11 +229,20 @@ func UpdateShamir(c *fiber.Ctx) error {
 
 	// trigger update
 	go updateShamir()
-	return c.JSON(utils.Message("触发成功，正在尝试更新shamir信息"))
+	return c.JSON(utils.Message("触发成功，正在尝试更新shamir信息，请访问/shamir/status获取更多信息"))
 }
 
 // only background running in goroutine
 func updateShamir() {
+	defer func() {
+		if err := recover(); err != nil {
+			GlobalUploadShamirStatus.Lock()
+			defer GlobalUploadShamirStatus.Unlock()
+			status := &GlobalUploadShamirStatus
+
+			status.FailMessage = fmt.Sprintf("recover from panic: %v", err)
+		}
+	}()
 	// prepare
 	GlobalUploadShamirStatus.Lock()
 
@@ -246,11 +250,11 @@ func updateShamir() {
 	GlobalUploadShamirStatus.ShamirUpdating = true
 
 	// backup old public keys
-	oldShamirPublicKey := make([]models.ShamirPublicKey, 0, len(models.ShamirPublicKeys))
-	copy(models.ShamirPublicKeys, oldShamirPublicKey)
+	oldShamirPublicKey := models.ShamirPublicKeys
 
 	// copy new public keys
-	copy(GlobalUploadShamirStatus.NewPublicKeys, models.ShamirPublicKeys)
+	models.ShamirPublicKeys = GlobalUploadShamirStatus.NewPublicKeys
+	GlobalUploadShamirStatus.CurrentPublicKeys = models.ShamirPublicKeys
 
 	// all the shares for decrypt
 	allShares := GlobalUploadShamirStatus.UploadedShares
@@ -277,7 +281,7 @@ func updateShamir() {
 				return err
 			}
 		}
-		if models.DB.Migrator().HasTable("shamir_email") {
+		if models.DB.Migrator().HasTable(shamirTableName) {
 			err := models.DB.Migrator().RenameTable(shamirTableName, backupShamirTableName)
 			if err != nil {
 				return err
@@ -291,6 +295,11 @@ func updateShamir() {
 
 		// main loop
 		for _, userID := range userIDs {
+			// update userID status
+			GlobalUploadShamirStatus.Lock()
+			GlobalUploadShamirStatus.NowUserID = userID
+			GlobalUploadShamirStatus.Unlock()
+
 			// get shares
 			shares := allShares[userID]
 			if len(shares) < 4 {
@@ -301,7 +310,13 @@ func updateShamir() {
 			// decrypt email
 			email := shamir.Decrypt(shares)
 			if !utils.ValidateEmail(email) {
-				return fmt.Errorf("invalid email, user_id = %d, email: %v", userID, email)
+				if !utils.IsEmail(email) {
+					// decrypt error
+					return fmt.Errorf("[email decrypt error] invalid email, user_id = %d, email: %v", userID, email)
+				} else {
+					// filter invalid emails
+					warningMessage.WriteString(fmt.Sprintf("user %v don't have valid email: %v\n", userID, email))
+				}
 			}
 
 			// get new shares
@@ -318,7 +333,7 @@ func updateShamir() {
 		}
 
 		// drop table shamir_email_backup
-		if models.DB.Migrator().HasTable("shamir_email") {
+		if models.DB.Migrator().HasTable(backupShamirTableName) {
 			err := models.DB.Migrator().DropTable(backupShamirTableName)
 			if err != nil {
 				return err
@@ -327,7 +342,28 @@ func updateShamir() {
 		return nil
 	})
 
-	if err != nil {
+	GlobalUploadShamirStatus.Lock()
+	status := &GlobalUploadShamirStatus
 
+	status.ShamirUpdating = false
+	status.ShamirUpdateReady = false
+	status.WarningMessage = warningMessage.String()
+	for userID := range status.UploadedShares {
+		delete(status.UploadedShares, userID)
 	}
+	status.UploadedSharesIdentityNames = nil
+	status.NewPublicKeys = nil
+	status.NowUserID = 0
+
+	if err != nil {
+		// rollback
+		status.FailMessage = err.Error()
+		status.NewPublicKeys = models.ShamirPublicKeys
+		status.CurrentPublicKeys = oldShamirPublicKey
+		models.ShamirPublicKeys = oldShamirPublicKey
+	}
+
+	GlobalUploadShamirStatus.Unlock()
+
+	// TODO: send email to database administrator
 }

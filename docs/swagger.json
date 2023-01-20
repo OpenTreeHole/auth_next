@@ -44,7 +44,7 @@
                 "tags": [
                     "token"
                 ],
-                "summary": "Login an account",
+                "summary": "Login",
                 "parameters": [
                     {
                         "description": "json",
@@ -86,7 +86,7 @@
         },
         "/logout": {
             "get": {
-                "description": "Logout, clear jwt credential and return successful message",
+                "description": "Logout, clear jwt credential and return successful message, logout",
                 "produces": [
                     "application/json"
                 ],
@@ -106,6 +106,7 @@
         },
         "/refresh": {
             "post": {
+                "description": "Refresh jwt token with refresh token in header, login required",
                 "produces": [
                     "application/json"
                 ],
@@ -998,6 +999,12 @@
         "apis.ShamirStatusResponse": {
             "type": "object",
             "properties": {
+                "current_public_keys": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ShamirPublicKey"
+                    }
+                },
                 "fail_message": {
                     "type": "string"
                 },
@@ -1021,6 +1028,9 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "warning_message": {
+                    "type": "string"
                 }
             }
         },
