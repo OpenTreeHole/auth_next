@@ -2,7 +2,6 @@ package models
 
 import (
 	"auth_next/config"
-	"auth_next/utils"
 	"auth_next/utils/shamir"
 	"errors"
 	"fmt"
@@ -18,9 +17,9 @@ type ShamirEmail struct {
 }
 
 type ShamirPublicKey struct {
-	ID               int             `json:"-" gorm:"primaryKey"`
+	ID               int             `json:"id" gorm:"primaryKey"`
 	IdentityName     string          `json:"identity_name"`
-	ArmoredPublicKey string          `json:"-"`
+	ArmoredPublicKey string          `json:"armored_public_key"`
 	PublicKey        *crypto.KeyRing `json:"-" gorm:"-"`
 }
 
@@ -52,19 +51,8 @@ func LoadShamirPublicKey() error {
 			return fmt.Errorf("%v; IdentityName: %v\n", err.Error(), identityName)
 		}
 
-		entity := key.GetEntity()
-		if entity == nil || len(entity.Identities) == 0 {
-			return fmt.Errorf("no identity found in this public key; IdentityName: %v\n", identityName)
-		}
-
-		// get all identity name in this public key
-		identityNameList := make([]string, 0, len(entity.Identities))
-		for name := range entity.Identities {
-			identityNameList = append(identityNameList, name)
-		}
-
-		// check if public key contains identity name stored in database
-		if !utils.InUnorderedSlice(identityNameList, identityName) {
+		// check identity name
+		if key.GetEntity().PrimaryIdentity().Name != identityName {
 			return fmt.Errorf("identity name not in public key, please check your database; IdentityName: %v\n", identityName)
 		}
 

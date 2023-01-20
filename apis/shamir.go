@@ -7,6 +7,7 @@ import (
 	"auth_next/utils/shamir"
 	"encoding/json"
 	"fmt"
+	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/exp/slices"
 	"gorm.io/gorm"
@@ -184,7 +185,53 @@ func UploadAllShares(c *fiber.Ctx) error {
 //	@Failure	403			{object}	utils.MessageResponse	"非管理员"
 //	@Failure	500			{object}	utils.MessageResponse
 func UploadPublicKey(c *fiber.Ctx) error {
-	return c.JSON(nil)
+	var body UploadPublicKeyRequest
+	err := utils.ValidateBody(c, &body)
+	if err != nil {
+		return err
+	}
+
+	// get request user id
+	requestUserID, err := models.GetUserID(c)
+	if err != nil {
+		return err
+	}
+	if !models.IsAdmin(requestUserID) {
+		return utils.Forbidden("你没有权限上传新的公钥")
+	}
+	if len(body.Data) != 7 {
+		return utils.BadRequest("公钥数量不足")
+	}
+
+	GlobalUploadShamirStatus.Lock()
+	defer GlobalUploadShamirStatus.Unlock()
+	status := &GlobalUploadShamirStatus
+
+	// save public keys
+	status.NewPublicKeys = nil
+	for i, armoredPublicKey := range body.Data {
+		// try parse
+		publicKey, err := crypto.NewKeyFromArmored(armoredPublicKey)
+		if err != nil {
+			return utils.BadRequest(fmt.Sprintf("load public key error: %v\n", armoredPublicKey))
+		}
+		publicKeyRing, err := crypto.NewKeyRing(publicKey)
+		if err != nil {
+			return utils.BadRequest(fmt.Sprintf("load public key error: %v\n", armoredPublicKey))
+		}
+
+		// save new public keys with assigned id, for save to database
+		status.NewPublicKeys = append(status.NewPublicKeys, models.ShamirPublicKey{
+			ID:               i + 1,
+			IdentityName:     publicKey.GetEntity().PrimaryIdentity().Name,
+			ArmoredPublicKey: armoredPublicKey,
+			PublicKey:        publicKeyRing,
+		})
+	}
+	return c.JSON(utils.MessageResponse{
+		Message: "上传公钥成功",
+		Data:    &status.ShamirStatusResponse,
+	})
 }
 
 // GetShamirStatus godoc
@@ -272,19 +319,23 @@ func updateShamir() {
 
 	var warningMessage strings.Builder
 
+	const (
+		shamirTableName       = "shamir_email"
+		backupShamirTableName = "shamir_email_backup"
+	)
+
 	err := models.DB.Transaction(func(tx *gorm.DB) error {
 
 		// backup old table
-		shamirTableName := "shamir_email"
-		backupShamirTableName := "shamir_email_backup"
-		if models.DB.Migrator().HasTable(backupShamirTableName) {
-			err := models.DB.Migrator().DropTable(backupShamirTableName)
+
+		if tx.Migrator().HasTable(backupShamirTableName) {
+			err := tx.Migrator().DropTable(backupShamirTableName)
 			if err != nil {
 				return err
 			}
 		}
-		if models.DB.Migrator().HasTable(shamirTableName) {
-			err := models.DB.Migrator().RenameTable(shamirTableName, backupShamirTableName)
+		if tx.Migrator().HasTable(shamirTableName) {
+			err := tx.Migrator().RenameTable(shamirTableName, backupShamirTableName)
 			if err != nil {
 				return err
 			}
@@ -335,13 +386,15 @@ func updateShamir() {
 		}
 
 		// drop table shamir_email_backup
-		if models.DB.Migrator().HasTable(backupShamirTableName) {
-			err := models.DB.Migrator().DropTable(backupShamirTableName)
+		if tx.Migrator().HasTable(backupShamirTableName) {
+			err := tx.Migrator().DropTable(backupShamirTableName)
 			if err != nil {
 				return err
 			}
 		}
-		return nil
+
+		// save new public keys
+		return tx.Save(models.ShamirPublicKeys).Error
 	})
 
 	GlobalUploadShamirStatus.Lock()
@@ -366,6 +419,13 @@ func updateShamir() {
 		status.NewPublicKeys = models.ShamirPublicKeys
 		status.CurrentPublicKeys = oldShamirPublicKey
 		models.ShamirPublicKeys = oldShamirPublicKey
+
+		if models.DB.Migrator().HasTable(backupShamirTableName) {
+			err := models.DB.Migrator().RenameTable(backupShamirTableName, shamirTableName)
+			if err != nil {
+				log.Println(err.Error())
+			}
+		}
 
 		subject = "shamir update failed"
 	} else {

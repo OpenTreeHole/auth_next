@@ -49,7 +49,7 @@ func initDB() error {
 		if err != nil && !os.IsExist(err) {
 			panic(err)
 		}
-		return gorm.Open(sqlite.Open("data/sqlite"), gormConfig)
+		return gorm.Open(sqlite.Open("data/sqlite.db"), gormConfig)
 	}
 	memoryDB := func() (*gorm.DB, error) {
 		return gorm.Open(sqlite.Open("file::memory:?cache=shared"), gormConfig)
