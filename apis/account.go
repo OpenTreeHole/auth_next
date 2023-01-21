@@ -1,6 +1,15 @@
 package apis
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"auth_next/config"
+	"auth_next/models"
+	"auth_next/utils"
+	"auth_next/utils/auth"
+	"auth_next/utils/kong"
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"time"
+)
 
 // Register godoc
 //
@@ -15,7 +24,86 @@ import "github.com/gofiber/fiber/v2"
 //	@Failure		400		{object}	utils.MessageResponse	"验证码错误、用户已注册"
 //	@Failure		500		{object}	utils.MessageResponse
 func Register(c *fiber.Ctx) error {
-	return c.JSON(TokenResponse{Message: "register successful"})
+	scope := "register"
+	var body RegisterRequest
+	err := utils.ValidateBody(c, &body)
+	if err != nil {
+		return err
+	}
+	ok, err := auth.CheckVerificationCode(body.Email, scope, body.Verification)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return utils.BadRequest("验证码错误")
+	}
+
+	registered := models.HasRegisteredEmail(body.Email)
+	deleted := models.HasDeletedEmail(body.Email)
+
+	var user models.User
+	if registered {
+		if !deleted {
+			return utils.BadRequest("该用户已注册，如果忘记密码，请使用忘记密码功能找回")
+		} else {
+			identifier := auth.MakeIdentifier(body.Email)
+
+			err = models.DB.Find(&user, "identifier = ?", identifier).Error
+			if err != nil {
+				return err
+			}
+
+			user.IsActive = true
+			user.Password, err = auth.MakePassword(body.Password)
+			user.LastLogin = time.Now()
+			if err != nil {
+				return err
+			}
+
+			err = models.DB.Save(&user).Error
+			if err != nil {
+				return err
+			}
+
+			err = models.DeleteDeletedEmail(body.Email)
+		}
+	} else {
+		user = models.User{
+			Identifier: auth.MakeIdentifier(body.Email),
+			Password:   "",
+			JoinedTime: time.Now().In(config.Config.TZLocation),
+			LastLogin:  time.Now().In(config.Config.TZLocation),
+		}
+		err = models.DB.Create(&user).Error
+		if err != nil {
+			return err
+		}
+
+		err = models.AddRegisteredEmail(body.Email)
+		if err != nil {
+			return err
+		}
+
+		err = kong.CreateUser(user.ID)
+		if err != nil {
+			return err
+		}
+	}
+
+	accessToken, refreshToken, err := kong.CreateToken(&user)
+	if err != nil {
+		return err
+	}
+
+	err = auth.DeleteVerificationCode(body.Email, scope)
+	if err != nil {
+		return err
+	}
+	return c.JSON(TokenResponse{
+		Access:  accessToken,
+		Refresh: refreshToken,
+		Message: "register successful",
+	})
 }
 
 // ChangePassword godoc
@@ -47,7 +135,8 @@ func ChangePassword(c *fiber.Ctx) error {
 //	@Failure	400		{object}	utils.MessageResponse	“email不在白名单中”
 //	@Failure	500		{object}	utils.MessageResponse
 func VerifyWithEmailOld(c *fiber.Ctx) error {
-	return c.JSON(EmailVerifyResponse{Message: "验证邮件已发送，请查收\n如未收到，请检查邮件地址是否正确，检查垃圾箱，或重试"})
+	email := c.Params("email")
+	return verifyWithEmail(c, email)
 }
 
 // VerifyWithEmail godoc
@@ -63,7 +152,51 @@ func VerifyWithEmailOld(c *fiber.Ctx) error {
 //	@Failure		403		{object}	utils.MessageResponse	“email不在白名单中”
 //	@Failure		500		{object}	utils.MessageResponse
 func VerifyWithEmail(c *fiber.Ctx) error {
-	return c.JSON(nil)
+	email := c.Params("email")
+	return verifyWithEmail(c, email)
+}
+
+func verifyWithEmail(c *fiber.Ctx, email string) error {
+	if !utils.ValidateEmail(email) {
+		return utils.BadRequest("email invalid")
+	}
+	registered := models.HasRegisteredEmail(email)
+	var scope string
+	if !registered {
+		scope = "register"
+	} else {
+		scope = "reset"
+	}
+	code, err := auth.SetVerificationCode(email, scope)
+	if err != nil {
+		return err
+	}
+
+	baseContent := fmt.Sprintf(`
+您的验证码是: %v
+验证码的有效期为 %d 分钟
+如果您意外地收到了此邮件，请忽略它
+`,
+		code, config.Config.VerificationCodeExpires)
+
+	var subject, content string
+	if !registered {
+		subject = fmt.Sprintf("%v 注册验证", config.Config.SiteName)
+		content = fmt.Sprintf("欢迎注册 %v, %v", config.Config.SiteName, baseContent)
+	} else {
+		subject = fmt.Sprintf("%v 重置密码", config.Config.SiteName)
+		content = fmt.Sprintf("您正在重置密码, %v", baseContent)
+	}
+
+	err = utils.SendEmail(subject, content, []string{email})
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(EmailVerifyResponse{
+		Message: "验证邮件已发送，请查收\n如未收到，请检查邮件地址是否正确，检查垃圾箱，或重试",
+		Scope:   scope,
+	})
 }
 
 // VerifyWithApikey godoc
