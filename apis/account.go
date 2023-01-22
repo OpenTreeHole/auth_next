@@ -8,7 +8,8 @@ import (
 	"auth_next/utils/kong"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"time"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // Register godoc
@@ -38,48 +39,59 @@ func Register(c *fiber.Ctx) error {
 		return utils.BadRequest("验证码错误")
 	}
 
-	registered := models.HasRegisteredEmail(body.Email)
-	deleted := models.HasDeletedEmail(body.Email)
+	registered, err := models.HasRegisteredEmail(models.DB, body.Email)
+	if err != nil {
+		return err
+	}
+	deleted, err := models.HasDeletedEmail(models.DB, body.Email)
+	if err != nil {
+		return err
+	}
 
 	var user models.User
 	if registered {
-		if !deleted {
-			return utils.BadRequest("该用户已注册，如果忘记密码，请使用忘记密码功能找回")
+		if deleted {
+			err = models.DB.Transaction(func(tx *gorm.DB) error {
+				err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+					Where("identifier = ?", auth.MakeIdentifier(body.Email)).
+					Take(&user).Error
+				if err != nil {
+					return err
+				}
+
+				user.IsActive = true
+				user.Password, err = auth.MakePassword(body.Password)
+				if err != nil {
+					return err
+				}
+
+				err = tx.Save(&user).Error
+				if err != nil {
+					return err
+				}
+
+				return models.DeleteDeletedEmail(tx, body.Email)
+			})
+			if err != nil {
+				return err
+			}
 		} else {
-			identifier := auth.MakeIdentifier(body.Email)
-
-			err = models.DB.Find(&user, "identifier = ?", identifier).Error
-			if err != nil {
-				return err
-			}
-
-			user.IsActive = true
-			user.Password, err = auth.MakePassword(body.Password)
-			user.LastLogin = time.Now()
-			if err != nil {
-				return err
-			}
-
-			err = models.DB.Save(&user).Error
-			if err != nil {
-				return err
-			}
-
-			err = models.DeleteDeletedEmail(body.Email)
+			return utils.BadRequest("该用户已注册，如果忘记密码，请使用忘记密码功能找回")
 		}
 	} else {
-		user = models.User{
-			Identifier: auth.MakeIdentifier(body.Email),
-			Password:   "",
-			JoinedTime: time.Now().In(config.Config.TZLocation),
-			LastLogin:  time.Now().In(config.Config.TZLocation),
-		}
-		err = models.DB.Create(&user).Error
+		user.Identifier = auth.MakeIdentifier(body.Email)
+		user.Password, err = auth.MakePassword(body.Password)
 		if err != nil {
 			return err
 		}
 
-		err = models.AddRegisteredEmail(body.Email)
+		err = models.DB.Transaction(func(tx *gorm.DB) error {
+			err = tx.Create(&user).Error
+			if err != nil {
+				return err
+			}
+			return models.AddRegisteredEmail(tx, body.Email)
+		})
 		if err != nil {
 			return err
 		}
@@ -119,7 +131,61 @@ func Register(c *fiber.Ctx) error {
 //	@Failure		400		{object}	utils.MessageResponse	"验证码错误"
 //	@Failure		500		{object}	utils.MessageResponse
 func ChangePassword(c *fiber.Ctx) error {
-	return c.JSON(TokenResponse{Message: "reset password successful"})
+	scope := "reset"
+	var body RegisterRequest
+	err := utils.ValidateBody(c, &body)
+	if err != nil {
+		return err
+	}
+	ok, err := auth.CheckVerificationCode(body.Email, scope, body.Verification)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return utils.BadRequest("验证码错误")
+	}
+
+	var user models.User
+	err = models.DB.Transaction(func(tx *gorm.DB) error {
+		err = tx.
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("identifier = ?", auth.MakeIdentifier(body.Email)).
+			Take(&user).Error
+		if err != nil {
+			return err
+		}
+
+		user.IsActive = true
+		user.Password, err = auth.MakePassword(body.Password)
+		if err != nil {
+			return err
+		}
+		return tx.Save(&user).Error
+	})
+	if err != nil {
+		return err
+	}
+
+	err = kong.DeleteJwtCredential(user.ID)
+	if err != nil {
+		return err
+	}
+
+	accessToken, refreshToken, err := kong.CreateToken(&user)
+	if err != nil {
+		return err
+	}
+
+	err = auth.DeleteVerificationCode(body.Email, scope)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(TokenResponse{
+		Access:  accessToken,
+		Refresh: refreshToken,
+		Message: "reset password successful",
+	})
 }
 
 // VerifyWithEmailOld godoc
@@ -160,7 +226,10 @@ func verifyWithEmail(c *fiber.Ctx, email string) error {
 	if !utils.ValidateEmail(email) {
 		return utils.BadRequest("email invalid")
 	}
-	registered := models.HasRegisteredEmail(email)
+	registered, err := models.HasRegisteredEmail(models.DB, email)
+	if err != nil {
+		return err
+	}
 	var scope string
 	if !registered {
 		scope = "register"
@@ -212,8 +281,8 @@ func verifyWithEmail(c *fiber.Ctx, email string) error {
 //	@Failure		403		{object}	utils.MessageResponse	"apikey不正确“
 //	@Failure		409		{object}	utils.MessageResponse	"用户已注册“
 //	@Failure		500		{object}	utils.MessageResponse
-func VerifyWithApikey(c *fiber.Ctx) error {
-	return c.JSON(nil)
+func VerifyWithApikey(_ *fiber.Ctx) error {
+	return utils.BadRequest("ApiKey注册功能暂缓开放")
 }
 
 // DeleteUser godoc
@@ -228,5 +297,43 @@ func VerifyWithApikey(c *fiber.Ctx) error {
 //	@Failure		404	{object}	utils.MessageResponse	"用户不存在“
 //	@Failure		500	{object}	utils.MessageResponse
 func DeleteUser(c *fiber.Ctx) error {
+	var body LoginRequest
+	err := utils.ValidateBody(c, &body)
+	if err != nil {
+		return err
+	}
+
+	var user models.User
+	err = models.DB.Transaction(func(tx *gorm.DB) error {
+		err = tx.
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("identifier = ?", auth.MakeIdentifier(body.Email)).
+			Take(&user).Error
+		if err != nil {
+			return err
+		}
+
+		ok, err := auth.CheckPassword(body.Password, user.Password)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return utils.Forbidden("密码错误")
+		}
+
+		user.IsActive = false
+		err = tx.Save(&user).Error
+		if err != nil {
+			return err
+		}
+
+		return models.AddDeletedEmail(tx, body.Email)
+	})
+
+	err = kong.DeleteJwtCredential(user.ID)
+	if err != nil {
+		return err
+	}
+
 	return c.SendStatus(204)
 }

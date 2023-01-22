@@ -3,52 +3,55 @@ package models
 import (
 	"encoding/hex"
 	"golang.org/x/crypto/sha3"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type EmailList struct {
 	Hash string `json:"hash" gorm:"primaryKey;size:128"`
 }
 
-func sha3SumEmail(email string) string {
+func Sha3SumEmail(email string) string {
 	sum512ByteArray := sha3.Sum512([]byte(email))
-	sum512ByteSlice := sum512ByteArray[0:]
-	return hex.EncodeToString(sum512ByteSlice)
+	return hex.EncodeToString(sum512ByteArray[:])
 }
 
-func hasEmail(model any, email string) bool {
+func hasEmail(tx *gorm.DB, model any, email string) (bool, error) {
 	var count int64
-	result := DB.Model(model).Where("hash = ?", sha3SumEmail(email)).Count(&count)
-	return result.Error == nil && count > 0
+	result := tx.Model(model).Where("hash = ?", Sha3SumEmail(email)).Count(&count)
+	return count > 0, result.Error
 }
 
-func addEmail(model any, email string) error {
-	return DB.Model(model).Create(Map{"hash": sha3SumEmail(email)}).Error
+func addEmail(tx *gorm.DB, model any, email string) error {
+	return tx.Model(model).
+		Clauses(clause.OnConflict{DoNothing: true}).
+		Create(Map{"hash": Sha3SumEmail(email)}).Error
 }
 
-func deleteEmail(model any, email string) error {
-	return DB.Model(model).Delete(Map{"hash": sha3SumEmail(email)}).Error
+func deleteEmail(tx *gorm.DB, model any, email string) error {
+	return tx.Where("hash = ?", Sha3SumEmail(email)).Delete(model).Error
 }
 
 type RegisteredEmail EmailList
 
 type DeletedEmail EmailList
 
-func HasRegisteredEmail(email string) bool {
-	return hasEmail(RegisteredEmail{}, email)
+func HasRegisteredEmail(tx *gorm.DB, email string) (bool, error) {
+	return hasEmail(tx, RegisteredEmail{}, email)
 }
 
-func HasDeletedEmail(email string) bool {
-	return hasEmail(DeletedEmail{}, email)
+func HasDeletedEmail(tx *gorm.DB, email string) (bool, error) {
+	return hasEmail(tx, DeletedEmail{}, email)
 }
 
-func AddRegisteredEmail(email string) error {
-	return addEmail(RegisteredEmail{}, email)
+func AddRegisteredEmail(tx *gorm.DB, email string) error {
+	return addEmail(tx, RegisteredEmail{}, email)
 }
 
-func AddDeletedEmail(email string) error {
-	return addEmail(DeletedEmail{}, email)
+func AddDeletedEmail(tx *gorm.DB, email string) error {
+	return addEmail(tx, DeletedEmail{}, email)
 }
 
-func DeleteDeletedEmail(email string) error {
-	return deleteEmail(DeletedEmail{}, email)
+func DeleteDeletedEmail(tx *gorm.DB, email string) error {
+	return deleteEmail(tx, DeletedEmail{}, email)
 }

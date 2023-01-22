@@ -12,10 +12,13 @@ func CreateToken(user *models.User) (accessToken, refreshToken string, err error
 		return "", "", err
 	}
 	claim := jwt.MapClaims{
-		"uid":      user.ID,
-		"iss":      jwtCredential.Key,
-		"iat":      time.Now().Unix(),
-		"is_admin": user.IsAdmin,
+		"uid":         user.ID,
+		"iss":         jwtCredential.Key,
+		"iat":         time.Now().Unix(),
+		"id":          user.ID,
+		"nickname":    user.Nickname,
+		"joined_time": user.JoinedTime.Format(time.RFC3339),
+		"is_admin":    user.IsAdmin,
 	}
 
 	// access payload
