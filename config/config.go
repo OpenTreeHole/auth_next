@@ -22,6 +22,7 @@ var Config struct {
 	EmailServerTestUrl    url.URL  `env:"EMAIL_SERVER_Test_URL"`
 	EmailServerOpsUrl     url.URL  `env:"EMAIL_SERVER_Ops_URL"`
 	EmailDomain           string   `env:"EMAIL_DOMAIN"`
+	EmailDev              string   `env:"EMAIL_DEV" envDefault:"dev@fduhole.com"`
 	ShamirFeature         bool     `env:"SHAMIR_FEATURE" envDefault:"true"`
 
 	VerificationCodeExpires int    `env:"VERIFICATION_CODE_EXPIRES" envDefault:"10"`
