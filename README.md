@@ -21,7 +21,7 @@ swag init --parseInternal --parseDepth 1 # to generate the latest docs, this sho
 # build for debug
 go build -o auth.exe
 # build for release
-go build -tags "release" -ldflags "-s -w" -o auth.exe
+go build -ldflags "-s -w" -o auth.exe
 # run
 ./auth.exe
 ```
