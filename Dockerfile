@@ -17,7 +17,7 @@ FROM alpine
 
 WORKDIR /app
 
-COPY --from=builder /app/treehole /app/
+COPY --from=builder /app/auth /app/
 
 ENV MODE=production
 
