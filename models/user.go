@@ -9,8 +9,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/exp/slices"
 	"gorm.io/gorm"
+	"log"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -27,20 +29,33 @@ type User struct {
 }
 
 // AdminIDList refresh every 10 minutes
-var AdminIDList []int
+var AdminIDList atomic.Value
 
 func GetAdminList() error {
-	return DB.Table("user").Select("id").Order("id asc").Find(&AdminIDList, "is_admin = true").Error
+	adminIDs := make([]int, 0, 10)
+	err := DB.Table("user").Select("id").Order("id asc").Find(&adminIDs, "is_admin = true").Error
+	if err != nil {
+		return err
+	}
+	AdminIDList.Store(adminIDs)
+	return nil
+}
+
+func RefreshAdminList() {
+	ticker := time.NewTicker(1 * time.Minute)
+	for range ticker.C {
+		err := GetAdminList()
+		if err != nil {
+			log.Println(err)
+		}
+	}
 }
 
 func IsAdmin(userID int) bool {
 	if config.Config.Mode == "dev" {
 		return true
 	}
-	if AdminIDList == nil {
-		return false
-	}
-	_, ok := slices.BinarySearch(AdminIDList, userID)
+	_, ok := slices.BinarySearch(AdminIDList.Load().([]int), userID)
 	return ok
 }
 
