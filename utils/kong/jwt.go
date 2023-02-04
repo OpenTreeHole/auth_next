@@ -7,6 +7,7 @@ import (
 )
 
 func CreateToken(user *models.User) (accessToken, refreshToken string, err error) {
+
 	jwtCredential, err := GetJwtCredential(user.ID)
 	if err != nil {
 		return "", "", err

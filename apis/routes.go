@@ -36,7 +36,7 @@ func RegisterRoutes(app *fiber.App) {
 	routes.Get("/users/me", GetCurrentUser)
 	routes.Get("/users/:id", GetUserByID)
 	routes.Get("/users", ListUsers)
-	routes.Put("/users/me", ModifyUser)
+	routes.Put("/users/:id", ModifyUser)
 
 	// shamir
 	routes.Get("/shamir/status", GetShamirStatus)

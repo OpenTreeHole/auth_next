@@ -9,7 +9,7 @@ import (
 
 type EmailModel struct {
 	// email in email blacklist
-	Email string `json:"email"`
+	Email string `json:"email" validate:"isValidEmail"`
 }
 
 type LoginRequest struct {
@@ -42,6 +42,12 @@ type ApikeyRequest struct {
 type ApikeyResponse struct {
 	EmailVerifyResponse
 	Code string `json:"code"`
+}
+
+/* user account */
+
+type ModifyUserRequest struct {
+	Nickname *string `json:"nickname" validate:"omitempty,min=1"`
 }
 
 /* shamir */

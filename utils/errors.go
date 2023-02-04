@@ -58,6 +58,17 @@ func Forbidden(messages ...string) *HttpError {
 	}
 }
 
+func NotFound(messages ...string) *HttpError {
+	message := "Not Found"
+	if len(messages) > 0 {
+		message = messages[0]
+	}
+	return &HttpError{
+		Code:    404,
+		Message: message,
+	}
+}
+
 func MyErrorHandler(ctx *fiber.Ctx, err error) error {
 	if err == nil {
 		return nil

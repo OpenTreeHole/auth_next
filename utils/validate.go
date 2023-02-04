@@ -41,6 +41,11 @@ func init() {
 
 		return name
 	})
+
+	err := validate.RegisterValidation("isValidEmail", ValidateEmailFunc, false)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func Validate(model any) error {
@@ -99,6 +104,10 @@ func ValidateEmail(email string) bool {
 		return true
 	}
 	return InUnorderedSlice(config.Config.EmailWhitelist, emailSplit[1])
+}
+
+func ValidateEmailFunc(fl validator.FieldLevel) bool {
+	return ValidateEmail(fl.Field().String())
 }
 
 func IsEmail(email string) bool {
