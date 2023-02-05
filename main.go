@@ -20,6 +20,7 @@ import (
 	"auth_next/middlewares"
 	"auth_next/models"
 	"auth_next/utils"
+	"auth_next/utils/kong"
 	"context"
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
@@ -30,6 +31,12 @@ import (
 )
 
 func main() {
+	// connect to kong
+	err := kong.Ping()
+	if err != nil {
+		panic(err)
+	}
+
 	app := fiber.New(fiber.Config{
 		ErrorHandler: utils.MyErrorHandler,
 		JSONEncoder:  json.Marshal,
@@ -54,7 +61,7 @@ func main() {
 	<-interrupt
 
 	// close app
-	err := app.Shutdown()
+	err = app.Shutdown()
 	if err != nil {
 		log.Println(err)
 	}
