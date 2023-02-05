@@ -10,20 +10,17 @@ import (
 )
 
 var Config struct {
-	Mode                  string   `env:"MODE" envDefault:"dev"`
-	DbUrl                 string   `env:"DB_URL"`
-	KongUrl               string   `env:"KONG_URL"`
-	NotificationUrl       string   `env:"NOTIFICATION_URL"`
-	EmailWhitelist        []string `env:"EMAIL_WHITELIST"`
-	EmailServerNoReplyUrl url.URL  `env:"EMAIL_SERVER_NO_REPLY_URL"`
-	EmailServerTestUrl    url.URL  `env:"EMAIL_SERVER_Test_URL"`
-	EmailServerOpsUrl     url.URL  `env:"EMAIL_SERVER_Ops_URL"`
-	EmailDomain           string   `env:"EMAIL_DOMAIN"`
-	EmailDev              string   `env:"EMAIL_DEV" envDefault:"dev@fduhole.com"`
-	ShamirFeature         bool     `env:"SHAMIR_FEATURE" envDefault:"true"`
-
-	VerificationCodeExpires int    `env:"VERIFICATION_CODE_EXPIRES" envDefault:"10"`
-	SiteName                string `env:"SITE_NAME" envDefault:"Open Tree Hole"`
+	Mode                    string   `env:"MODE" envDefault:"dev"`
+	DbUrl                   string   `env:"DB_URL,required"`
+	KongUrl                 string   `env:"KONG_URL,required"`
+	NotificationUrl         string   `env:"NOTIFICATION_URL"`
+	EmailWhitelist          []string `env:"EMAIL_WHITELIST"`
+	EmailServerNoReplyUrl   url.URL  `env:"EMAIL_SERVER_NO_REPLY_URL,required"`
+	EmailDomain             string   `env:"EMAIL_DOMAIN,required"`
+	EmailDev                string   `env:"EMAIL_DEV" envDefault:"dev@fduhole.com"`
+	ShamirFeature           bool     `env:"SHAMIR_FEATURE" envDefault:"true"`
+	VerificationCodeExpires int      `env:"VERIFICATION_CODE_EXPIRES" envDefault:"10"`
+	SiteName                string   `env:"SITE_NAME" envDefault:"Open Tree Hole"`
 }
 
 var FileConfig struct {

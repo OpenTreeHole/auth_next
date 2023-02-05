@@ -7,6 +7,8 @@ import (
 )
 
 func TestSendEmail(t *testing.T) {
+	config.InitConfig()
+
 	if config.Config.EmailServerNoReplyUrl.Hostname() == "" {
 		t.Fatal("no valid no-reply email server, please check your environment variables")
 	}
