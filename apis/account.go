@@ -218,7 +218,7 @@ func VerifyWithEmailOld(c *fiber.Ctx) error {
 //	@Failure		403		{object}	utils.MessageResponse	“email不在白名单中”
 //	@Failure		500		{object}	utils.MessageResponse
 func VerifyWithEmail(c *fiber.Ctx) error {
-	email := c.Params("email")
+	email := c.Query("email")
 	return verifyWithEmail(c, email)
 }
 
