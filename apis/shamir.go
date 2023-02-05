@@ -1,5 +1,7 @@
 package apis
 
+// apis in this page won't check permission, and should be terminated by api gateway in production environment
+
 import (
 	"auth_next/config"
 	"auth_next/models"
@@ -140,7 +142,7 @@ func UploadAllShares(c *fiber.Ctx) error {
 		status.UploadedShares[userID] = append(status.UploadedShares[userID], userShare.Share)
 	}
 
-	if len(status.UploadedSharesIdentityNames) >= 4 {
+	if len(status.UploadedSharesIdentityNames) >= 4 && len(status.NewPublicKeys) == 7 {
 		status.ShamirUpdateReady = true
 	}
 
@@ -171,18 +173,6 @@ func UploadPublicKey(c *fiber.Ctx) error {
 		return err
 	}
 
-	// get request user id
-	requestUserID, err := models.GetUserID(c)
-	if err != nil {
-		return err
-	}
-	if !models.IsAdmin(requestUserID) {
-		return utils.Forbidden("你没有权限上传新的公钥")
-	}
-	if len(body.Data) != 7 {
-		return utils.BadRequest("公钥数量不足")
-	}
-
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
 	status := &GlobalUploadShamirStatus
@@ -208,6 +198,11 @@ func UploadPublicKey(c *fiber.Ctx) error {
 			PublicKey:        publicKeyRing,
 		})
 	}
+
+	if len(status.UploadedSharesIdentityNames) >= 4 && len(status.NewPublicKeys) == 7 {
+		status.ShamirUpdateReady = true
+	}
+
 	return c.JSON(utils.MessageResponse{
 		Message: "上传公钥成功",
 		Data:    &status.ShamirStatusResponse,

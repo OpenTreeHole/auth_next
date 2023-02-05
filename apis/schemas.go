@@ -72,7 +72,7 @@ type UploadSharesRequest struct {
 }
 
 type UploadPublicKeyRequest struct {
-	Data []string `json:"data"` // all standalone public keys
+	Data []string `json:"data" validate:"required,len=7"` // all standalone public keys
 }
 
 type IdentityNameResponse struct {
