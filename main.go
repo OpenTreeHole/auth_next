@@ -34,6 +34,7 @@ import (
 func main() {
 	config.InitConfig()
 	models.InitDB()
+	apis.InitShamirStatus()
 
 	// connect to kong
 	err := kong.Ping()

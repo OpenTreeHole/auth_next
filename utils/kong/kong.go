@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gofiber/fiber/v2"
 	"github.com/pkg/errors"
 	"io"
 	"net/http"
@@ -25,7 +26,7 @@ type JwtCredentials struct {
 
 var kongClient = &http.Client{}
 
-func kongRequestDo(Method, URI string, body io.Reader) (int, []byte, error) {
+func kongRequestDo(Method, URI string, body io.Reader, contentType string) (int, []byte, error) {
 	req, err := http.NewRequest(
 		Method,
 		fmt.Sprintf("%v%v", config.Config.KongUrl, URI),
@@ -34,7 +35,9 @@ func kongRequestDo(Method, URI string, body io.Reader) (int, []byte, error) {
 	if err != nil {
 		return 500, nil, err
 	}
-	req.Header.Set("Content-Type", "application/json")
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
+	}
 	if config.FileConfig.KongToken != "" {
 		req.Header.Set("Authorization", config.FileConfig.KongToken)
 	}
@@ -79,6 +82,7 @@ func CreateUser(userID int) error {
 		http.MethodPut,
 		fmt.Sprintf("/consumers/%d", userID),
 		bytes.NewReader(reqData),
+		fiber.MIMEApplicationJSON,
 	)
 	if err != nil {
 		return err
@@ -94,6 +98,7 @@ func CreateJwtCredential(userID int) (*JwtCredential, error) {
 		http.MethodPost,
 		fmt.Sprintf("/consumers/%d/jwt", userID),
 		nil,
+		fiber.MIMEApplicationForm,
 	)
 	if err != nil {
 		return nil, err
@@ -117,6 +122,7 @@ func ListJwtCredentials(userID int) ([]*JwtCredential, error) {
 		http.MethodGet,
 		fmt.Sprintf("/consumers/%d/jwt", userID),
 		nil,
+		"",
 	)
 	if err != nil {
 		return nil, err
@@ -152,6 +158,7 @@ func DeleteJwtCredential(userID int) error {
 			http.MethodDelete,
 			fmt.Sprintf("/consumers/%d/jwt/%v", userID, jwtID),
 			nil,
+			"",
 		)
 		if err != nil {
 			return err

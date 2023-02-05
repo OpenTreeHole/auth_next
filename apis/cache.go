@@ -11,7 +11,7 @@ var GlobalUploadShamirStatus struct {
 	ShamirStatusResponse
 }
 
-func init() {
+func InitShamirStatus() {
 	GlobalUploadShamirStatus.ShamirStatusResponse = ShamirStatusResponse{
 		UploadedShares:              make(map[int]shamir.Shares, 0),
 		CurrentPublicKeys:           models.ShamirPublicKeys,
