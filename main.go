@@ -16,6 +16,7 @@ package main
 
 import (
 	"auth_next/apis"
+	"auth_next/config"
 	_ "auth_next/docs"
 	"auth_next/middlewares"
 	"auth_next/models"
@@ -31,6 +32,9 @@ import (
 )
 
 func main() {
+	config.InitConfig()
+	models.InitDB()
+
 	// connect to kong
 	err := kong.Ping()
 	if err != nil {

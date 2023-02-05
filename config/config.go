@@ -34,7 +34,7 @@ var FileConfig struct {
 	ProvisionKey            string `env:"PROVISION_KEY,file" envDefault:"/var/run/secrets/provision_key" default:""`
 }
 
-func init() {
+func InitConfig() {
 	if err := env.Parse(&Config); err != nil {
 		panic(err)
 	}

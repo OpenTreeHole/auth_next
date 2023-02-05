@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-func init() {
+func InitDB() {
 	var err error
 
 	// connect to database and auto migrate models
