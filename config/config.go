@@ -60,6 +60,4 @@ func init() {
 			panic(err)
 		}
 	}
-
-	fmt.Printf("%+v\n", &FileConfig)
 }
