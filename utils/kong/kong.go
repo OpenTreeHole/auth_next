@@ -2,11 +2,13 @@ package kong
 
 import (
 	"auth_next/config"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 type JwtCredential struct {
@@ -23,11 +25,11 @@ type JwtCredentials struct {
 
 var kongClient = &http.Client{}
 
-func kongRequestDo(Method, URI string) (int, []byte, error) {
+func kongRequestDo(Method, URI string, body io.Reader) (int, []byte, error) {
 	req, err := http.NewRequest(
 		Method,
 		fmt.Sprintf("%v%v", config.Config.KongUrl, URI),
-		nil,
+		body,
 	)
 	if err != nil {
 		return 500, nil, err
@@ -43,8 +45,8 @@ func kongRequestDo(Method, URI string) (int, []byte, error) {
 	if err != nil {
 		return 500, nil, err
 	}
-	body, err := io.ReadAll(rsp.Body)
-	return rsp.StatusCode, body, err
+	data, err := io.ReadAll(rsp.Body)
+	return rsp.StatusCode, data, err
 }
 
 func Ping() error {
@@ -66,14 +68,22 @@ func Ping() error {
 }
 
 func CreateUser(userID int) error {
+	reqBodyObject := map[string]any{
+		"username": strconv.Itoa(userID),
+	}
+	reqData, err := json.Marshal(reqBodyObject)
+	if err != nil {
+		return err
+	}
 	statusCode, body, err := kongRequestDo(
 		http.MethodPut,
 		fmt.Sprintf("/consumers/%d", userID),
+		bytes.NewReader(reqData),
 	)
 	if err != nil {
 		return err
 	}
-	if statusCode != 200 {
+	if !(statusCode == 200 || statusCode == 201) {
 		return fmt.Errorf("create user %v in kong error: %v", userID, string(body))
 	}
 	return nil
@@ -83,6 +93,7 @@ func CreateJwtCredential(userID int) (*JwtCredential, error) {
 	statusCode, body, err := kongRequestDo(
 		http.MethodPost,
 		fmt.Sprintf("/consumers/%d/jwt", userID),
+		nil,
 	)
 	if err != nil {
 		return nil, err
@@ -105,6 +116,7 @@ func ListJwtCredentials(userID int) ([]*JwtCredential, error) {
 	statusCode, body, err := kongRequestDo(
 		http.MethodGet,
 		fmt.Sprintf("/consumers/%d/jwt", userID),
+		nil,
 	)
 	if err != nil {
 		return nil, err
@@ -139,6 +151,7 @@ func DeleteJwtCredential(userID int) error {
 		statusCode, _, err := kongRequestDo(
 			http.MethodDelete,
 			fmt.Sprintf("/consumers/%d/jwt/%v", userID, jwtID),
+			nil,
 		)
 		if err != nil {
 			return err
