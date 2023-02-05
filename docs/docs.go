@@ -41,7 +41,7 @@ const docTemplate = `{
         },
         "/login": {
             "post": {
-                "description": "Login with email and password, return jwt token",
+                "description": "Login with email and password, return jwt token, not need jwt",
                 "consumes": [
                     "application/json"
                 ],
@@ -93,7 +93,7 @@ const docTemplate = `{
         },
         "/logout": {
             "get": {
-                "description": "Logout, clear jwt credential and return successful message, logout",
+                "description": "Logout, clear jwt credential and return successful message, logout, jwt needed",
                 "produces": [
                     "application/json"
                 ],
@@ -229,7 +229,7 @@ const docTemplate = `{
                 "tags": [
                     "shamir"
                 ],
-                "summary": "list related shamir PGP messages, admin only",
+                "summary": "list related shamir PGP messages",
                 "parameters": [
                     {
                         "type": "string",
@@ -251,12 +251,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "非管理员",
                         "schema": {
                             "$ref": "#/definitions/utils.MessageResponse"
                         }
@@ -396,12 +390,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/utils.MessageResponse"
                         }
                     },
-                    "403": {
-                        "description": "非管理员",
-                        "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -493,7 +481,7 @@ const docTemplate = `{
                 "tags": [
                     "shamir"
                 ],
-                "summary": "get shamir PGP message, admin only",
+                "summary": "get shamir PGP message",
                 "parameters": [
                     {
                         "type": "integer",
@@ -505,7 +493,8 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "name": "identity_name",
-                        "in": "query"
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -521,12 +510,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/utils.MessageResponse"
                         }
                     },
-                    "403": {
-                        "description": "非管理员",
-                        "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -538,7 +521,7 @@ const docTemplate = `{
         },
         "/users": {
             "get": {
-                "description": "list all users, admin only",
+                "description": "list all users, admin only, not implemented",
                 "produces": [
                     "application/json"
                 ],
@@ -546,15 +529,6 @@ const docTemplate = `{
                     "user"
                 ],
                 "summary": "list all users",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "UserID",
-                        "name": "user_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -569,6 +543,34 @@ const docTemplate = `{
                         "description": "不是管理员",
                         "schema": {
                             "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/admin": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "list admins",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
                         }
                     },
                     "500": {
@@ -1073,6 +1075,12 @@ const docTemplate = `{
         "models.ShamirPublicKey": {
             "type": "object",
             "properties": {
+                "armored_public_key": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
                 "identity_name": {
                     "type": "string"
                 }
@@ -1095,6 +1103,9 @@ const docTemplate = `{
                 },
                 "nickname": {
                     "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },

@@ -34,7 +34,7 @@
         },
         "/login": {
             "post": {
-                "description": "Login with email and password, return jwt token",
+                "description": "Login with email and password, return jwt token, not need jwt",
                 "consumes": [
                     "application/json"
                 ],
@@ -86,7 +86,7 @@
         },
         "/logout": {
             "get": {
-                "description": "Logout, clear jwt credential and return successful message, logout",
+                "description": "Logout, clear jwt credential and return successful message, logout, jwt needed",
                 "produces": [
                     "application/json"
                 ],
@@ -222,7 +222,7 @@
                 "tags": [
                     "shamir"
                 ],
-                "summary": "list related shamir PGP messages, admin only",
+                "summary": "list related shamir PGP messages",
                 "parameters": [
                     {
                         "type": "string",
@@ -244,12 +244,6 @@
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "非管理员",
                         "schema": {
                             "$ref": "#/definitions/utils.MessageResponse"
                         }
@@ -389,12 +383,6 @@
                             "$ref": "#/definitions/utils.MessageResponse"
                         }
                     },
-                    "403": {
-                        "description": "非管理员",
-                        "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -486,7 +474,7 @@
                 "tags": [
                     "shamir"
                 ],
-                "summary": "get shamir PGP message, admin only",
+                "summary": "get shamir PGP message",
                 "parameters": [
                     {
                         "type": "integer",
@@ -498,7 +486,8 @@
                     {
                         "type": "string",
                         "name": "identity_name",
-                        "in": "query"
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -514,12 +503,6 @@
                             "$ref": "#/definitions/utils.MessageResponse"
                         }
                     },
-                    "403": {
-                        "description": "非管理员",
-                        "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -531,7 +514,7 @@
         },
         "/users": {
             "get": {
-                "description": "list all users, admin only",
+                "description": "list all users, admin only, not implemented",
                 "produces": [
                     "application/json"
                 ],
@@ -539,15 +522,6 @@
                     "user"
                 ],
                 "summary": "list all users",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "UserID",
-                        "name": "user_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -562,6 +536,34 @@
                         "description": "不是管理员",
                         "schema": {
                             "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/admin": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "list admins",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
                         }
                     },
                     "500": {
@@ -1066,6 +1068,12 @@
         "models.ShamirPublicKey": {
             "type": "object",
             "properties": {
+                "armored_public_key": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
                 "identity_name": {
                     "type": "string"
                 }
@@ -1088,6 +1096,9 @@
                 },
                 "nickname": {
                     "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },

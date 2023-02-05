@@ -68,12 +68,23 @@ func GetUserByID(c *fiber.Ctx) error {
 //	@Tags			user
 //	@Produce		json
 //	@Router			/users [get]
-//	@Param			user_id	path		int	true	"UserID"
 //	@Success		200		{array}		User
 //	@Failure		403		{object}	utils.MessageResponse	"不是管理员"
 //	@Failure		500		{object}	utils.MessageResponse
 func ListUsers(c *fiber.Ctx) error {
 	return c.JSON([]User{})
+}
+
+// ListAdmin godoc
+//
+//	@Summary		list admins
+//	@Tags			user
+//	@Produce		json
+//	@Router			/users/admin [get]
+//	@Success		200		{array}		int
+//	@Failure		500		{object}	utils.MessageResponse
+func ListAdmin(c *fiber.Ctx) error {
+	return c.JSON(AdminIDList.Load().([]int))
 }
 
 // ModifyUser godoc
