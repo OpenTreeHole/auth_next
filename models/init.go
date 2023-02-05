@@ -88,7 +88,12 @@ func initDB() error {
 	}
 
 	// migrate database
-	err = DB.AutoMigrate(User{}, ShamirEmail{})
+	err = DB.AutoMigrate(
+		User{},
+		ShamirEmail{},
+		RegisteredEmail{},
+		DeletedEmail{},
+	)
 	if err != nil {
 		return err
 	}
