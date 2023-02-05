@@ -53,7 +53,7 @@ type ModifyUserRequest struct {
 /* shamir */
 
 type PGPMessageRequest struct {
-	IdentityName string `json:"identity_name"`
+	IdentityName string `json:"identity_name" query:"identity_name" validate:"required"`
 }
 
 type PGPMessageResponse struct {
@@ -67,8 +67,8 @@ type UserShare struct {
 }
 
 type UploadSharesRequest struct {
-	IdentityName string      `json:"identity_name"`
-	Shares       []UserShare `json:"shares"`
+	PGPMessageRequest
+	Shares []UserShare `json:"shares" query:"shares"`
 }
 
 type UploadPublicKeyRequest struct {

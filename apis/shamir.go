@@ -6,6 +6,7 @@ import (
 	"auth_next/utils"
 	"auth_next/utils/shamir"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/gofiber/fiber/v2"
@@ -35,14 +36,17 @@ func GetPGPMessageByUserID(c *fiber.Ctx) error {
 	}
 
 	// get target user id
-	targetUserID, err := c.ParamsInt("id")
+	targetUserID, err := c.ParamsInt("id", 0)
 	if err != nil {
 		return err
+	}
+	if targetUserID <= 0 {
+		return errors.New("user_id at least 1")
 	}
 
 	// get related pgp message key
 	var key string
-	result := models.DB.Table("shamir_email").Select("key").
+	result := models.DB.Model(&models.ShamirEmail{}).Select("key").
 		Where("encrypted_by = ? AND user_id = ?", query.IdentityName, targetUserID).
 		Take(&key)
 	// DB.Take raise error when take nothing
