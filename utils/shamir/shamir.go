@@ -127,7 +127,6 @@ func Encrypt(secret string, num, threshold int) ([]Share, error) {
 		return nil, errors.New(fmt.Sprintf("length of secret should less than %d", MaxLength))
 	}
 	s := new(Int).SetBytes(utils.SliceReverse([]byte(secret)))
-	fmt.Println(s)
 	if s.Cmp(P) >= 0 {
 		return nil, errors.New(fmt.Sprintf("secret should not bigger than P = %d", P))
 	}

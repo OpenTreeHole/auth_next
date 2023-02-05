@@ -245,10 +245,13 @@ func UpdateShamir(c *fiber.Ctx) error {
 		return utils.BadRequest("正在重新加解密，请不要重复触发")
 	}
 	if !status.ShamirUpdateReady {
-		return utils.BadRequest("坐标点数量不够，无法解密")
-	}
-	if len(status.NewPublicKeys) < 7 {
-		return utils.BadRequest("公钥数量不够，无法重新加密")
+		if len(status.UploadedSharesIdentityNames) < 4 {
+			return utils.BadRequest("坐标点数量不够，无法解密")
+		} else if len(status.NewPublicKeys) < 7 {
+			return utils.BadRequest("公钥数量不够，无法重新加密")
+		} else {
+			return utils.BadRequest("无法解密")
+		}
 	}
 
 	// trigger update
@@ -381,8 +384,8 @@ func updateShamir() {
 	for userID := range status.UploadedShares {
 		delete(status.UploadedShares, userID)
 	}
-	status.UploadedSharesIdentityNames = nil
-	status.NewPublicKeys = nil
+	status.UploadedSharesIdentityNames = []string{}
+	status.NewPublicKeys = []models.ShamirPublicKey{}
 	status.NowUserID = 0
 
 	var subject string
