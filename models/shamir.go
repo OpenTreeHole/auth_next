@@ -18,8 +18,8 @@ type ShamirEmail struct {
 
 type ShamirPublicKey struct {
 	ID               int             `json:"id" gorm:"primaryKey"`
-	IdentityName     string          `json:"identity_name"`
-	ArmoredPublicKey string          `json:"armored_public_key"`
+	IdentityName     string          `json:"identity_name" gorm:"not null"`
+	ArmoredPublicKey string          `json:"armored_public_key" gorm:"not null"`
 	PublicKey        *crypto.KeyRing `json:"-" gorm:"-"`
 }
 

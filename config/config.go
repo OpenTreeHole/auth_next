@@ -7,13 +7,10 @@ import (
 	"github.com/creasty/defaults"
 	"log"
 	"net/url"
-	"time"
 )
 
 var Config struct {
-	Mode                  string `env:"MODE" envDefault:"dev"`
-	TZ                    string `env:"TZ" envDefault:"Asia/Shanghai"`
-	TZLocation            *time.Location
+	Mode                  string   `env:"MODE" envDefault:"dev"`
 	DbUrl                 string   `env:"DB_URL"`
 	KongUrl               string   `env:"KONG_URL"`
 	NotificationUrl       string   `env:"NOTIFICATION_URL"`
@@ -38,17 +35,10 @@ var FileConfig struct {
 }
 
 func init() {
-	var err error
 	if err := env.Parse(&Config); err != nil {
 		panic(err)
 	}
 	fmt.Printf("%+v\n", &Config)
-
-	// load TZ
-	Config.TZLocation, err = time.LoadLocation(Config.TZ)
-	if err != nil {
-		panic(err)
-	}
 
 	if err := env.Parse(&FileConfig); err != nil {
 		if Config.Mode != "production" {

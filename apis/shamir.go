@@ -17,7 +17,7 @@ import (
 
 // GetPGPMessageByUserID godoc
 //
-//	@Summary	get shamir PGP message, admin only
+//	@Summary	get shamir PGP message
 //	@Tags		shamir
 //	@Produce	json
 //	@Router		/shamir/{user_id} [get]
@@ -25,7 +25,6 @@ import (
 //	@Param		identity_name	query		PGPMessageRequest	true	"recipient uid"
 //	@Success	200				{object}	PGPMessageResponse
 //	@Failure	400				{object}	utils.MessageResponse
-//	@Failure	403				{object}	utils.MessageResponse	"非管理员"
 //	@Failure	500				{object}	utils.MessageResponse
 func GetPGPMessageByUserID(c *fiber.Ctx) error {
 	// get identity
@@ -33,15 +32,6 @@ func GetPGPMessageByUserID(c *fiber.Ctx) error {
 	err := utils.ValidateQuery(c, &query)
 	if err != nil {
 		return err
-	}
-
-	// get request user id
-	requestUserID, err := models.GetUserID(c)
-	if err != nil {
-		return err
-	}
-	if !models.IsAdmin(requestUserID) {
-		return utils.Forbidden("你没有权限获取Shamir信息")
 	}
 
 	// get target user id
@@ -57,26 +47,28 @@ func GetPGPMessageByUserID(c *fiber.Ctx) error {
 		Take(&key)
 	// DB.Take raise error when take nothing
 	if result.Error != nil {
-		log.Printf("user %v try to get user %v shamir pgp message with identity %v\n",
-			requestUserID, targetUserID, query.IdentityName)
 		return result.Error
 	}
+
+	// log
+	log.Printf("admin try to get user %v shamir pgp message with identity %v\n",
+		targetUserID, query.IdentityName)
+
 	return c.JSON(PGPMessageResponse{
-		UserID:     requestUserID,
+		UserID:     targetUserID,
 		PGPMessage: key,
 	})
 }
 
 // ListPGPMessages godoc
 //
-//	@Summary	list related shamir PGP messages, admin only
+//	@Summary	list related shamir PGP messages
 //	@Tags		shamir
 //	@Produce	json
 //	@Router		/shamir [get]
 //	@Param		identity_name	query		string	true	"recipient uid"
 //	@Success	200				{array}		PGPMessageResponse
 //	@Failure	400				{object}	utils.MessageResponse
-//	@Failure	403				{object}	utils.MessageResponse	"非管理员"
 //	@Failure	500				{object}	utils.MessageResponse
 func ListPGPMessages(c *fiber.Ctx) error {
 	// get identity
@@ -84,15 +76,6 @@ func ListPGPMessages(c *fiber.Ctx) error {
 	err := utils.ValidateQuery(c, &query)
 	if err != nil {
 		return err
-	}
-
-	// get request user id
-	requestUserID, err := models.GetUserID(c)
-	if err != nil {
-		return err
-	}
-	if !models.IsAdmin(requestUserID) {
-		return utils.Forbidden("你没有权限获取Shamir信息")
 	}
 
 	// list pgp messages
@@ -107,6 +90,9 @@ func ListPGPMessages(c *fiber.Ctx) error {
 		return c.Status(404).JSON(utils.Message("获取Shamir信息失败"))
 	}
 
+	// log
+	log.Printf("identity %s lists all pgp messages\n", query.IdentityName)
+
 	return c.JSON(messages)
 }
 
@@ -120,7 +106,6 @@ func ListPGPMessages(c *fiber.Ctx) error {
 //	@Success	200		{object}	utils.MessageResponse{data=IdentityNameResponse}
 //	@Success	201		{object}	utils.MessageResponse{data=IdentityNameResponse}
 //	@Failure	400		{object}	utils.MessageResponse
-//	@Failure	403		{object}	utils.MessageResponse	"非管理员"
 //	@Failure	500		{object}	utils.MessageResponse
 func UploadAllShares(c *fiber.Ctx) error {
 	// get shares
@@ -128,15 +113,6 @@ func UploadAllShares(c *fiber.Ctx) error {
 	err := utils.ValidateBody(c, &body)
 	if err != nil {
 		return err
-	}
-
-	// get request user id
-	requestUserID, err := models.GetUserID(c)
-	if err != nil {
-		return err
-	}
-	if !models.IsAdmin(requestUserID) {
-		return utils.Forbidden("你没有权限上传Shamir信息")
 	}
 
 	// lock
