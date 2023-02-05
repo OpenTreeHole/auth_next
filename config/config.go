@@ -27,11 +27,11 @@ var Config struct {
 }
 
 var FileConfig struct {
-	RegisterApikeySeed      string `env:"REGISTER_APIKEY_SEED,file" envDefault:"/var/run/secret/register_apikey_seed" default:""`
-	KongToken               string `env:"KONG_TOKEN,file" envDefault:"/var/run/secret/kong_token" default:""`
-	IdentifierSalt          string `env:"IDENTIFIER_SALT,file" envDefault:"/var/run/secret/identifier_salt" default:""`
+	RegisterApikeySeed      string `env:"REGISTER_APIKEY_SEED,file" envDefault:"/var/run/secrets/register_apikey_seed" default:""`
+	KongToken               string `env:"KONG_TOKEN,file" envDefault:"/var/run/secrets/kong_token" default:""`
+	IdentifierSalt          string `env:"IDENTIFIER_SALT,file" envDefault:"/var/run/secrets/identifier_salt" default:""`
 	DecryptedIdentifierSalt []byte
-	ProvisionKey            string `env:"PROVISION_KEY,file" envDefault:"/var/run/secret/provision_key" default:""`
+	ProvisionKey            string `env:"PROVISION_KEY,file" envDefault:"/var/run/secrets/provision_key" default:""`
 }
 
 func init() {
