@@ -118,6 +118,8 @@ definitions:
         items:
           type: string
         type: array
+    required:
+    - data
     type: object
   apis.UploadSharesRequest:
     type: object
@@ -388,6 +390,18 @@ paths:
           schema:
             $ref: '#/definitions/utils.MessageResponse'
       summary: upload all PGP PublicKeys for encryption, admin only
+      tags:
+      - shamir
+  /shamir/refresh:
+    put:
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.MessageResponse'
+      summary: trigger for refresh uploaded shares
       tags:
       - shamir
   /shamir/shares:

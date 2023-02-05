@@ -259,6 +259,31 @@ func UpdateShamir(c *fiber.Ctx) error {
 	return c.JSON(utils.Message("触发成功，正在尝试更新shamir信息，请访问/shamir/status获取更多信息"))
 }
 
+// RefreshShamir godoc
+//
+// @Summary trigger for refresh uploaded shares
+// @Tags shamir
+// @Router /shamir/refresh [put]
+// @Success 204
+// @failure 500 {object} utils.MessageResponse
+func RefreshShamir(c *fiber.Ctx) error {
+	GlobalUploadShamirStatus.Lock()
+	defer GlobalUploadShamirStatus.Unlock()
+	status := &GlobalUploadShamirStatus
+
+	if status.ShamirUpdating {
+		return utils.BadRequest("正在重新加解密，请不要触发刷新")
+	}
+
+	status.UploadedSharesIdentityNames = []string{}
+	status.UploadedShares = make(map[int]shamir.Shares, 0)
+
+	status.ShamirUpdateReady = false
+	status.ShamirUpdating = false
+
+	return c.SendStatus(204)
+}
+
 // only background running in goroutine
 func updateShamir() {
 	defer func() {

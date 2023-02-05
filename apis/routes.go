@@ -46,4 +46,5 @@ func RegisterRoutes(app *fiber.App) {
 	routes.Post("/shamir/shares", UploadAllShares)
 	routes.Post("/shamir/key", UploadPublicKey)
 	routes.Post("/shamir/update", UpdateShamir)
+	routes.Put("/shamir/refresh", RefreshShamir)
 }

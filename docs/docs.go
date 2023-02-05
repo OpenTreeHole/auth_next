@@ -327,6 +327,25 @@ const docTemplate = `{
                 }
             }
         },
+        "/shamir/refresh": {
+            "put": {
+                "tags": [
+                    "shamir"
+                ],
+                "summary": "trigger for refresh uploaded shares",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/shamir/shares": {
             "post": {
                 "produces": [
@@ -1059,6 +1078,9 @@ const docTemplate = `{
         },
         "apis.UploadPublicKeyRequest": {
             "type": "object",
+            "required": [
+                "data"
+            ],
             "properties": {
                 "data": {
                     "description": "all standalone public keys",
