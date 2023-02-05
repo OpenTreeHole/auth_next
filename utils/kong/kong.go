@@ -47,6 +47,24 @@ func kongRequestDo(Method, URI string) (int, []byte, error) {
 	return rsp.StatusCode, body, err
 }
 
+func Ping() error {
+	req, err := kongClient.Get(config.Config.KongUrl)
+	if err != nil {
+		return err
+	}
+
+	if req.StatusCode != 200 {
+		return fmt.Errorf("error connect to kong[%s]: %s", config.Config.KongUrl, err)
+	} else {
+		data, err := io.ReadAll(req.Body)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("ping kong response: %s\n", string(data))
+	}
+	return req.Body.Close()
+}
+
 func CreateUser(userID int) error {
 	statusCode, body, err := kongRequestDo(
 		http.MethodPut,

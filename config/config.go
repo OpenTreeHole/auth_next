@@ -1,6 +1,7 @@
 package config
 
 import (
+	"auth_next/utils/kong"
 	"encoding/base64"
 	"fmt"
 	"github.com/caarlos0/env/v6"
@@ -62,4 +63,10 @@ func init() {
 	}
 
 	fmt.Printf("%+v\n", &FileConfig)
+
+	// connect to kong
+	err := kong.Ping()
+	if err != nil {
+		panic(err)
+	}
 }
