@@ -50,7 +50,7 @@ func GetUserByID(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	if toUserId != userID || !IsAdmin(userID) {
+	if !(toUserId == userID || IsAdmin(userID)) {
 		return utils.Forbidden()
 	}
 
