@@ -6,6 +6,7 @@ import (
 	"auth_next/utils"
 	"auth_next/utils/auth"
 	"auth_next/utils/kong"
+	"auth_next/utils/shamir"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -90,7 +91,19 @@ func Register(c *fiber.Ctx) error {
 			if err != nil {
 				return err
 			}
-			return models.AddRegisteredEmail(tx, body.Email)
+
+			err = models.AddRegisteredEmail(tx, body.Email)
+			if err != nil {
+				return err
+			}
+
+			// create shamir emails
+			shares, err := shamir.Encrypt(body.Email, 7, 4)
+			if err != nil {
+				return err
+			}
+
+			return models.CreateShamirEmails(tx, user.ID, shares)
 		})
 		if err != nil {
 			return err
@@ -111,6 +124,7 @@ func Register(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+
 	return c.JSON(TokenResponse{
 		Access:  accessToken,
 		Refresh: refreshToken,
