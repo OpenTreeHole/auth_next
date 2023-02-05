@@ -28,7 +28,7 @@ type User struct {
 	LastLogin  time.Time `json:"last_login" gorm:"autoUpdateTime"`
 }
 
-// AdminIDList refresh every 10 minutes
+// AdminIDList refresh every 1 minutes
 var AdminIDList atomic.Value
 
 func GetAdminList() error {
@@ -49,6 +49,16 @@ func RefreshAdminList() {
 			log.Println(err)
 		}
 	}
+}
+
+func (user *User) AfterCreate(_ *gorm.DB) error {
+	user.UserID = user.ID
+	return nil
+}
+
+func (user *User) AfterFind(_ *gorm.DB) error {
+	user.UserID = user.ID
+	return nil
 }
 
 func IsAdmin(userID int) bool {
