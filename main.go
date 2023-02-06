@@ -25,6 +25,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/robfig/cron/v3"
 	"log"
 	"os"
 	"os/signal"
@@ -78,5 +79,12 @@ func main() {
 func startTasks() context.CancelFunc {
 	_, cancel := context.WithCancel(context.Background())
 	go models.RefreshAdminList()
+
+	c := cron.New()
+	_, err := c.AddFunc("CRON_TZ=Asia/Shanghai 0 0 * * *", models.ActiveStatusTask) // run every day 00:00 +8:00
+	if err != nil {
+		panic(err)
+	}
+	go c.Start()
 	return cancel
 }

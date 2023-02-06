@@ -93,6 +93,7 @@ func initDB() error {
 		ShamirEmail{},
 		RegisteredEmail{},
 		DeletedEmail{},
+		ActiveStatus{},
 	)
 	if err != nil {
 		return err
