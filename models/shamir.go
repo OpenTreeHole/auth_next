@@ -11,8 +11,8 @@ import (
 
 type ShamirEmail struct {
 	ID          int    `json:"id" gorm:"primaryKey"`
-	UserID      int    `json:"user_id"`
-	EncryptedBy string `json:"encrypted_by"`
+	UserID      int    `json:"user_id" gorm:"uniqueIndex:idx_key_uid,priority:2"`
+	EncryptedBy string `json:"encrypted_by" gorm:"uniqueIndex:idx_key_uid,priority:1,length:5"`
 	Key         string `json:"key"`
 }
 
