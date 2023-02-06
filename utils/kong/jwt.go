@@ -24,7 +24,7 @@ func CreateToken(user *models.User) (accessToken, refreshToken string, err error
 
 	// access payload
 	claim["type"] = "access"
-	claim["exp"] = time.Now().Add(30 * time.Minute) // 30 minutes
+	claim["exp"] = time.Now().Add(30 * time.Minute).Unix() // 30 minutes
 	accessToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, claim).SignedString([]byte(jwtCredential.Secret))
 	if err != nil {
 		return "", "", err
@@ -32,7 +32,7 @@ func CreateToken(user *models.User) (accessToken, refreshToken string, err error
 
 	// refresh payload
 	claim["type"] = "refresh"
-	claim["exp"] = time.Now().Add(30 * 24 * time.Hour) // 30 hours
+	claim["exp"] = time.Now().Add(30 * 24 * time.Hour).Unix() // 30 days
 	refreshToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, claim).SignedString([]byte(jwtCredential.Secret))
 	if err != nil {
 		return "", "", err
