@@ -21,26 +21,28 @@ var Config struct {
 	ShamirFeature           bool     `env:"SHAMIR_FEATURE" envDefault:"true"`
 	VerificationCodeExpires int      `env:"VERIFICATION_CODE_EXPIRES" envDefault:"10"`
 	SiteName                string   `env:"SITE_NAME" envDefault:"Open Tree Hole"`
+	RegisterApikeySeed      string   `env:"REGISTER_APIKEY_SEED,required" envDefault:"123456"`
+	KongToken               string   `env:"KONG_TOKEN"`
 }
 
 var FileConfig struct {
-	RegisterApikeySeed      string `env:"REGISTER_APIKEY_SEED,file" envDefault:"/var/run/secrets/register_apikey_seed" default:""`
-	KongToken               string `env:"KONG_TOKEN,file" envDefault:"/var/run/secrets/kong_token" default:""`
-	IdentifierSalt          string `env:"IDENTIFIER_SALT,file" envDefault:"/var/run/secrets/identifier_salt" default:""`
-	DecryptedIdentifierSalt []byte
-	ProvisionKey            string `env:"PROVISION_KEY,file" envDefault:"/var/run/secrets/provision_key" default:""`
+	IdentifierSalt string `env:"IDENTIFIER_SALT,file" envDefault:"/var/run/secrets/identifier_salt" default:""`
+	ProvisionKey   string `env:"PROVISION_KEY,file" envDefault:"/var/run/secrets/provision_key" default:""`
 }
 
+var DecryptedIdentifierSalt []byte
+
 func InitConfig() {
-	if err := env.Parse(&Config); err != nil {
+	var err error
+	if err = env.Parse(&Config); err != nil {
 		panic(err)
 	}
 	fmt.Printf("%+v\n", &Config)
 
-	if err := env.Parse(&FileConfig); err != nil {
+	if err = env.Parse(&FileConfig); err != nil {
 		if Config.Mode != "production" {
 			log.Println(err)
-			if err := defaults.Set(&FileConfig); err != nil {
+			if err = defaults.Set(&FileConfig); err != nil {
 				panic(err)
 			}
 		} else {
@@ -49,10 +51,9 @@ func InitConfig() {
 	}
 
 	if FileConfig.IdentifierSalt == "" {
-		FileConfig.DecryptedIdentifierSalt = []byte("123456")
+		DecryptedIdentifierSalt = []byte("123456")
 	} else {
-		var err error
-		FileConfig.DecryptedIdentifierSalt, err = base64.StdEncoding.DecodeString(FileConfig.IdentifierSalt)
+		DecryptedIdentifierSalt, err = base64.StdEncoding.DecodeString(FileConfig.IdentifierSalt)
 		if err != nil {
 			panic(err)
 		}

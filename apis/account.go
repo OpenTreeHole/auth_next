@@ -295,8 +295,41 @@ func verifyWithEmail(c *fiber.Ctx, email string) error {
 //	@Failure		403		{object}	utils.MessageResponse	"apikey不正确“
 //	@Failure		409		{object}	utils.MessageResponse	"用户已注册“
 //	@Failure		500		{object}	utils.MessageResponse
-func VerifyWithApikey(_ *fiber.Ctx) error {
-	return utils.BadRequest("ApiKey注册功能暂缓开放")
+func VerifyWithApikey(c *fiber.Ctx) error {
+	var query ApikeyRequest
+	err := utils.ValidateQuery(c, &query)
+	if err != nil {
+		return err
+	}
+
+	scope := "register"
+	if !auth.CheckApikey(query.Apikey) {
+		return utils.Forbidden("API Key 不正确")
+	}
+	ok, err := models.HasRegisteredEmail(models.DB, query.Email)
+	if err != nil {
+		return err
+	}
+
+	if ok {
+		return c.Status(409).JSON(utils.Message("用户已注册"))
+	}
+	if query.CheckRegister {
+		return c.Status(200).JSON(utils.Message("用户未注册"))
+	}
+
+	code, err := auth.SetVerificationCode(query.Email, scope)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(ApikeyResponse{
+		EmailVerifyResponse: EmailVerifyResponse{
+			Message: "验证成功",
+			Scope:   scope,
+		},
+		Code: code,
+	})
 }
 
 // DeleteUser godoc

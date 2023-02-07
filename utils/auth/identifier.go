@@ -20,7 +20,7 @@ func MakeIdentifier(email string) string {
 	return hex.EncodeToString(
 		pbkdf2.Key(
 			[]byte(email),
-			config.FileConfig.DecryptedIdentifierSalt,
+			config.DecryptedIdentifierSalt,
 			1,
 			64,
 			sha3.New512,

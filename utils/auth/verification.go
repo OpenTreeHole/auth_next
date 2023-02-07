@@ -8,6 +8,9 @@ import (
 	"github.com/eko/gocache/lib/v4/cache"
 	gocache_store "github.com/eko/gocache/store/go_cache/v4"
 	gocache "github.com/patrickmn/go-cache"
+	"github.com/pquerna/otp"
+	"github.com/pquerna/otp/totp"
+	"log"
 	"math/big"
 	"time"
 )
@@ -52,4 +55,22 @@ func DeleteVerificationCode(email, scope string) error {
 		context.Background(),
 		fmt.Sprintf("%v-%v", scope, MakeIdentifier(email)),
 	)
+}
+
+func CheckApikey(key string) bool {
+	ok, err := totp.ValidateCustom(
+		key,
+		config.Config.RegisterApikeySeed,
+		time.Now(),
+		totp.ValidateOpts{
+			Period:    5,
+			Skew:      1,
+			Digits:    16,
+			Algorithm: otp.AlgorithmSHA256,
+		})
+	if err != nil {
+		log.Printf("verify api key error: %s\n", err)
+		return false
+	}
+	return ok
 }
