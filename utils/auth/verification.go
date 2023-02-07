@@ -60,7 +60,7 @@ func DeleteVerificationCode(email, scope string) error {
 func CheckApikey(key string) bool {
 	ok, err := totp.ValidateCustom(
 		key,
-		config.Config.RegisterApikeySeed,
+		config.RegisterApikeySecret,
 		time.Now(),
 		totp.ValidateOpts{
 			Period:    5,

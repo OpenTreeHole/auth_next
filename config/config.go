@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/base32"
 	"encoding/base64"
 	"fmt"
 	"github.com/caarlos0/env/v6"
@@ -21,7 +22,7 @@ var Config struct {
 	ShamirFeature           bool     `env:"SHAMIR_FEATURE" envDefault:"true"`
 	VerificationCodeExpires int      `env:"VERIFICATION_CODE_EXPIRES" envDefault:"10"`
 	SiteName                string   `env:"SITE_NAME" envDefault:"Open Tree Hole"`
-	RegisterApikeySeed      string   `env:"REGISTER_APIKEY_SEED,required" envDefault:"123456"`
+	RegisterApikeySeed      string   `env:"REGISTER_APIKEY_SEED" envDefault:"123456"`
 	KongToken               string   `env:"KONG_TOKEN"`
 }
 
@@ -31,6 +32,7 @@ var FileConfig struct {
 }
 
 var DecryptedIdentifierSalt []byte
+var RegisterApikeySecret string
 
 func InitConfig() {
 	var err error
@@ -58,4 +60,6 @@ func InitConfig() {
 			panic(err)
 		}
 	}
+
+	RegisterApikeySecret = base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString([]byte(Config.RegisterApikeySeed))
 }
