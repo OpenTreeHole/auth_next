@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/eko/gocache/lib/v4/cache"
 	gocacheStore "github.com/eko/gocache/store/go_cache/v4"
+	redisStore "github.com/eko/gocache/store/redis/v4"
+	"github.com/go-redis/redis/v8"
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
@@ -18,8 +20,25 @@ import (
 var verificationCodeCache *cache.Cache[string]
 
 func init() {
-	gocacheClient := gocache.New(time.Duration(config.Config.VerificationCodeExpires)*time.Minute, 20*time.Minute)
-	verificationCodeCache = cache.New[string](gocacheStore.NewGoCache(gocacheClient))
+	if config.Config.RedisUrl != "" {
+		verificationCodeCache = cache.New[string](
+			redisStore.NewRedis(
+				redis.NewClient(
+					&redis.Options{
+						Addr: config.Config.RedisUrl,
+					},
+				),
+			),
+		)
+	} else {
+		verificationCodeCache = cache.New[string](
+			gocacheStore.NewGoCache(
+				gocache.New(
+					time.Duration(config.Config.VerificationCodeExpires)*time.Minute,
+					20*time.Minute),
+			),
+		)
+	}
 }
 
 // SetVerificationCode 缓存中设置验证码，key = {scope}-{many_hashes(email)}

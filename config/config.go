@@ -14,6 +14,7 @@ var Config struct {
 	Mode                    string   `env:"MODE" envDefault:"dev"`
 	DbUrl                   string   `env:"DB_URL,required"`
 	KongUrl                 string   `env:"KONG_URL,required"`
+	RedisUrl                string   `env:"REDIS_URL"`
 	NotificationUrl         string   `env:"NOTIFICATION_URL"`
 	EmailWhitelist          []string `env:"EMAIL_WHITELIST"`
 	EmailServerNoReplyUrl   url.URL  `env:"EMAIL_SERVER_NO_REPLY_URL,required"`
