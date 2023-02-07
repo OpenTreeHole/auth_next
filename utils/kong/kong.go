@@ -38,8 +38,8 @@ func kongRequestDo(Method, URI string, body io.Reader, contentType string) (int,
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
 	}
-	if config.FileConfig.KongToken != "" {
-		req.Header.Set("Authorization", config.FileConfig.KongToken)
+	if config.Config.KongToken != "" {
+		req.Header.Set("Authorization", config.Config.KongToken)
 	}
 	rsp, err := kongClient.Do(req)
 	defer func() {
