@@ -128,6 +128,12 @@ func Refresh(c *fiber.Ctx) error {
 		return err
 	}
 
+	// update login time
+	err = DB.Model(&user).Select("LastLogin").Updates(&user).Error
+	if err != nil {
+		return err
+	}
+
 	access, refresh, err := kong.CreateToken(user)
 	if err != nil {
 		return err
