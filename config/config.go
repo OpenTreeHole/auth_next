@@ -22,13 +22,13 @@ var Config struct {
 	ShamirFeature           bool     `env:"SHAMIR_FEATURE" envDefault:"true"`
 	VerificationCodeExpires int      `env:"VERIFICATION_CODE_EXPIRES" envDefault:"10"`
 	SiteName                string   `env:"SITE_NAME" envDefault:"Open Tree Hole"`
-	RegisterApikeySeed      string   `env:"REGISTER_APIKEY_SEED" envDefault:"123456"`
-	KongToken               string   `env:"KONG_TOKEN"`
 }
 
 var FileConfig struct {
-	IdentifierSalt string `env:"IDENTIFIER_SALT,file" envDefault:"/var/run/secrets/identifier_salt" default:""`
-	ProvisionKey   string `env:"PROVISION_KEY,file" envDefault:"/var/run/secrets/provision_key" default:""`
+	IdentifierSalt     string `env:"IDENTIFIER_SALT,file" envDefault:"/var/run/secrets/identifier_salt" default:""`
+	ProvisionKey       string `env:"PROVISION_KEY,file" envDefault:"/var/run/secrets/provision_key" default:""`
+	RegisterApikeySeed string `env:"REGISTER_APIKEY_SEED,file" envDefault:"/var/run/secrets/register_apikey_seed" default:""`
+	KongToken          string `env:"KONG_TOKEN,file" envDefault:"/var/run/secrets/kong_token" default:""`
 }
 
 var DecryptedIdentifierSalt []byte
@@ -61,5 +61,5 @@ func InitConfig() {
 		}
 	}
 
-	RegisterApikeySecret = base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString([]byte(Config.RegisterApikeySeed))
+	RegisterApikeySecret = base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString([]byte(FileConfig.RegisterApikeySeed))
 }

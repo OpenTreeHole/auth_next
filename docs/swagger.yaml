@@ -163,7 +163,7 @@ info:
     and issuing tokens
   license:
     name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
   title: Open Tree Hole Auth
   version: "2.0"
 paths:

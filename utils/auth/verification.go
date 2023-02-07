@@ -6,7 +6,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"github.com/eko/gocache/lib/v4/cache"
-	gocache_store "github.com/eko/gocache/store/go_cache/v4"
+	gocacheStore "github.com/eko/gocache/store/go_cache/v4"
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
@@ -19,8 +19,7 @@ var verificationCodeCache *cache.Cache[string]
 
 func init() {
 	gocacheClient := gocache.New(time.Duration(config.Config.VerificationCodeExpires)*time.Minute, 20*time.Minute)
-	gocacheStore := gocache_store.NewGoCache(gocacheClient)
-	verificationCodeCache = cache.New[string](gocacheStore)
+	verificationCodeCache = cache.New[string](gocacheStore.NewGoCache(gocacheClient))
 }
 
 // SetVerificationCode 缓存中设置验证码，key = {scope}-{many_hashes(email)}
