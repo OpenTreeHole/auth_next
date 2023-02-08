@@ -62,5 +62,5 @@ func InitConfig() {
 		}
 	}
 
-	RegisterApikeySecret = base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString([]byte(FileConfig.RegisterApikeySeed))
+	RegisterApikeySecret = base32.StdEncoding.EncodeToString([]byte(FileConfig.RegisterApikeySeed))
 }

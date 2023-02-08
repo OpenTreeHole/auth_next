@@ -119,7 +119,7 @@ func ModifyUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	if !IsAdmin(userID) || userID == toUserID {
+	if !(IsAdmin(userID) || userID == toUserID) {
 		return utils.Forbidden()
 	}
 	user, err := LoadUserFromDB(toUserID)
@@ -134,5 +134,5 @@ func ModifyUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(user)
+	return c.Status(201).JSON(user)
 }
