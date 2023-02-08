@@ -9,7 +9,7 @@ import (
 
 type EmailModel struct {
 	// email in email blacklist
-	Email string `json:"email" validate:"isValidEmail"`
+	Email string `json:"email" query:"email" validate:"isValidEmail"`
 }
 
 type LoginRequest struct {
@@ -35,8 +35,8 @@ type EmailVerifyResponse struct {
 
 type ApikeyRequest struct {
 	EmailModel
-	Apikey        string `json:"apikey"`
-	CheckRegister bool   `json:"check_register" default:"false"` // if true, return whether registered
+	Apikey        string `json:"apikey" query:"apikey"`
+	CheckRegister bool   `json:"check_register" query:"check_register" default:"false"` // if true, return whether registered
 }
 
 type ApikeyResponse struct {

@@ -79,7 +79,7 @@ func CheckApikey(key string) bool {
 	ok, err := totp.ValidateCustom(
 		key,
 		config.RegisterApikeySecret,
-		time.Now(),
+		time.Now().UTC(),
 		totp.ValidateOpts{
 			Period:    5,
 			Skew:      1,

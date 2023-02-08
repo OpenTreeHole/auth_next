@@ -61,11 +61,7 @@ func Ping() error {
 	if req.StatusCode != 200 {
 		return fmt.Errorf("error connect to kong[%s]: %s", config.Config.KongUrl, err)
 	} else {
-		data, err := io.ReadAll(req.Body)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("ping kong response: %s\n", string(data))
+		fmt.Println("ping kong success")
 	}
 	return req.Body.Close()
 }
