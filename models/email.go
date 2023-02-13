@@ -8,7 +8,7 @@ import (
 )
 
 type EmailList struct {
-	Hash string `json:"hash" gorm:"primaryKey;size:128;uniqueIndex:idx_email_hash,length:10"`
+	Hash string `json:"hash" gorm:"primaryKey;size:128"`
 }
 
 func Sha3SumEmail(email string) string {

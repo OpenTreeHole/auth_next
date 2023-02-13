@@ -1,0 +1,142 @@
+version: '3'
+
+services:
+
+  kong-database:
+    image: postgres:10
+    container_name: kong-database
+    restart: always
+    networks:
+      - kong
+    environment:
+      - POSTGRES_USER=kong
+      - POSTGRES_DB=kong
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - kong_data:/var/lib/postgresql/data
+
+  kong-migrations:
+    image: kong:latest
+    container_name: kong-migrations
+    restart: on-failure
+    networks:
+      - kong
+    environment:
+      - KONG_DATABASE=postgres
+      - KONG_PG_HOST=kong-database
+      - KONG_PG_PASSWORD=${POSTGRES_PASSWORD}
+      - KONG_CASSANDRA_CONTACT_POINTS=kong-database
+    command: kong migrations bootstrap
+    links:
+      - kong-database
+    depends_on:
+      - kong-database
+
+  kong:
+    image: kong:latest
+    container_name: kong
+    restart: always
+    networks:
+      - kong
+    environment:
+      - LC_CTYPE=en_US.UTF-8
+      - LC_ALL=en_US.UTF-8
+      - KONG_DATABASE=postgres
+      - KONG_PG_HOST=kong-database
+      - KONG_PG_USER=kong
+      - KONG_PG_PASSWORD=${POSTGRES_PASSWORD}
+      - KONG_CASSANDRA_CONTACT_POINTS=kong-database
+      - KONG_ADMIN_LISTEN=0.0.0.0:8001
+      - KONG_PROXY_LISTEN=0.0.0.0:80, 0.0.0.0:443 ssl http2
+      - KONG_STREAM_LISTEN=0.0.0.0:444
+      - KONG_PROXY_ACCESS_LOG=/dev/stdout
+      - KONG_ADMIN_ACCESS_LOG=/dev/stdout
+      - KONG_PROXY_ERROR_LOG=/dev/stderr
+      - KONG_ADMIN_ERROR_LOG=/dev/stderr
+      - KONG_LUA_SSL_TRUSTED_CERTIFICATE=/etc/ssl/certs/ca-certificates.crt
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "8001:8001"
+      - "8444:8444"
+    depends_on:
+      - kong-migrations
+
+  konga:
+    image: pantsel/konga:latest
+    restart: always
+    networks:
+      - kong
+    ports:
+      - "1337:1337"
+    container_name: konga
+    environment:
+      DB_ADAPTER: postgres
+      DB_HOST: kong-database
+      DB_USER: kong
+      DB_DATABASE: konga
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      NODE_ENV: development # auto perform db migrations
+    depends_on:
+      - kong
+      - kong-database
+    volumes:
+      - konga_data:/app/kongadata
+
+  auth:
+    container_name: auth
+    image: opentreehole/auth_next:latest
+    restart: always
+    volumes:
+      - secrets:/var/run/secrets
+    environment:
+      - MODE=production
+      - DB_URL=${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(mysql:3306)/${MYSQL_DATABASE}?parseTime=true&loc=Asia%2FShanghai
+      - KONG_URL=http://kong:8001
+      - EMAIL_WHITELIST=${EMAIL_WHITELIST}
+      - EMAIL_SERVER_NO_REPLY_URL=${EMAIL_SERVER_NO_REPLY_URL}
+      - EMAIL_DOMAIN=${EMAIL_DOMAIN}
+      - REDIS_URL=${REDIS_URL}
+      - SITE_NAME=${SITE_NAME}
+    networks:
+      - kong
+    depends_on:
+      - kong
+      - kong-database
+      - db
+      - redis
+
+  db:
+    container_name: db_mysql
+    image: mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    restart: always
+    networks:
+      - kong
+
+  redis:
+    container_name: db_redis
+    image: redis:latest
+    volumes:
+      - redis:/data
+    restart: always
+    networks:
+      - kong
+
+networks:
+  kong:
+
+volumes:
+  kong_data:
+  konga_data:
+  data:
+  redis:
+
