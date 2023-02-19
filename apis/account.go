@@ -32,7 +32,7 @@ func Register(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	ok, err := auth.CheckVerificationCode(body.Email, scope, body.Verification)
+	ok, err := auth.CheckVerificationCode(body.Email, scope, string(body.Verification))
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func ChangePassword(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	ok, err := auth.CheckVerificationCode(body.Email, scope, body.Verification)
+	ok, err := auth.CheckVerificationCode(body.Email, scope, string(body.Verification))
 	if err != nil {
 		return err
 	}

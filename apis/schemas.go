@@ -3,6 +3,9 @@ package apis
 import (
 	"auth_next/models"
 	"auth_next/utils/shamir"
+	"fmt"
+	"strconv"
+	"strings"
 )
 
 /* account */
@@ -25,7 +28,36 @@ type TokenResponse struct {
 
 type RegisterRequest struct {
 	LoginRequest
-	Verification string `json:"verification" minLength:"6" maxLength:"6"`
+	Verification VerificationType `json:"verification" minLength:"6" maxLength:"6" swaggerType:"string"`
+}
+
+type VerificationType string
+
+func (v *VerificationType) UnmarshalJSON(data []byte) error {
+	s := strings.Trim(string(data), `"`)
+	// Ignore null, like in the main JSON package.
+	if s == "null" {
+		return nil
+	}
+
+	number, err := strconv.Atoi(s)
+	if err != nil {
+		return err
+	}
+
+	*v = VerificationType(fmt.Sprintf("%06d", number))
+	return nil
+}
+
+func (v *VerificationType) UnmarshalText(data []byte) error {
+	s := strings.Trim(string(data), `"`)
+	// Ignore null, like in the main JSON package.
+	if s == "" {
+		return nil
+	}
+
+	*v = VerificationType(s)
+	return nil
 }
 
 type EmailVerifyResponse struct {
