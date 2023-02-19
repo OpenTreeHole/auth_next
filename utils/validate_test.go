@@ -2,6 +2,7 @@ package utils
 
 import (
 	"auth_next/config"
+	"fmt"
 	"github.com/go-playground/assert/v2"
 	"testing"
 )
@@ -11,4 +12,12 @@ func TestValidateEmail(t *testing.T) {
 	assert.Equal(t, ValidateEmail("abcd@fudan.edu.cn"), true)
 	assert.Equal(t, ValidateEmail("abcd@qq.com"), false)
 	assert.Equal(t, ValidateEmail("123345"), false)
+}
+
+func TestValidateEmailFudan(t *testing.T) {
+	fmt.Println(ValidateEmailFudan("21307130001@m.fudan.edu.cn"))
+	fmt.Println(ValidateEmailFudan("21307130001@fudan.edu.cn"))
+	fmt.Println(ValidateEmailFudan("20307130001@m.fudan.edu.cn"))
+	fmt.Println(ValidateEmailFudan("20307130001@fudan.edu.cn"))
+	fmt.Println(ValidateEmailFudan("abcd@fudan.edu.cn"))
 }

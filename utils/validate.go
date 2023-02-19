@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -104,6 +105,24 @@ func ValidateEmail(email string) bool {
 		return true
 	}
 	return InUnorderedSlice(config.Config.EmailWhitelist, emailSplit[1])
+}
+
+func ValidateEmailFudan(email string) error {
+	year, err := strconv.Atoi(email[:2])
+	if err != nil {
+		return nil
+	}
+	emailSplit := strings.Split(email, "@")
+	if emailSplit[1] == "fudan.edu.cn" {
+		if year >= 21 {
+			return BadRequest("21级及以后的同学请使用m.fudan.edu.cn邮箱")
+		}
+	} else if emailSplit[1] == "m.fudan.edu.cn" {
+		if year <= 20 {
+			return BadRequest("20级及以前的同学请使用fudan.edu.cn邮箱")
+		}
+	}
+	return nil
 }
 
 func ValidateEmailFunc(fl validator.FieldLevel) bool {

@@ -240,6 +240,10 @@ func verifyWithEmail(c *fiber.Ctx, email string) error {
 	if !utils.ValidateEmail(email) {
 		return utils.BadRequest("email invalid")
 	}
+	err := utils.ValidateEmailFudan(email)
+	if err != nil {
+		return err
+	}
 	registered, err := models.HasRegisteredEmail(models.DB, email)
 	if err != nil {
 		return err
