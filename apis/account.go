@@ -302,7 +302,7 @@ func VerifyWithApikey(c *fiber.Ctx) error {
 
 	scope := "register"
 	if !auth.CheckApikey(query.Apikey) {
-		return utils.Forbidden("API Key 不正确")
+		return utils.Forbidden("API Key 不正确，您可以选择使用旦夕账号登录，或者在 auth.fduhole.com 注册旦夕账户")
 	}
 	ok, err := models.HasRegisteredEmail(models.DB, query.Email)
 	if err != nil {

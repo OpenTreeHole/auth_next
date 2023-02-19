@@ -110,7 +110,7 @@ func Generate(secret *Int, num, threshold int) ([]Share, error) {
 		}
 		coefficient[i] = c
 	}
-	fmt.Println(coefficient)
+
 	shares := make([]Share, num)
 	for i := range shares {
 		x, err := rand.Int(rand.Reader, P)
