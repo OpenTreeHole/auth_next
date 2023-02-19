@@ -108,7 +108,7 @@ func parseJWT(token string) (Map, error) {
 	}
 
 	// jwt encoding ignores padding, so RawStdEncoding should be used instead of StdEncoding
-	payloadBytes, err := base64.RawStdEncoding.DecodeString(payloads[1]) // the middle one is payload
+	payloadBytes, err := base64.RawURLEncoding.DecodeString(payloads[1]) // the middle one is payload
 	if err != nil {
 		return nil, err
 	}
