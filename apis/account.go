@@ -32,12 +32,9 @@ func Register(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	ok, err := auth.CheckVerificationCode(body.Email, scope, string(body.Verification))
-	if err != nil {
-		return err
-	}
+	ok := auth.CheckVerificationCode(body.Email, scope, string(body.Verification))
 	if !ok {
-		return utils.BadRequest("验证码错误")
+		return utils.BadRequest("验证码错误，请多次尝试或者重新获取验证码")
 	}
 
 	registered, err := models.HasRegisteredEmail(models.DB, body.Email)
@@ -151,12 +148,9 @@ func ChangePassword(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	ok, err := auth.CheckVerificationCode(body.Email, scope, string(body.Verification))
-	if err != nil {
-		return err
-	}
+	ok := auth.CheckVerificationCode(body.Email, scope, string(body.Verification))
 	if !ok {
-		return utils.BadRequest("验证码错误")
+		return utils.BadRequest("验证码错误，请多次尝试或者重新获取验证码")
 	}
 
 	var user models.User

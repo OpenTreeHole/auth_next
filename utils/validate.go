@@ -113,13 +113,16 @@ func ValidateEmailFudan(email string) error {
 		return nil
 	}
 	emailSplit := strings.Split(email, "@")
+
+	const messageSuffix = `如果您的邮箱不满足此规则，可以尝试邮箱别名，或发送您的学邮和情况说明到 dev@fduhole.com ，我们为您手动处理`
+
 	if emailSplit[1] == "fudan.edu.cn" {
 		if year >= 21 {
-			return BadRequest("21级及以后的同学请使用m.fudan.edu.cn邮箱")
+			return BadRequest("21级及以后的同学请使用m.fudan.edu.cn邮箱。" + messageSuffix)
 		}
 	} else if emailSplit[1] == "m.fudan.edu.cn" {
 		if year <= 20 {
-			return BadRequest("20级及以前的同学请使用fudan.edu.cn邮箱")
+			return BadRequest("20级及以前的同学请使用fudan.edu.cn邮箱。" + messageSuffix)
 		}
 	}
 	return nil

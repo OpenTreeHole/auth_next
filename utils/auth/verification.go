@@ -30,6 +30,7 @@ func init() {
 				),
 			),
 		)
+		log.Println("verification code cache: redis")
 	} else {
 		verificationCodeCache = cache.New[string](
 			gocacheStore.NewGoCache(
@@ -38,6 +39,7 @@ func init() {
 					20*time.Minute),
 			),
 		)
+		log.Println("verification code cache: gocache")
 	}
 }
 
@@ -57,15 +59,12 @@ func SetVerificationCode(email, scope string) (string, error) {
 }
 
 // CheckVerificationCode 检查验证码
-func CheckVerificationCode(email, scope, code string) (bool, error) {
+func CheckVerificationCode(email, scope, code string) bool {
 	storedCode, err := verificationCodeCache.Get(
 		context.Background(),
 		fmt.Sprintf("%v-%v", scope, MakeIdentifier(email)),
 	)
-	if err != nil {
-		return false, err
-	}
-	return storedCode == code, nil
+	return err == nil && storedCode == code
 }
 
 func DeleteVerificationCode(email, scope string) error {
