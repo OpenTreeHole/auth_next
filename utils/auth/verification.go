@@ -19,7 +19,7 @@ import (
 
 var verificationCodeCache *cache.Cache[string]
 
-func init() {
+func InitVerificationCodeCache() {
 	if config.Config.RedisUrl != "" {
 		verificationCodeCache = cache.New[string](
 			redisStore.NewRedis(

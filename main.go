@@ -21,6 +21,7 @@ import (
 	"auth_next/middlewares"
 	"auth_next/models"
 	"auth_next/utils"
+	"auth_next/utils/auth"
 	"auth_next/utils/kong"
 	"context"
 	"encoding/json"
@@ -34,6 +35,7 @@ import (
 
 func main() {
 	config.InitConfig()
+	auth.InitVerificationCodeCache()
 	models.InitDB()
 	apis.InitShamirStatus()
 
