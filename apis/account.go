@@ -242,8 +242,13 @@ func verifyWithEmail(c *fiber.Ctx, email string) error {
 	if err != nil {
 		return err
 	}
+	deleted, err := models.HasDeletedEmail(models.DB, email)
+	if err != nil {
+		return err
+	}
+
 	var scope string
-	if !registered {
+	if !registered || deleted {
 		scope = "register"
 	} else {
 		scope = "reset"
