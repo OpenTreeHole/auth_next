@@ -85,13 +85,15 @@ services:
 
   auth:
     container_name: auth
-    image: opentreehole/auth_next:latest
+    build: .
     restart: always
     volumes:
       - secrets:/var/run/secrets
+    ports:
+      - "8080:8000"
     environment:
       - MODE=production
-      - DB_URL=${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(mysql:3306)/${MYSQL_DATABASE}?parseTime=true&loc=Asia%2FShanghai
+      - DB_URL=${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(db_mysql:3306)/${MYSQL_DATABASE}?parseTime=true&loc=Asia%2FShanghai
       - KONG_URL=http://kong:8001
       - EMAIL_WHITELIST=${EMAIL_WHITELIST}
       - EMAIL_SERVER_NO_REPLY_URL=${EMAIL_SERVER_NO_REPLY_URL}
@@ -135,6 +137,7 @@ networks:
   kong:
 
 volumes:
+  secrets:
   kong_data:
   konga_data:
   data:
