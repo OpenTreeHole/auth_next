@@ -101,6 +101,9 @@ func CreateJwtCredential(userID int) (*JwtCredential, error) {
 	}
 	if statusCode == 404 {
 		err = CreateUser(userID)
+		if err != nil {
+			return nil, err
+		}
 		return CreateJwtCredential(userID)
 	} else if statusCode != 201 {
 		return nil, fmt.Errorf("create user %v jwt credential error: %v", userID, string(body))
@@ -137,10 +140,7 @@ func ListJwtCredentials(userID int) ([]*JwtCredential, error) {
 }
 
 func GetJwtCredential(userID int) (*JwtCredential, error) {
-	jwtCredentials, err := ListJwtCredentials(userID)
-	if err != nil {
-		return nil, err
-	}
+	jwtCredentials, _ := ListJwtCredentials(userID)
 	if len(jwtCredentials) == 0 {
 		return CreateJwtCredential(userID)
 	} else {
