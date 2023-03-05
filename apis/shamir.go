@@ -311,6 +311,13 @@ func updateShamir() {
 	// all the shares for decrypt
 	allShares := GlobalUploadShamirStatus.UploadedShares
 
+	// debug
+	fmt.Printf("%#v", allShares)
+
+	if len(allShares) == 0 {
+		panic("no shares")
+	}
+
 	// get all userID
 	userIDs := make([]int, 0, len(allShares))
 	for userID := range allShares {
