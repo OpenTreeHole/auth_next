@@ -15,16 +15,16 @@ import (
 
 // Register godoc
 //
-//	@Summary		register
-//	@Description	register with email, password and verification code
-//	@Tags			account
-//	@Accept			json
-//	@Produce		json
-//	@Router			/register [post]
-//	@Param			json	body		RegisterRequest	true	"json"
-//	@Success		201		{object}	TokenResponse
-//	@Failure		400		{object}	utils.MessageResponse	"验证码错误、用户已注册"
-//	@Failure		500		{object}	utils.MessageResponse
+// @Summary register
+// @Description register with email, password and verification code
+// @Tags account
+// @Accept json
+// @Produce json
+// @Router /register [post]
+// @Param json body RegisterRequest true "json"
+// @Success 201 {object} TokenResponse
+// @Failure 400 {object} utils.MessageResponse "验证码错误、用户已注册"
+// @Failure 500 {object} utils.MessageResponse
 func Register(c *fiber.Ctx) error {
 	scope := "register"
 	var body RegisterRequest
@@ -50,28 +50,28 @@ func Register(c *fiber.Ctx) error {
 	if registered {
 		if deleted {
 			//err = models.DB.Transaction(func(tx *gorm.DB) error {
-			//	err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			//		Where("identifier = ?", auth.MakeIdentifier(body.Email)).
-			//		Take(&user).Error
-			//	if err != nil {
-			//		return err
-			//	}
+			// err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			// Where("identifier = ?", auth.MakeIdentifier(body.Email)).
+			// Take(&user).Error
+			// if err != nil {
+			// return err
+			// }
 			//
-			//	user.IsActive = true
-			//	user.Password, err = auth.MakePassword(body.Password)
-			//	if err != nil {
-			//		return err
-			//	}
+			// user.IsActive = true
+			// user.Password, err = auth.MakePassword(body.Password)
+			// if err != nil {
+			// return err
+			// }
 			//
-			//	err = tx.Save(&user).Error
-			//	if err != nil {
-			//		return err
-			//	}
+			// err = tx.Save(&user).Error
+			// if err != nil {
+			// return err
+			// }
 			//
-			//	return models.DeleteDeletedEmail(tx, body.Email)
+			// return models.DeleteDeletedEmail(tx, body.Email)
 			//})
 			//if err != nil {
-			//	return err
+			// return err
 			//}
 			return utils.BadRequest("注销账号后禁止注册")
 		} else {
@@ -132,16 +132,16 @@ func Register(c *fiber.Ctx) error {
 
 // ChangePassword godoc
 //
-//	@Summary		reset password
-//	@Description	reset password, reset jwt credential
-//	@Tags			account
-//	@Accept			json
-//	@Produce		json
-//	@Router			/register [put]
-//	@Param			json	body		RegisterRequest	true	"json"
-//	@Success		200		{object}	TokenResponse
-//	@Failure		400		{object}	utils.MessageResponse	"验证码错误"
-//	@Failure		500		{object}	utils.MessageResponse
+// @Summary reset password
+// @Description reset password, reset jwt credential
+// @Tags account
+// @Accept json
+// @Produce json
+// @Router /register [put]
+// @Param json body RegisterRequest true "json"
+// @Success 200 {object} TokenResponse
+// @Failure 400 {object} utils.MessageResponse "验证码错误"
+// @Failure 500 {object} utils.MessageResponse
 func ChangePassword(c *fiber.Ctx) error {
 	scope := "reset"
 	var body RegisterRequest
@@ -199,39 +199,43 @@ func ChangePassword(c *fiber.Ctx) error {
 
 // VerifyWithEmailOld godoc
 //
-//	@Summary		verify with email in path
-//	@Description	verify with email in path, send verification email
-//	@Deprecated
-//	@Tags		account
-//	@Produce	json
-//	@Router		/verify/email/{email} [get]
-//	@Param		email	path		string	true	"email"
-//	@Success	200		{object}	EmailVerifyResponse
-//	@Failure	400		{object}	utils.MessageResponse	“email不在白名单中”
-//	@Failure	500		{object}	utils.MessageResponse
+// @Summary verify with email in path
+// @Description verify with email in path, send verification email
+// @Deprecated
+// @Tags account
+// @Produce json
+// @Router /verify/email/{email} [get]
+// @Param email path string true "email"
+// @Param scope query string false "scope"
+// @Success 200 {object} EmailVerifyResponse
+// @Failure 400 {object} utils.MessageResponse “email不在白名单中”
+// @Failure 500 {object} utils.MessageResponse
 func VerifyWithEmailOld(c *fiber.Ctx) error {
 	email := c.Params("email")
-	return verifyWithEmail(c, email)
+	scope := c.Query("scope")
+	return verifyWithEmail(c, email, scope)
 }
 
 // VerifyWithEmail godoc
 //
-//	@Summary		verify with email in query
-//	@Description	verify with email in query, Send verification email
-//	@Tags			account
-//	@Produce		json
-//	@Router			/verify/email [get]
-//	@Param			email	query		string	true	"email"
-//	@Success		200		{object}	EmailVerifyResponse
-//	@Failure		400		{object}	utils.MessageResponse
-//	@Failure		403		{object}	utils.MessageResponse	“email不在白名单中”
-//	@Failure		500		{object}	utils.MessageResponse
+// @Summary verify with email in query
+// @Description verify with email in query, Send verification email
+// @Tags account
+// @Produce json
+// @Router /verify/email [get]
+// @Param email query string true "email"
+// @Param scope query string false "scope"
+// @Success 200 {object} EmailVerifyResponse
+// @Failure 400 {object} utils.MessageResponse
+// @Failure 403 {object} utils.MessageResponse “email不在白名单中”
+// @Failure 500 {object} utils.MessageResponse
 func VerifyWithEmail(c *fiber.Ctx) error {
 	email := c.Query("email")
-	return verifyWithEmail(c, email)
+	scope := c.Query("scope")
+	return verifyWithEmail(c, email, scope)
 }
 
-func verifyWithEmail(c *fiber.Ctx, email string) error {
+func verifyWithEmail(c *fiber.Ctx, email, givenScope string) error {
 	if !utils.ValidateEmail(email) {
 		return utils.BadRequest("email invalid")
 	}
@@ -239,20 +243,28 @@ func verifyWithEmail(c *fiber.Ctx, email string) error {
 	if err != nil {
 		return err
 	}
-	registered, err := models.HasRegisteredEmail(models.DB, email)
+	deleted, err := models.HasDeletedEmail(models.DB, email)
 	if err != nil {
 		return err
 	}
-	deleted, err := models.HasDeletedEmail(models.DB, email)
+	if deleted {
+		return utils.BadRequest("注销账号后禁止注册")
+	}
+	registered, err := models.HasRegisteredEmail(models.DB, email)
 	if err != nil {
 		return err
 	}
 
 	var scope string
-	if !registered || deleted {
+	if !registered {
 		scope = "register"
 	} else {
 		scope = "reset"
+	}
+	if givenScope == "register" && scope == "reset" {
+		return utils.BadRequest("该用户已注册，请使用重置密码功能")
+	} else if givenScope == "reset" && scope == "register" {
+		return utils.BadRequest("该用户未注册，请先注册账户")
 	}
 	code, err := auth.SetVerificationCode(email, scope)
 	if err != nil {
@@ -288,17 +300,17 @@ func verifyWithEmail(c *fiber.Ctx, email string) error {
 
 // VerifyWithApikey godoc
 //
-//	@Summary		verify with email in query and apikey
-//	@Description	verify with email in query, return verification code
-//	@Tags			account
-//	@Produce		json
-//	@Router			/verify/apikey [get]
-//	@Param			email	query		ApikeyRequest	true	"apikey, email"
-//	@Success		200		{object}	ApikeyResponse
-//	@Success		200		{object}	utils.MessageResponse	"用户未注册“
-//	@Failure		403		{object}	utils.MessageResponse	"apikey不正确“
-//	@Failure		409		{object}	utils.MessageResponse	"用户已注册“
-//	@Failure		500		{object}	utils.MessageResponse
+// @Summary verify with email in query and apikey
+// @Description verify with email in query, return verification code
+// @Tags account
+// @Produce json
+// @Router /verify/apikey [get]
+// @Param email query ApikeyRequest true "apikey, email"
+// @Success 200 {object} ApikeyResponse
+// @Success 200 {object} utils.MessageResponse "用户未注册“
+// @Failure 403 {object} utils.MessageResponse "apikey不正确“
+// @Failure 409 {object} utils.MessageResponse "用户已注册“
+// @Failure 500 {object} utils.MessageResponse
 func VerifyWithApikey(c *fiber.Ctx) error {
 	var query ApikeyRequest
 	err := utils.ValidateQuery(c, &query)
@@ -338,15 +350,15 @@ func VerifyWithApikey(c *fiber.Ctx) error {
 
 // DeleteUser godoc
 //
-//	@Summary		delete user
-//	@Description	delete user and related jwt credentials
-//	@Tags			account
-//	@Router			/users/me [delete]
-//	@Param			json	body	LoginRequest	true	"email, password"
-//	@Success		204
-//	@Failure		400	{object}	utils.MessageResponse	"密码错误“
-//	@Failure		404	{object}	utils.MessageResponse	"用户不存在“
-//	@Failure		500	{object}	utils.MessageResponse
+// @Summary delete user
+// @Description delete user and related jwt credentials
+// @Tags account
+// @Router /users/me [delete]
+// @Param json body LoginRequest true "email, password"
+// @Success 204
+// @Failure 400 {object} utils.MessageResponse "密码错误“
+// @Failure 404 {object} utils.MessageResponse "用户不存在“
+// @Failure 500 {object} utils.MessageResponse
 func DeleteUser(c *fiber.Ctx) error {
 	var body LoginRequest
 	err := utils.ValidateBody(c, &body)

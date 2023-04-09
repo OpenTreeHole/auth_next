@@ -828,6 +828,12 @@
                         "name": "email",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "scope",
+                        "name": "scope",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -876,6 +882,12 @@
                         "name": "email",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "scope",
+                        "name": "scope",
+                        "in": "query"
                     }
                 ],
                 "responses": {

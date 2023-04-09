@@ -686,6 +686,10 @@ paths:
         name: email
         required: true
         type: string
+      - description: scope
+        in: query
+        name: scope
+        type: string
       produces:
       - application/json
       responses:
@@ -717,6 +721,10 @@ paths:
         in: path
         name: email
         required: true
+        type: string
+      - description: scope
+        in: query
+        name: scope
         type: string
       produces:
       - application/json
