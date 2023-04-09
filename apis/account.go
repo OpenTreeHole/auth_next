@@ -49,30 +49,31 @@ func Register(c *fiber.Ctx) error {
 	var user models.User
 	if registered {
 		if deleted {
-			err = models.DB.Transaction(func(tx *gorm.DB) error {
-				err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-					Where("identifier = ?", auth.MakeIdentifier(body.Email)).
-					Take(&user).Error
-				if err != nil {
-					return err
-				}
-
-				user.IsActive = true
-				user.Password, err = auth.MakePassword(body.Password)
-				if err != nil {
-					return err
-				}
-
-				err = tx.Save(&user).Error
-				if err != nil {
-					return err
-				}
-
-				return models.DeleteDeletedEmail(tx, body.Email)
-			})
-			if err != nil {
-				return err
-			}
+			//err = models.DB.Transaction(func(tx *gorm.DB) error {
+			//	err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			//		Where("identifier = ?", auth.MakeIdentifier(body.Email)).
+			//		Take(&user).Error
+			//	if err != nil {
+			//		return err
+			//	}
+			//
+			//	user.IsActive = true
+			//	user.Password, err = auth.MakePassword(body.Password)
+			//	if err != nil {
+			//		return err
+			//	}
+			//
+			//	err = tx.Save(&user).Error
+			//	if err != nil {
+			//		return err
+			//	}
+			//
+			//	return models.DeleteDeletedEmail(tx, body.Email)
+			//})
+			//if err != nil {
+			//	return err
+			//}
+			return utils.BadRequest("注销账号后禁止注册")
 		} else {
 			return utils.BadRequest("该用户已注册，如果忘记密码，请使用忘记密码功能找回")
 		}
