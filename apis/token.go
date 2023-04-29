@@ -7,8 +7,9 @@ import (
 	"auth_next/utils/kong"
 	"auth_next/utils/shamir"
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
 )
+
+var ErrLogin = Forbidden("邮箱或密码错误")
 
 // Login godoc
 //
@@ -35,12 +36,7 @@ func Login(c *fiber.Ctx) error {
 		Where("identifier = ? AND is_active = true", auth.MakeIdentifier(body.Email)).
 		Take(&user).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return NotFound("User Not Found")
-		} else {
-			return err
-		}
-
+		return ErrLogin
 	}
 
 	ok, err := auth.CheckPassword(body.Password, user.Password)
@@ -48,7 +44,7 @@ func Login(c *fiber.Ctx) error {
 		return err
 	}
 	if !ok {
-		return Unauthorized("password incorrect")
+		return ErrLogin
 	}
 
 	// if no shamir email, insert it
@@ -123,7 +119,7 @@ func Logout(c *fiber.Ctx) error {
 //	@Router			/refresh [post]
 //	@Success		200	{object}	TokenResponse
 func Refresh(c *fiber.Ctx) error {
-	user, err := GetUserByRefreshToken(c)
+	refreshToken, user, err := GetUserByRefreshToken(c)
 	if err != nil {
 		return err
 	}
@@ -134,13 +130,13 @@ func Refresh(c *fiber.Ctx) error {
 		return err
 	}
 
-	access, refresh, err := kong.CreateToken(user)
+	access, _, err := kong.CreateToken(user)
 	if err != nil {
 		return err
 	}
 	return c.JSON(TokenResponse{
 		Access:  access,
-		Refresh: refresh,
+		Refresh: refreshToken, // using old refreshToken instead
 		Message: "refresh successful",
 	})
 }

@@ -98,11 +98,10 @@ func GetUserID(c *fiber.Ctx) (int, error) {
 
 // parseJWT extracts and parse token
 func parseJWT(token string) (Map, error) {
-	if len(token) < 7 {
-		return nil, errors.New("bearer token required")
+	if token == "" {
+		return nil, errors.New("jwt token required")
 	}
-
-	payloads := strings.SplitN(token[7:], ".", 3) // extract "Bearer "
+	payloads := strings.SplitN(token, ".", 3)
 	if len(payloads) < 3 {
 		return nil, errors.New("jwt token required")
 	}
@@ -118,11 +117,11 @@ func parseJWT(token string) (Map, error) {
 	return value, err
 }
 
-func GetUserByRefreshToken(c *fiber.Ctx) (*User, error) {
+func GetUserByRefreshToken(c *fiber.Ctx) (string, *User, error) {
 	// get id
 	userID, err := GetUserID(c)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	tokenString := c.Get("Authorization")
@@ -130,14 +129,21 @@ func GetUserByRefreshToken(c *fiber.Ctx) (*User, error) {
 		tokenString = c.Cookies("refresh")
 	}
 
+	if strings.HasPrefix(tokenString, "Bearer ") {
+		tokenString = tokenString[7:] // extract "Bearer "
+	}
+	tokenString = strings.Trim(tokenString, " ")
+
 	payload, err := parseJWT(tokenString)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	if tokenType, ok := payload["type"]; !ok || tokenType != "refresh" {
-		return nil, utils.Unauthorized("refresh token invalid")
+		return "", nil, utils.Unauthorized("refresh token invalid")
 	}
 
-	return LoadUserFromDB(userID)
+	user, err := LoadUserFromDB(userID)
+
+	return tokenString, user, err
 }
