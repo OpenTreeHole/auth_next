@@ -73,19 +73,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "404": {
                         "description": "User Not Found",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -105,7 +105,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -165,13 +165,13 @@ const docTemplate = `{
                     "400": {
                         "description": "验证码错误",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -209,13 +209,13 @@ const docTemplate = `{
                     "400": {
                         "description": "验证码错误、用户已注册",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -252,13 +252,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -292,7 +292,7 @@ const docTemplate = `{
                             "items": {
                                 "allOf": [
                                     {
-                                        "$ref": "#/definitions/utils.MessageResponse"
+                                        "$ref": "#/definitions/common.MessageResponse"
                                     },
                                     {
                                         "type": "object",
@@ -309,19 +309,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "403": {
                         "description": "非管理员",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -340,7 +340,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -372,7 +372,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/utils.MessageResponse"
+                                    "$ref": "#/definitions/common.MessageResponse"
                                 },
                                 {
                                     "type": "object",
@@ -390,7 +390,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/utils.MessageResponse"
+                                    "$ref": "#/definitions/common.MessageResponse"
                                 },
                                 {
                                     "type": "object",
@@ -406,13 +406,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -437,19 +437,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "403": {
                         "description": "非管理员",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -468,25 +468,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "403": {
                         "description": "非管理员",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -526,13 +526,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -561,13 +561,13 @@ const docTemplate = `{
                     "403": {
                         "description": "不是管理员",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -595,7 +595,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -621,13 +621,13 @@ const docTemplate = `{
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -656,19 +656,19 @@ const docTemplate = `{
                     "400": {
                         "description": "密码错误“",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "404": {
                         "description": "用户不存在“",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -703,19 +703,19 @@ const docTemplate = `{
                     "403": {
                         "description": "不是该用户或管理员",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -748,13 +748,13 @@ const docTemplate = `{
                     "403": {
                         "description": "不是管理员",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -794,25 +794,25 @@ const docTemplate = `{
                     "200": {
                         "description": "用户未注册“",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "403": {
                         "description": "apikey不正确“",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "409": {
                         "description": "用户已注册“",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -853,19 +853,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -907,13 +907,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/utils.MessageResponse"
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     }
                 }
@@ -1104,7 +1104,44 @@ const docTemplate = `{
             }
         },
         "apis.UploadSharesRequest": {
+            "type": "object",
+            "required": [
+                "identity_name"
+            ],
+            "properties": {
+                "identity_name": {
+                    "type": "string"
+                },
+                "shares": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apis.UserShare"
+                    }
+                }
+            }
+        },
+        "apis.UserShare": {
+            "type": "object",
+            "properties": {
+                "share": {
+                    "$ref": "#/definitions/shamir.Share"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "big.Int": {
             "type": "object"
+        },
+        "common.MessageResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                }
+            }
         },
         "models.ShamirPublicKey": {
             "type": "object",
@@ -1143,12 +1180,14 @@ const docTemplate = `{
                 }
             }
         },
-        "utils.MessageResponse": {
+        "shamir.Share": {
             "type": "object",
             "properties": {
-                "data": {},
-                "message": {
-                    "type": "string"
+                "x": {
+                    "$ref": "#/definitions/big.Int"
+                },
+                "y": {
+                    "$ref": "#/definitions/big.Int"
                 }
             }
         }
@@ -1165,6 +1204,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "Next Generation of Auth microservice integrated with kong for registration and issuing tokens",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {

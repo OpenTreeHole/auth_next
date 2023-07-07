@@ -20,12 +20,12 @@ import (
 	_ "auth_next/docs"
 	"auth_next/middlewares"
 	"auth_next/models"
-	"auth_next/utils"
 	"auth_next/utils/auth"
 	"auth_next/utils/kong"
 	"context"
-	"encoding/json"
+	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/opentreehole/go-common"
 	"github.com/robfig/cron/v3"
 	"log"
 	"os"
@@ -46,9 +46,10 @@ func main() {
 	}
 
 	app := fiber.New(fiber.Config{
-		ErrorHandler: utils.MyErrorHandler,
-		JSONEncoder:  json.Marshal,
-		JSONDecoder:  json.Unmarshal,
+		ErrorHandler:          common.ErrorHandler,
+		JSONEncoder:           json.Marshal,
+		JSONDecoder:           json.Unmarshal,
+		DisableStartupMessage: true,
 	})
 	middlewares.RegisterMiddlewares(app)
 	apis.RegisterRoutes(app)

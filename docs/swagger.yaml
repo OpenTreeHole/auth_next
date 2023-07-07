@@ -122,6 +122,30 @@ definitions:
     - data
     type: object
   apis.UploadSharesRequest:
+    properties:
+      identity_name:
+        type: string
+      shares:
+        items:
+          $ref: '#/definitions/apis.UserShare'
+        type: array
+    required:
+    - identity_name
+    type: object
+  apis.UserShare:
+    properties:
+      share:
+        $ref: '#/definitions/shamir.Share'
+      user_id:
+        type: integer
+    type: object
+  big.Int:
+    type: object
+  common.MessageResponse:
+    properties:
+      data: {}
+      message:
+        type: string
     type: object
   models.ShamirPublicKey:
     properties:
@@ -147,11 +171,12 @@ definitions:
       user_id:
         type: integer
     type: object
-  utils.MessageResponse:
+  shamir.Share:
     properties:
-      data: {}
-      message:
-        type: string
+      x:
+        $ref: '#/definitions/big.Int'
+      "y":
+        $ref: '#/definitions/big.Int'
     type: object
 host: localhost:8000
 info:
@@ -198,15 +223,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "404":
           description: User Not Found
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: Login
       tags:
       - token
@@ -220,7 +245,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: Logout
       tags:
       - token
@@ -259,11 +284,11 @@ paths:
         "400":
           description: 验证码错误、用户已注册
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: register
       tags:
       - account
@@ -288,11 +313,11 @@ paths:
         "400":
           description: 验证码错误
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: reset password
       tags:
       - account
@@ -316,11 +341,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: list related shamir PGP messages
       tags:
       - shamir
@@ -346,11 +371,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: get shamir PGP message
       tags:
       - shamir
@@ -371,7 +396,7 @@ paths:
           schema:
             items:
               allOf:
-              - $ref: '#/definitions/utils.MessageResponse'
+              - $ref: '#/definitions/common.MessageResponse'
               - properties:
                   data:
                     $ref: '#/definitions/apis.IdentityNameResponse'
@@ -380,15 +405,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "403":
           description: 非管理员
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: upload all PGP PublicKeys for encryption, admin only
       tags:
       - shamir
@@ -400,7 +425,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: trigger for refresh uploaded shares
       tags:
       - shamir
@@ -420,7 +445,7 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/utils.MessageResponse'
+            - $ref: '#/definitions/common.MessageResponse'
             - properties:
                 data:
                   $ref: '#/definitions/apis.IdentityNameResponse'
@@ -429,7 +454,7 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/utils.MessageResponse'
+            - $ref: '#/definitions/common.MessageResponse'
             - properties:
                 data:
                   $ref: '#/definitions/apis.IdentityNameResponse'
@@ -437,11 +462,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: upload all shares of all users, cached
       tags:
       - shamir
@@ -457,15 +482,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "403":
           description: 非管理员
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: get shamir info
       tags:
       - shamir
@@ -477,19 +502,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "403":
           description: 非管理员
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: trigger for updating shamir
       tags:
       - shamir
@@ -508,11 +533,11 @@ paths:
         "403":
           description: 不是管理员
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: list all users
       tags:
       - user
@@ -535,15 +560,15 @@ paths:
         "403":
           description: 不是该用户或管理员
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: get user by id
       tags:
       - user
@@ -565,11 +590,11 @@ paths:
         "403":
           description: 不是管理员
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: modify user
       tags:
       - user
@@ -587,7 +612,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: list admins
       tags:
       - user
@@ -607,15 +632,15 @@ paths:
         "400":
           description: 密码错误“
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "404":
           description: 用户不存在“
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: delete user
       tags:
       - account
@@ -631,11 +656,11 @@ paths:
         "404":
           description: 用户不存在
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: get current user
       tags:
       - user
@@ -661,19 +686,19 @@ paths:
         "200":
           description: 用户未注册“
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "403":
           description: apikey不正确“
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "409":
           description: 用户已注册“
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: verify with email in query and apikey
       tags:
       - account
@@ -700,15 +725,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: verify with email in query
       tags:
       - account
@@ -736,11 +761,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/utils.MessageResponse'
+            $ref: '#/definitions/common.MessageResponse'
       summary: verify with email in path
       tags:
       - account

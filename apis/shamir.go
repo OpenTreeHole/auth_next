@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/gofiber/fiber/v2"
+	"github.com/opentreehole/go-common"
 	"golang.org/x/exp/slices"
 	"gorm.io/gorm"
 	"log"
@@ -27,12 +28,12 @@ import (
 //	@Param		user_id			path		int					true	"Target UserID"
 //	@Param		identity_name	query		PGPMessageRequest	true	"recipient uid"
 //	@Success	200				{object}	PGPMessageResponse
-//	@Failure	400				{object}	utils.MessageResponse
-//	@Failure	500				{object}	utils.MessageResponse
+//	@Failure	400				{object}	common.MessageResponse
+//	@Failure	500				{object}	common.MessageResponse
 func GetPGPMessageByUserID(c *fiber.Ctx) error {
 	// get identity
 	var query PGPMessageRequest
-	err := utils.ValidateQuery(c, &query)
+	err := common.ValidateQuery(c, &query)
 	if err != nil {
 		return err
 	}
@@ -74,12 +75,12 @@ func GetPGPMessageByUserID(c *fiber.Ctx) error {
 //	@Router		/shamir [get]
 //	@Param		identity_name	query		string	true	"recipient uid"
 //	@Success	200				{array}		PGPMessageResponse
-//	@Failure	400				{object}	utils.MessageResponse
-//	@Failure	500				{object}	utils.MessageResponse
+//	@Failure	400				{object}	common.MessageResponse
+//	@Failure	500				{object}	common.MessageResponse
 func ListPGPMessages(c *fiber.Ctx) error {
 	// get identity
 	var query PGPMessageRequest
-	err := utils.ValidateQuery(c, &query)
+	err := common.ValidateQuery(c, &query)
 	if err != nil {
 		return err
 	}
@@ -93,7 +94,7 @@ func ListPGPMessages(c *fiber.Ctx) error {
 		return result.Error
 	}
 	if len(messages) == 0 {
-		return c.Status(404).JSON(utils.Message("获取Shamir信息失败"))
+		return c.Status(404).JSON(common.Message("获取Shamir信息失败"))
 	}
 
 	// log
@@ -109,14 +110,14 @@ func ListPGPMessages(c *fiber.Ctx) error {
 //	@Produce	json
 //	@Router		/shamir/shares [post]
 //	@Param		shares	body		UploadSharesRequest	true	"shares"
-//	@Success	200		{object}	utils.MessageResponse{data=IdentityNameResponse}
-//	@Success	201		{object}	utils.MessageResponse{data=IdentityNameResponse}
-//	@Failure	400		{object}	utils.MessageResponse
-//	@Failure	500		{object}	utils.MessageResponse
+//	@Success	200		{object}	common.MessageResponse{data=IdentityNameResponse}
+//	@Success	201		{object}	common.MessageResponse{data=IdentityNameResponse}
+//	@Failure	400		{object}	common.MessageResponse
+//	@Failure	500		{object}	common.MessageResponse
 func UploadAllShares(c *fiber.Ctx) error {
 	// get shares
 	var body UploadSharesRequest
-	err := utils.ValidateBody(c, &body)
+	err := common.ValidateBody(c, &body)
 	if err != nil {
 		return err
 	}
@@ -127,11 +128,11 @@ func UploadAllShares(c *fiber.Ctx) error {
 	status := &GlobalUploadShamirStatus
 
 	if status.ShamirUpdating {
-		return utils.BadRequest("正在重新加解密，请不要上传")
+		return common.BadRequest("正在重新加解密，请不要上传")
 	}
 
 	if utils.InUnorderedSlice(status.UploadedSharesIdentityNames, body.IdentityName) {
-		return utils.BadRequest("您已经上传过，请不要重复上传")
+		return common.BadRequest("您已经上传过，请不要重复上传")
 	}
 	status.UploadedSharesIdentityNames = append(status.UploadedSharesIdentityNames, body.IdentityName)
 
@@ -146,7 +147,7 @@ func UploadAllShares(c *fiber.Ctx) error {
 		status.ShamirUpdateReady = true
 	}
 
-	return c.JSON(utils.MessageResponse{
+	return c.JSON(common.MessageResponse{
 		Message: "上传成功",
 		Data: models.Map{
 			"identity_name":      body.IdentityName,
@@ -162,13 +163,13 @@ func UploadAllShares(c *fiber.Ctx) error {
 //	@Produce	json
 //	@Router		/shamir/key [post]
 //	@Param		public_keys	body		UploadPublicKeyRequest	true	"public keys"
-//	@Success	200			{array}		utils.MessageResponse{data=IdentityNameResponse}
-//	@Failure	400			{object}	utils.MessageResponse
-//	@Failure	403			{object}	utils.MessageResponse	"非管理员"
-//	@Failure	500			{object}	utils.MessageResponse
+//	@Success	200			{array}		common.MessageResponse{data=IdentityNameResponse}
+//	@Failure	400			{object}	common.MessageResponse
+//	@Failure	403			{object}	common.MessageResponse	"非管理员"
+//	@Failure	500			{object}	common.MessageResponse
 func UploadPublicKey(c *fiber.Ctx) error {
 	var body UploadPublicKeyRequest
-	err := utils.ValidateBody(c, &body)
+	err := common.ValidateBody(c, &body)
 	if err != nil {
 		return err
 	}
@@ -183,11 +184,11 @@ func UploadPublicKey(c *fiber.Ctx) error {
 		// try parse
 		publicKey, err := crypto.NewKeyFromArmored(armoredPublicKey)
 		if err != nil {
-			return utils.BadRequest(fmt.Sprintf("load public key error: %v\n", armoredPublicKey))
+			return common.BadRequest(fmt.Sprintf("load public key error: %v\n", armoredPublicKey))
 		}
 		publicKeyRing, err := crypto.NewKeyRing(publicKey)
 		if err != nil {
-			return utils.BadRequest(fmt.Sprintf("load public key error: %v\n", armoredPublicKey))
+			return common.BadRequest(fmt.Sprintf("load public key error: %v\n", armoredPublicKey))
 		}
 
 		// save new public keys with assigned id, for save to database
@@ -203,7 +204,7 @@ func UploadPublicKey(c *fiber.Ctx) error {
 		status.ShamirUpdateReady = true
 	}
 
-	return c.JSON(utils.MessageResponse{
+	return c.JSON(common.MessageResponse{
 		Message: "上传公钥成功",
 		Data:    &status.ShamirStatusResponse,
 	})
@@ -216,9 +217,9 @@ func UploadPublicKey(c *fiber.Ctx) error {
 //	@Produce	json
 //	@Router		/shamir/status [get]
 //	@Success	200	{object}	ShamirStatusResponse
-//	@Failure	400	{object}	utils.MessageResponse
-//	@Failure	403	{object}	utils.MessageResponse	"非管理员"
-//	@Failure	500	{object}	utils.MessageResponse
+//	@Failure	400	{object}	common.MessageResponse
+//	@Failure	403	{object}	common.MessageResponse	"非管理员"
+//	@Failure	500	{object}	common.MessageResponse
 func GetShamirStatus(c *fiber.Ctx) error {
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
@@ -232,31 +233,31 @@ func GetShamirStatus(c *fiber.Ctx) error {
 //	@Tags		shamir
 //	@Produce	json
 //	@Router		/shamir/update [post]
-//	@Success	200	{object}	utils.MessageResponse
-//	@Failure	400	{object}	utils.MessageResponse
-//	@Failure	403	{object}	utils.MessageResponse	"非管理员"
-//	@Failure	500	{object}	utils.MessageResponse
+//	@Success	200	{object}	common.MessageResponse
+//	@Failure	400	{object}	common.MessageResponse
+//	@Failure	403	{object}	common.MessageResponse	"非管理员"
+//	@Failure	500	{object}	common.MessageResponse
 func UpdateShamir(c *fiber.Ctx) error {
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
 	status := &GlobalUploadShamirStatus
 
 	if status.ShamirUpdating {
-		return utils.BadRequest("正在重新加解密，请不要重复触发")
+		return common.BadRequest("正在重新加解密，请不要重复触发")
 	}
 	if !status.ShamirUpdateReady {
 		if len(status.UploadedSharesIdentityNames) < 4 {
-			return utils.BadRequest("坐标点数量不够，无法解密")
+			return common.BadRequest("坐标点数量不够，无法解密")
 		} else if len(status.NewPublicKeys) < 7 {
-			return utils.BadRequest("公钥数量不够，无法重新加密")
+			return common.BadRequest("公钥数量不够，无法重新加密")
 		} else {
-			return utils.BadRequest("无法解密")
+			return common.BadRequest("无法解密")
 		}
 	}
 
 	// trigger update
 	go updateShamir()
-	return c.JSON(utils.Message("触发成功，正在尝试更新shamir信息，请访问/shamir/status获取更多信息"))
+	return c.JSON(common.Message("触发成功，正在尝试更新shamir信息，请访问/shamir/status获取更多信息"))
 }
 
 // RefreshShamir godoc
@@ -265,14 +266,14 @@ func UpdateShamir(c *fiber.Ctx) error {
 // @Tags shamir
 // @Router /shamir/refresh [put]
 // @Success 204
-// @failure 500 {object} utils.MessageResponse
+// @failure 500 {object} common.MessageResponse
 func RefreshShamir(c *fiber.Ctx) error {
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
 	status := &GlobalUploadShamirStatus
 
 	if status.ShamirUpdating {
-		return utils.BadRequest("正在重新加解密，请不要触发刷新")
+		return common.BadRequest("正在重新加解密，请不要触发刷新")
 	}
 
 	status.UploadedSharesIdentityNames = []string{}

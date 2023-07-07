@@ -2,8 +2,8 @@ package apis
 
 import (
 	. "auth_next/models"
-	"auth_next/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/opentreehole/go-common"
 )
 
 // GetCurrentUser godoc
@@ -14,12 +14,12 @@ import (
 //	@Produce		json
 //	@Router			/users/me [get]
 //	@Success		200	{object}	User
-//	@Failure		404	{object}	utils.MessageResponse	"用户不存在"
-//	@Failure		500	{object}	utils.MessageResponse
+//	@Failure		404	{object}	common.MessageResponse	"用户不存在"
+//	@Failure		500	{object}	common.MessageResponse
 func GetCurrentUser(c *fiber.Ctx) error {
-	userID, err := GetUserID(c)
-	if err != nil {
-		return err
+	userID, ok := c.Locals("user_id").(int)
+	if !ok {
+		return common.Unauthorized()
 	}
 	user, err := LoadUserFromDB(userID)
 	if err != nil {
@@ -37,13 +37,13 @@ func GetCurrentUser(c *fiber.Ctx) error {
 //	@Router			/users/{user_id} [get]
 //	@Param			user_id	path		int	true	"UserID"
 //	@Success		200		{object}	User
-//	@Failure		403		{object}	utils.MessageResponse	"不是该用户或管理员"
-//	@Failure		404		{object}	utils.MessageResponse	"用户不存在"
-//	@Failure		500		{object}	utils.MessageResponse
+//	@Failure		403		{object}	common.MessageResponse	"不是该用户或管理员"
+//	@Failure		404		{object}	common.MessageResponse	"用户不存在"
+//	@Failure		500		{object}	common.MessageResponse
 func GetUserByID(c *fiber.Ctx) error {
-	userID, err := GetUserID(c)
-	if err != nil {
-		return err
+	userID, ok := c.Locals("user_id").(int)
+	if !ok {
+		return common.Unauthorized()
 	}
 
 	toUserId, err := c.ParamsInt("id")
@@ -51,7 +51,7 @@ func GetUserByID(c *fiber.Ctx) error {
 		return err
 	}
 	if !(toUserId == userID || IsAdmin(userID)) {
-		return utils.Forbidden()
+		return common.Forbidden()
 	}
 
 	user, err := LoadUserFromDB(toUserId)
@@ -69,8 +69,8 @@ func GetUserByID(c *fiber.Ctx) error {
 //	@Produce		json
 //	@Router			/users [get]
 //	@Success		200		{array}		User
-//	@Failure		403		{object}	utils.MessageResponse	"不是管理员"
-//	@Failure		500		{object}	utils.MessageResponse
+//	@Failure		403		{object}	common.MessageResponse	"不是管理员"
+//	@Failure		500		{object}	common.MessageResponse
 func ListUsers(c *fiber.Ctx) error {
 	return c.JSON([]User{})
 }
@@ -82,7 +82,7 @@ func ListUsers(c *fiber.Ctx) error {
 //	@Produce		json
 //	@Router			/users/admin [get]
 //	@Success		200		{array}		int
-//	@Failure		500		{object}	utils.MessageResponse
+//	@Failure		500		{object}	common.MessageResponse
 func ListAdmin(c *fiber.Ctx) error {
 	return c.JSON(AdminIDList.Load().([]int))
 }
@@ -96,22 +96,22 @@ func ListAdmin(c *fiber.Ctx) error {
 //	@Router			/users/{user_id} [put]
 //	@Param			user_id	path		int	true	"UserID"
 //	@Success		201		{object}	User
-//	@Failure		403		{object}	utils.MessageResponse	"不是管理员"
-//	@Failure		500		{object}	utils.MessageResponse
+//	@Failure		403		{object}	common.MessageResponse	"不是管理员"
+//	@Failure		500		{object}	common.MessageResponse
 func ModifyUser(c *fiber.Ctx) error {
 	var body ModifyUserRequest
-	err := utils.ValidateBody(c, &body)
+	err := common.ValidateBody(c, &body)
 	if err != nil {
 		return err
 	}
 
 	if body.Nickname == nil {
-		return utils.BadRequest("无效请求")
+		return common.BadRequest("无效请求")
 	}
 
-	userID, err := GetUserID(c)
-	if err != nil {
-		return err
+	userID, ok := c.Locals("user_id").(int)
+	if !ok {
+		return common.Unauthorized()
 	}
 
 	toUserID, err := c.ParamsInt("id")
@@ -120,7 +120,7 @@ func ModifyUser(c *fiber.Ctx) error {
 	}
 
 	if !(IsAdmin(userID) || userID == toUserID) {
-		return utils.Forbidden()
+		return common.Forbidden()
 	}
 	user, err := LoadUserFromDB(toUserID)
 	if err != nil {

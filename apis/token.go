@@ -2,14 +2,14 @@ package apis
 
 import (
 	. "auth_next/models"
-	. "auth_next/utils"
 	"auth_next/utils/auth"
 	"auth_next/utils/kong"
 	"auth_next/utils/shamir"
 	"github.com/gofiber/fiber/v2"
+	"github.com/opentreehole/go-common"
 )
 
-var ErrLogin = Forbidden("邮箱或密码错误")
+var ErrLogin = common.Forbidden("邮箱或密码错误")
 
 // Login godoc
 //
@@ -21,12 +21,12 @@ var ErrLogin = Forbidden("邮箱或密码错误")
 //	@Router			/login [post]
 //	@Param			json	body		LoginRequest	true	"json"
 //	@Success		200		{object}	TokenResponse
-//	@Failure		400		{object}	utils.MessageResponse
-//	@Failure		404		{object}	utils.MessageResponse	"User Not Found"
-//	@Failure		500		{object}	utils.MessageResponse
+//	@Failure		400		{object}	common.MessageResponse
+//	@Failure		404		{object}	common.MessageResponse	"User Not Found"
+//	@Failure		500		{object}	common.MessageResponse
 func Login(c *fiber.Ctx) error {
 	var body LoginRequest
-	err := ValidateBody(c, &body)
+	err := common.ValidateBody(c, &body)
 	if err != nil {
 		return err
 	}
@@ -90,14 +90,14 @@ func Login(c *fiber.Ctx) error {
 //	@Tags			token
 //	@Produce		json
 //	@Router			/logout [get]
-//	@Success		200	{object}	utils.MessageResponse
+//	@Success		200	{object}	common.MessageResponse
 func Logout(c *fiber.Ctx) error {
-	userID, err := GetUserID(c)
-	if err != nil {
-		return err
+	userID, ok := c.Locals("user_id").(int)
+	if !ok {
+		return common.Unauthorized()
 	}
 
-	_, err = LoadUserFromDB(userID)
+	_, err := LoadUserFromDB(userID)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func Logout(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(Message("logout successful"))
+	return c.JSON(common.Message("logout successful"))
 }
 
 // Refresh

@@ -9,6 +9,7 @@ import (
 	"auth_next/utils/shamir"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/opentreehole/go-common"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -23,18 +24,18 @@ import (
 // @Router /register [post]
 // @Param json body RegisterRequest true "json"
 // @Success 201 {object} TokenResponse
-// @Failure 400 {object} utils.MessageResponse "验证码错误、用户已注册"
-// @Failure 500 {object} utils.MessageResponse
+// @Failure 400 {object} common.MessageResponse "验证码错误、用户已注册"
+// @Failure 500 {object} common.MessageResponse
 func Register(c *fiber.Ctx) error {
 	scope := "register"
 	var body RegisterRequest
-	err := utils.ValidateBody(c, &body)
+	err := common.ValidateBody(c, &body)
 	if err != nil {
 		return err
 	}
 	ok := auth.CheckVerificationCode(body.Email, scope, string(body.Verification))
 	if !ok {
-		return utils.BadRequest("验证码错误，请多次尝试或者重新获取验证码")
+		return common.BadRequest("验证码错误，请多次尝试或者重新获取验证码")
 	}
 
 	registered, err := models.HasRegisteredEmail(models.DB, body.Email)
@@ -73,9 +74,9 @@ func Register(c *fiber.Ctx) error {
 			//if err != nil {
 			// return err
 			//}
-			return utils.BadRequest("注销账号后禁止注册")
+			return common.BadRequest("注销账号后禁止注册")
 		} else {
-			return utils.BadRequest("该用户已注册，如果忘记密码，请使用忘记密码功能找回")
+			return common.BadRequest("该用户已注册，如果忘记密码，请使用忘记密码功能找回")
 		}
 	} else {
 		user.Identifier = auth.MakeIdentifier(body.Email)
@@ -140,18 +141,18 @@ func Register(c *fiber.Ctx) error {
 // @Router /register [put]
 // @Param json body RegisterRequest true "json"
 // @Success 200 {object} TokenResponse
-// @Failure 400 {object} utils.MessageResponse "验证码错误"
-// @Failure 500 {object} utils.MessageResponse
+// @Failure 400 {object} common.MessageResponse "验证码错误"
+// @Failure 500 {object} common.MessageResponse
 func ChangePassword(c *fiber.Ctx) error {
 	scope := "reset"
 	var body RegisterRequest
-	err := utils.ValidateBody(c, &body)
+	err := common.ValidateBody(c, &body)
 	if err != nil {
 		return err
 	}
 	ok := auth.CheckVerificationCode(body.Email, scope, string(body.Verification))
 	if !ok {
-		return utils.BadRequest("验证码错误，请多次尝试或者重新获取验证码")
+		return common.BadRequest("验证码错误，请多次尝试或者重新获取验证码")
 	}
 
 	var user models.User
@@ -208,8 +209,8 @@ func ChangePassword(c *fiber.Ctx) error {
 // @Param email path string true "email"
 // @Param scope query string false "scope"
 // @Success 200 {object} EmailVerifyResponse
-// @Failure 400 {object} utils.MessageResponse “email不在白名单中”
-// @Failure 500 {object} utils.MessageResponse
+// @Failure 400 {object} common.MessageResponse “email不在白名单中”
+// @Failure 500 {object} common.MessageResponse
 func VerifyWithEmailOld(c *fiber.Ctx) error {
 	email := c.Params("email")
 	scope := c.Query("scope")
@@ -226,9 +227,9 @@ func VerifyWithEmailOld(c *fiber.Ctx) error {
 // @Param email query string true "email"
 // @Param scope query string false "scope"
 // @Success 200 {object} EmailVerifyResponse
-// @Failure 400 {object} utils.MessageResponse
-// @Failure 403 {object} utils.MessageResponse “email不在白名单中”
-// @Failure 500 {object} utils.MessageResponse
+// @Failure 400 {object} common.MessageResponse
+// @Failure 403 {object} common.MessageResponse “email不在白名单中”
+// @Failure 500 {object} common.MessageResponse
 func VerifyWithEmail(c *fiber.Ctx) error {
 	email := c.Query("email")
 	scope := c.Query("scope")
@@ -237,7 +238,7 @@ func VerifyWithEmail(c *fiber.Ctx) error {
 
 func verifyWithEmail(c *fiber.Ctx, email, givenScope string) error {
 	if !utils.ValidateEmail(email) {
-		return utils.BadRequest("email invalid")
+		return common.BadRequest("email invalid")
 	}
 	err := utils.ValidateEmailFudan(email)
 	if err != nil {
@@ -248,7 +249,7 @@ func verifyWithEmail(c *fiber.Ctx, email, givenScope string) error {
 		return err
 	}
 	if deleted {
-		return utils.BadRequest("注销账号后禁止注册")
+		return common.BadRequest("注销账号后禁止注册")
 	}
 	registered, err := models.HasRegisteredEmail(models.DB, email)
 	if err != nil {
@@ -262,9 +263,9 @@ func verifyWithEmail(c *fiber.Ctx, email, givenScope string) error {
 		scope = "reset"
 	}
 	if givenScope == "register" && scope == "reset" {
-		return utils.BadRequest("该用户已注册，请使用重置密码功能")
+		return common.BadRequest("该用户已注册，请使用重置密码功能")
 	} else if givenScope == "reset" && scope == "register" {
-		return utils.BadRequest("该用户未注册，请先注册账户")
+		return common.BadRequest("该用户未注册，请先注册账户")
 	}
 	code, err := auth.SetVerificationCode(email, scope)
 	if err != nil {
@@ -307,20 +308,20 @@ func verifyWithEmail(c *fiber.Ctx, email, givenScope string) error {
 // @Router /verify/apikey [get]
 // @Param email query ApikeyRequest true "apikey, email"
 // @Success 200 {object} ApikeyResponse
-// @Success 200 {object} utils.MessageResponse "用户未注册“
-// @Failure 403 {object} utils.MessageResponse "apikey不正确“
-// @Failure 409 {object} utils.MessageResponse "用户已注册“
-// @Failure 500 {object} utils.MessageResponse
+// @Success 200 {object} common.MessageResponse "用户未注册“
+// @Failure 403 {object} common.MessageResponse "apikey不正确“
+// @Failure 409 {object} common.MessageResponse "用户已注册“
+// @Failure 500 {object} common.MessageResponse
 func VerifyWithApikey(c *fiber.Ctx) error {
 	var query ApikeyRequest
-	err := utils.ValidateQuery(c, &query)
+	err := common.ValidateQuery(c, &query)
 	if err != nil {
 		return err
 	}
 
 	scope := "register"
 	if !auth.CheckApikey(query.Apikey) {
-		return utils.Forbidden("API Key 不正确，您可以选择使用旦夕账号登录，或者在 auth.fduhole.com 注册旦夕账户")
+		return common.Forbidden("API Key 不正确，您可以选择使用旦夕账号登录，或者在 auth.fduhole.com 注册旦夕账户")
 	}
 	ok, err := models.HasRegisteredEmail(models.DB, query.Email)
 	if err != nil {
@@ -328,10 +329,10 @@ func VerifyWithApikey(c *fiber.Ctx) error {
 	}
 
 	if ok {
-		return c.Status(409).JSON(utils.Message("用户已注册"))
+		return c.Status(409).JSON(common.HttpError{Code: 409, Message: "用户已注册"})
 	}
 	if query.CheckRegister {
-		return c.Status(200).JSON(utils.Message("用户未注册"))
+		return c.Status(200).JSON(common.HttpError{Code: 200, Message: "用户已注册"})
 	}
 
 	code, err := auth.SetVerificationCode(query.Email, scope)
@@ -356,12 +357,12 @@ func VerifyWithApikey(c *fiber.Ctx) error {
 // @Router /users/me [delete]
 // @Param json body LoginRequest true "email, password"
 // @Success 204
-// @Failure 400 {object} utils.MessageResponse "密码错误“
-// @Failure 404 {object} utils.MessageResponse "用户不存在“
-// @Failure 500 {object} utils.MessageResponse
+// @Failure 400 {object} common.MessageResponse "密码错误“
+// @Failure 404 {object} common.MessageResponse "用户不存在“
+// @Failure 500 {object} common.MessageResponse
 func DeleteUser(c *fiber.Ctx) error {
 	var body LoginRequest
-	err := utils.ValidateBody(c, &body)
+	err := common.ValidateBody(c, &body)
 	if err != nil {
 		return err
 	}
@@ -381,7 +382,7 @@ func DeleteUser(c *fiber.Ctx) error {
 			return err
 		}
 		if !ok {
-			return utils.Forbidden("密码错误")
+			return common.Forbidden("密码错误")
 		}
 
 		user.IsActive = false

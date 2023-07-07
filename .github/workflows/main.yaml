@@ -1,7 +1,7 @@
 name: Dev Build
 on:
   push:
-    branches: [ dev ]
+    branches: [ main ]
 
 env:
   APP_NAME: auth_next
@@ -21,6 +21,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to Aliyun ACR
+        uses: docker/login-action@master
+        with:
+          registry: registry.cn-shanghai.aliyuncs.com
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v3
@@ -28,5 +34,7 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:dev
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP_NAME }}:master
+            registry.cn-shanghai.aliyuncs.com/${{ secrets.ACR_NAMESPACE }}/${{ env.APP_NAME }}:latest
+            registry.cn-shanghai.aliyuncs.com/${{ secrets.ACR_NAMESPACE }}/${{ env.APP_NAME }}:master
 

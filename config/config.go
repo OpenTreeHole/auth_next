@@ -3,10 +3,8 @@ package config
 import (
 	"encoding/base32"
 	"encoding/base64"
-	"fmt"
-	"github.com/caarlos0/env/v6"
-	"github.com/creasty/defaults"
-	"log"
+	"github.com/caarlos0/env/v9"
+	"github.com/rs/zerolog/log"
 	"net/url"
 )
 
@@ -37,21 +35,13 @@ var RegisterApikeySecret string
 
 func InitConfig() {
 	var err error
-	if err = env.Parse(&Config); err != nil {
-		panic(err)
+	err = env.Parse(&Config)
+	if err != nil {
+		log.Panic().Err(err)
 	}
-	fmt.Printf("%+v\n", &Config)
+	log.Info().Any("config", Config).Send()
 
-	if err = env.Parse(&FileConfig); err != nil {
-		if Config.Mode != "production" {
-			log.Println(err)
-			if err = defaults.Set(&FileConfig); err != nil {
-				panic(err)
-			}
-		} else {
-			panic(err)
-		}
-	}
+	initFileConfig()
 
 	if FileConfig.IdentifierSalt == "" {
 		DecryptedIdentifierSalt = []byte("123456")
@@ -63,4 +53,20 @@ func InitConfig() {
 	}
 
 	RegisterApikeySecret = base32.StdEncoding.EncodeToString([]byte(FileConfig.RegisterApikeySeed))
+}
+
+func initFileConfig() {
+	err := env.Parse(&FileConfig)
+	if err != nil {
+		if e, ok := err.(*env.AggregateError); ok {
+			for _, innerErr := range e.Errors {
+				switch innerErr.(type) {
+				case env.LoadFileContentError:
+					continue
+				default:
+					log.Panic().Err(err).Msg("init file config error")
+				}
+			}
+		}
+	}
 }

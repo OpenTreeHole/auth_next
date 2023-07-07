@@ -2,15 +2,11 @@ package models
 
 import (
 	"auth_next/config"
-	"auth_next/utils"
-	"encoding/base64"
-	"encoding/json"
-	"errors"
 	"github.com/gofiber/fiber/v2"
+	"github.com/opentreehole/go-common"
 	"golang.org/x/exp/slices"
 	"gorm.io/gorm"
 	"log"
-	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -74,7 +70,7 @@ func LoadUserFromDB(userID int) (*User, error) {
 	err := DB.Where("is_active = true").Take(&user, userID).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, utils.NotFound("User Not Found")
+			return nil, common.NotFound("User Not Found")
 		} else {
 			return nil, err
 		}
@@ -83,45 +79,11 @@ func LoadUserFromDB(userID int) (*User, error) {
 	}
 }
 
-func GetUserID(c *fiber.Ctx) (int, error) {
-	if config.Config.Mode == "dev" || config.Config.Mode == "test" {
-		return 1, nil
-	}
-
-	id, err := strconv.Atoi(c.Get("X-Consumer-Username"))
-	if err != nil {
-		return 0, utils.Unauthorized("Unauthorized")
-	}
-
-	return id, nil
-}
-
-// parseJWT extracts and parse token
-func parseJWT(token string) (Map, error) {
-	if token == "" {
-		return nil, errors.New("jwt token required")
-	}
-	payloads := strings.SplitN(token, ".", 3)
-	if len(payloads) < 3 {
-		return nil, errors.New("jwt token required")
-	}
-
-	// jwt encoding ignores padding, so RawStdEncoding should be used instead of StdEncoding
-	payloadBytes, err := base64.RawURLEncoding.DecodeString(payloads[1]) // the middle one is payload
-	if err != nil {
-		return nil, err
-	}
-
-	var value Map
-	err = json.Unmarshal(payloadBytes, &value)
-	return value, err
-}
-
 func GetUserByRefreshToken(c *fiber.Ctx) (string, *User, error) {
 	// get id
-	userID, err := GetUserID(c)
-	if err != nil {
-		return "", nil, err
+	userID, ok := c.Locals("user_id").(int)
+	if !ok {
+		return "", nil, common.Unauthorized()
 	}
 
 	tokenString := c.Get("Authorization")
@@ -134,13 +96,14 @@ func GetUserByRefreshToken(c *fiber.Ctx) (string, *User, error) {
 	}
 	tokenString = strings.Trim(tokenString, " ")
 
-	payload, err := parseJWT(tokenString)
+	var payload Map
+	err := common.ParseJWTToken(tokenString, &payload)
 	if err != nil {
 		return "", nil, err
 	}
 
 	if tokenType, ok := payload["type"]; !ok || tokenType != "refresh" {
-		return "", nil, utils.Unauthorized("refresh token invalid")
+		return "", nil, common.Unauthorized("refresh token invalid")
 	}
 
 	user, err := LoadUserFromDB(userID)
