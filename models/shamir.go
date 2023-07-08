@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
+	"os"
 )
 
 type ShamirEmail struct {
@@ -25,46 +27,89 @@ type ShamirPublicKey struct {
 
 var ShamirPublicKeys []ShamirPublicKey
 
-func LoadShamirPublicKey() error {
+// InitShamirPublicKey initialize shamir public key.
+// if found in database, load from database,
+// else generate from default keys
+func InitShamirPublicKey() {
 	if !config.Config.ShamirFeature {
-		return nil
+		return
 	}
 
 	ShamirPublicKeys = make([]ShamirPublicKey, 0)
-	result := DB.Find(&ShamirPublicKeys)
-	if result.Error != nil {
-		return result.Error
+	err := DB.Find(&ShamirPublicKeys).Error
+	if err != nil {
+		log.Fatal().Err(err).Msg("load shamir public key failed")
 	}
 
 	// check if stored public keys in the database
 	if len(ShamirPublicKeys) == 0 {
-		return errors.New("shamir public key not found, please check your database")
-	}
+		// no public key found, generate using default keys
+		log.Warn().Msg("no public key found in database, using default keys")
 
-	// check public key validity
-	for i := range ShamirPublicKeys {
-		identityName := ShamirPublicKeys[i].IdentityName
+		// load keys from data dir
+		for i := 1; i <= config.DefaultShamirKeyCount; i++ {
+			filename := fmt.Sprintf("data/%d-public.key", i)
 
-		// parse key
-		key, err := crypto.NewKeyFromArmored(ShamirPublicKeys[i].ArmoredPublicKey)
+			// read public key
+			armoredPublicKeyBytes, err := os.ReadFile(filename)
+			if err != nil {
+				log.Fatal().Err(err).Msg("read default public key failed")
+			}
+			armoredPublicKey := string(armoredPublicKeyBytes)
+
+			// parse key
+			key, err := crypto.NewKeyFromArmored(armoredPublicKey)
+			if err != nil {
+				log.Fatal().Err(err).Msg("parse default public key failed")
+			}
+
+			// transform public key to key ring
+			keyRing, err := crypto.NewKeyRing(key)
+			if err != nil {
+				log.Fatal().Err(err).Msg("cannot generate keyring from key")
+			}
+
+			// append to public key list
+			ShamirPublicKeys = append(ShamirPublicKeys, ShamirPublicKey{
+				ID:               i,
+				IdentityName:     key.GetEntity().PrimaryIdentity().Name,
+				ArmoredPublicKey: armoredPublicKey,
+				PublicKey:        keyRing,
+			})
+		}
+
+		// save public key list to database
+		err := DB.Save(&ShamirPublicKeys).Error
 		if err != nil {
-			return fmt.Errorf("%v; IdentityName: %v\n", err.Error(), identityName)
+			log.Fatal().Err(err).Msg("save default public key failed")
 		}
+	} else {
+		// check public key validity
+		for i := range ShamirPublicKeys {
+			identityName := ShamirPublicKeys[i].IdentityName
 
-		// check identity name
-		if key.GetEntity().PrimaryIdentity().Name != identityName {
-			return fmt.Errorf("identity name not in public key, please check your database; IdentityName: %v\n", identityName)
-		}
+			// parse key
+			key, err := crypto.NewKeyFromArmored(ShamirPublicKeys[i].ArmoredPublicKey)
+			if err != nil {
+				log.Fatal().Err(err).Str("identity_name", identityName).Msg("parse key failed")
+			}
 
-		// transform public key to key ring
-		ShamirPublicKeys[i].PublicKey, err = crypto.NewKeyRing(key)
-		if err != nil {
-			return fmt.Errorf("cannot generate keyring from key; IdentityName: %v\n", identityName)
+			// check identity name
+			if key.GetEntity().PrimaryIdentity().Name != identityName {
+				log.Fatal().
+					Str("identity_name", identityName).
+					Msg("identity name not in public key, please check your database")
+			}
+
+			// transform public key to key ring
+			ShamirPublicKeys[i].PublicKey, err = crypto.NewKeyRing(key)
+			if err != nil {
+				log.Fatal().
+					Str("identity_name", identityName).
+					Msg("cannot generate keyring from key")
+			}
 		}
 	}
-
-	// all check success
-	return nil
 }
 
 func CreateShamirEmails(tx *gorm.DB, userID int, shares []shamir.Share) error {

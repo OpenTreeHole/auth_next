@@ -65,7 +65,7 @@ func Login(c *fiber.Ctx) error {
 		}
 	}
 
-	access, refresh, err := kong.CreateToken(&user)
+	access, refresh, err := user.CreateJWTToken()
 	if err != nil {
 		return err
 	}
@@ -130,10 +130,11 @@ func Refresh(c *fiber.Ctx) error {
 		return err
 	}
 
-	access, _, err := kong.CreateToken(user)
+	access, _, err := user.CreateJWTToken()
 	if err != nil {
 		return err
 	}
+
 	return c.JSON(TokenResponse{
 		Access:  access,
 		Refresh: refreshToken, // using old refreshToken instead

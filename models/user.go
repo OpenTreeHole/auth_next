@@ -4,32 +4,41 @@ import (
 	"auth_next/config"
 	"github.com/gofiber/fiber/v2"
 	"github.com/opentreehole/go-common"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/exp/slices"
 	"gorm.io/gorm"
-	"log"
 	"strings"
 	"sync/atomic"
 	"time"
 )
 
 type User struct {
-	ID         int       `json:"id" gorm:"primaryKey"`
-	UserID     int       `json:"user_id" gorm:"-"`
-	Nickname   string    `json:"nickname" gorm:"default:user;size:32"`
-	Identifier string    `json:"-" gorm:"size:128;uniqueIndex:idx_user_identifier,length:10"`
-	Password   string    `json:"-" gorm:"size:128"`
-	IsAdmin    bool      `json:"is_admin" gorm:"default:false;index"`
-	IsActive   bool      `json:"-" gorm:"default:true"`
-	JoinedTime time.Time `json:"joined_time" gorm:"autoCreateTime"`
-	LastLogin  time.Time `json:"last_login" gorm:"autoUpdateTime"`
+	ID            int            `json:"id" gorm:"primaryKey"`
+	UserID        int            `json:"user_id" gorm:"-"`
+	Nickname      string         `json:"nickname" gorm:"default:user;size:32"`
+	Identifier    string         `json:"-" gorm:"size:128;uniqueIndex:idx_user_identifier,length:10"`
+	Password      string         `json:"-" gorm:"size:128"`
+	IsAdmin       bool           `json:"is_admin" gorm:"default:false;index"`
+	IsActive      bool           `json:"-" gorm:"default:true"`
+	JoinedTime    time.Time      `json:"joined_time" gorm:"autoCreateTime"`
+	LastLogin     time.Time      `json:"last_login" gorm:"autoUpdateTime"`
+	UserJwtSecret *UserJwtSecret `json:"-" gorm:"foreignKey:ID;references:ID"`
 }
 
 // AdminIDList refresh every 1 minutes
 var AdminIDList atomic.Value
 
-func GetAdminList() error {
+func InitAdminList() {
+	err := LoadAdminList()
+	if err != nil {
+		log.Fatal().Err(err).Msg("initial admin list failed")
+	}
+	go RefreshAdminList()
+}
+
+func LoadAdminList() error {
 	adminIDs := make([]int, 0, 10)
-	err := DB.Table("user").Select("id").Order("id asc").Find(&adminIDs, "is_admin = true").Error
+	err := DB.Model(&User{}).Where("is_admin = true").Pluck("id", &adminIDs).Error
 	if err != nil {
 		return err
 	}
@@ -40,9 +49,9 @@ func GetAdminList() error {
 func RefreshAdminList() {
 	ticker := time.NewTicker(1 * time.Minute)
 	for range ticker.C {
-		err := GetAdminList()
+		err := LoadAdminList()
 		if err != nil {
-			log.Println(err)
+			log.Err(err).Msg("refresh admin list failed")
 		}
 	}
 }

@@ -2,37 +2,25 @@ package models
 
 import (
 	"auth_next/config"
-	"errors"
+	"github.com/rs/zerolog/log"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
-	"log"
 	"os"
 	"time"
 )
 
 func InitDB() {
-	var err error
-
 	// connect to database and auto migrate models
-	err = initDB()
-	if err != nil {
-		panic(err)
-	}
+	initDB()
 
-	// get admin list for admin check
-	err = GetAdminList()
-	if err != nil {
-		panic(err)
-	}
+	// get admin list for admin check and start admin refresh task
+	InitAdminList()
 
 	// get pgp public key for register
-	err = LoadShamirPublicKey()
-	if err != nil {
-		panic(err)
-	}
+	InitShamirPublicKey()
 }
 
 var DB *gorm.DB
@@ -42,7 +30,7 @@ var gormConfig = &gorm.Config{
 		SingularTable: true, // use singular table name, table for `User` would be `user` with this option enabled
 	},
 	Logger: logger.New(
-		log.Default(),
+		&log.Logger,
 		logger.Config{
 			SlowThreshold:             time.Second,  // 慢 SQL 阈值
 			LogLevel:                  logger.Error, // 日志级别
@@ -52,14 +40,14 @@ var gormConfig = &gorm.Config{
 	),
 }
 
-func initDB() error {
+func initDB() {
 	mysqlDB := func() (*gorm.DB, error) {
 		return gorm.Open(mysql.Open(config.Config.DbUrl), gormConfig)
 	}
 	sqliteDB := func() (*gorm.DB, error) {
 		err := os.MkdirAll("data", 0755)
 		if err != nil && !os.IsExist(err) {
-			panic(err)
+			log.Fatal().Err(err).Msg("create data directory failed")
 		}
 		return gorm.Open(sqlite.Open("data/sqlite.db"), gormConfig)
 	}
@@ -88,11 +76,11 @@ func initDB() error {
 			DB, err = mysqlDB()
 		}
 	default:
-		return errors.New("unsupported mode")
+		log.Fatal().Str("scope", "init db").Msg("unknown mode")
 	}
 
 	if err != nil {
-		return err
+		log.Fatal().Err(err).Msg("connect to database failed")
 	}
 
 	if config.Config.Mode == "dev" || config.Config.Mode == "test" {
@@ -108,12 +96,18 @@ func initDB() error {
 		ActiveStatus{},
 	)
 	if err != nil {
-		return err
+		log.Fatal().Err(err).Msg("auto migrate failed")
 	}
 	if config.Config.ShamirFeature {
-		return DB.AutoMigrate(ShamirPublicKey{})
-	} else {
-		return nil
+		err = DB.AutoMigrate(ShamirPublicKey{})
+		if err != nil {
+			log.Fatal().Err(err).Msg("auto migrate failed")
+		}
 	}
-
+	if config.Config.Standalone {
+		err = DB.AutoMigrate(UserJwtSecret{})
+		if err != nil {
+			log.Fatal().Err(err).Msg("auto migrate failed")
+		}
+	}
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 	"github.com/redis/go-redis/v9"
-	"log"
+	"github.com/rs/zerolog/log"
 	"math/big"
 	"time"
 )
@@ -30,7 +30,7 @@ func InitVerificationCodeCache() {
 				),
 			),
 		)
-		log.Println("verification code cache: redis")
+		log.Info().Msg("verification code cache: redis")
 	} else {
 		verificationCodeCache = cache.New[string](
 			gocacheStore.NewGoCache(
@@ -39,7 +39,7 @@ func InitVerificationCodeCache() {
 					20*time.Minute),
 			),
 		)
-		log.Println("verification code cache: gocache")
+		log.Info().Msg("verification code cache: gocache")
 	}
 }
 

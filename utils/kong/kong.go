@@ -4,9 +4,10 @@ import (
 	"auth_next/config"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
 	"strconv"
@@ -61,7 +62,7 @@ func Ping() error {
 	if req.StatusCode != 200 {
 		return fmt.Errorf("error connect to kong[%s]: %s", config.Config.KongUrl, err)
 	} else {
-		fmt.Println("ping kong success")
+		log.Info().Msg("ping kong success")
 	}
 	return req.Body.Close()
 }
@@ -173,8 +174,16 @@ func DeleteJwtCredential(userID int) error {
 	for i := range jwtCredentials {
 		innerErr := deleteAJwtCredential(jwtCredentials[i].ID)
 		if innerErr != nil {
-			err = errors.Wrap(innerErr, err.Error())
+			err = errors.Join(err, innerErr)
 		}
 	}
 	return err
+}
+
+func GetJwtSecret(userID int) (key, secret string, err error) {
+	jwtCredential, err := GetJwtCredential(userID)
+	if err != nil {
+		return "", "", err
+	}
+	return jwtCredential.Key, jwtCredential.Secret, nil
 }

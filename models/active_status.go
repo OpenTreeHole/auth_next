@@ -1,7 +1,7 @@
 package models
 
 import (
-	"log"
+	"github.com/rs/zerolog/log"
 	"time"
 )
 
@@ -18,13 +18,15 @@ func ActiveStatusTask() {
 		Where("last_login between ? and ?", time.Now().Add(-24*time.Hour), time.Now()).
 		Count(&dau).Error
 	if err != nil {
-		log.Println("load dau err")
+		log.Err(err).Msg("load dau err")
+		return
 	}
 	err = DB.Model(&User{}).
 		Where("last_login between ? and ?", time.Now().AddDate(0, -1, 0), time.Now()).
 		Count(&mau).Error
 	if err != nil {
-		log.Println("load mau err")
+		log.Err(err).Msg("load mau err")
+		return
 	}
 
 	status := ActiveStatus{
@@ -33,6 +35,6 @@ func ActiveStatusTask() {
 	}
 	err = DB.Create(&status).Error
 	if err != nil {
-		log.Println("save status err")
+		log.Err(err).Msg("save status err")
 	}
 }

@@ -13,9 +13,9 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/gofiber/fiber/v2"
 	"github.com/opentreehole/go-common"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/exp/slices"
 	"gorm.io/gorm"
-	"log"
 	"strings"
 )
 
@@ -313,10 +313,12 @@ func updateShamir() {
 	allShares := GlobalUploadShamirStatus.UploadedShares
 
 	// debug
-	fmt.Printf("%#v", allShares)
+	log.Debug().Any("all_shares", allShares).Send()
 
 	if len(allShares) == 0 {
-		panic("no shares")
+		log.Error().Msg("no shares uploaded")
+		GlobalUploadShamirStatus.Unlock()
+		return
 	}
 
 	// get all userID
@@ -409,6 +411,7 @@ func updateShamir() {
 	})
 
 	GlobalUploadShamirStatus.Lock()
+	defer GlobalUploadShamirStatus.Unlock()
 	status := &GlobalUploadShamirStatus
 
 	status.ShamirUpdating = false
@@ -434,7 +437,7 @@ func updateShamir() {
 		if models.DB.Migrator().HasTable(backupShamirTableName) {
 			err := models.DB.Migrator().RenameTable(backupShamirTableName, shamirTableName)
 			if err != nil {
-				log.Println(err.Error())
+				log.Err(err).Msg("rename table error")
 			}
 		}
 
@@ -448,13 +451,11 @@ func updateShamir() {
 		content = []byte(err.Error())
 	}
 
-	GlobalUploadShamirStatus.Unlock()
-
 	// send email to update
 	err = utils.SendEmail(subject, string(content), []string{config.Config.EmailDev})
 	if err != nil {
 		log.Printf("error sending emails: %v\nsubject: %v\ncontent: %v", err.Error(), subject, string(content))
 	}
 
-	log.Println("updateShamir function finished")
+	log.Info().Msg("updateShamir function finished")
 }

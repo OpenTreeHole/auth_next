@@ -18,16 +18,17 @@ import (
 	"auth_next/apis"
 	"auth_next/config"
 	_ "auth_next/docs"
-	"auth_next/middlewares"
 	"auth_next/models"
 	"auth_next/utils/auth"
 	"auth_next/utils/kong"
 	"context"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/opentreehole/go-common"
 	"github.com/robfig/cron/v3"
-	"log"
+	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -40,9 +41,11 @@ func main() {
 	apis.InitShamirStatus()
 
 	// connect to kong
-	err := kong.Ping()
-	if err != nil {
-		panic(err)
+	if !config.Config.Standalone {
+		err := kong.Ping()
+		if err != nil {
+			log.Fatal().Err(err).Msg("kong ping failed")
+		}
 	}
 
 	app := fiber.New(fiber.Config{
@@ -51,7 +54,7 @@ func main() {
 		JSONDecoder:           json.Unmarshal,
 		DisableStartupMessage: true,
 	})
-	middlewares.RegisterMiddlewares(app)
+	RegisterMiddlewares(app)
 	apis.RegisterRoutes(app)
 
 	cancel := startTasks()
@@ -59,7 +62,7 @@ func main() {
 	go func() {
 		err := app.Listen("0.0.0.0:8000")
 		if err != nil {
-			log.Println(err)
+			log.Fatal().Err(err).Msg("app listen failed")
 		}
 	}()
 
@@ -70,9 +73,9 @@ func main() {
 	<-interrupt
 
 	// close app
-	err = app.Shutdown()
+	err := app.Shutdown()
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Msg("error shutdown app")
 	}
 
 	// stop tasks
@@ -81,13 +84,26 @@ func main() {
 
 func startTasks() context.CancelFunc {
 	_, cancel := context.WithCancel(context.Background())
-	go models.RefreshAdminList()
 
 	c := cron.New()
 	_, err := c.AddFunc("CRON_TZ=Asia/Shanghai 0 0 * * *", models.ActiveStatusTask) // run every day 00:00 +8:00
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("cron add func failed")
 	}
 	go c.Start()
 	return cancel
+}
+
+func RegisterMiddlewares(app *fiber.App) {
+	app.Use(recover.New(recover.Config{
+		EnableStackTrace:  true,
+		StackTraceHandler: common.StackTraceHandler,
+	}))
+	app.Use(common.MiddlewareGetUserID)
+	if config.Config.Mode != "bench" {
+		app.Use(common.MiddlewareCustomLogger)
+	}
+	if config.Config.Mode == "dev" {
+		app.Use(cors.New(cors.Config{AllowOrigins: "*"})) // for swag docs
+	}
 }

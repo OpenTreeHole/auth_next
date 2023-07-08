@@ -114,7 +114,7 @@ func Register(c *fiber.Ctx) error {
 		}
 	}
 
-	accessToken, refreshToken, err := kong.CreateToken(&user)
+	accessToken, refreshToken, err := user.CreateJWTToken()
 	if err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func ChangePassword(c *fiber.Ctx) error {
 		return err
 	}
 
-	accessToken, refreshToken, err := kong.CreateToken(&user)
+	accessToken, refreshToken, err := user.CreateJWTToken()
 	if err != nil {
 		return err
 	}

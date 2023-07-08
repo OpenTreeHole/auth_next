@@ -8,10 +8,14 @@ import (
 	"net/url"
 )
 
+const (
+	DefaultShamirKeyCount = 7
+)
+
 var Config struct {
 	Mode                    string   `env:"MODE" envDefault:"dev"`
-	DbUrl                   string   `env:"DB_URL,required"`
-	KongUrl                 string   `env:"KONG_URL,required"`
+	DbUrl                   string   `env:"DB_URL"`
+	KongUrl                 string   `env:"KONG_URL"`
 	RedisUrl                string   `env:"REDIS_URL"`
 	NotificationUrl         string   `env:"NOTIFICATION_URL"`
 	EmailWhitelist          []string `env:"EMAIL_WHITELIST"`
@@ -19,6 +23,7 @@ var Config struct {
 	EmailDomain             string   `env:"EMAIL_DOMAIN,required"`
 	EmailDev                string   `env:"EMAIL_DEV" envDefault:"dev@fduhole.com"`
 	ShamirFeature           bool     `env:"SHAMIR_FEATURE" envDefault:"true"`
+	Standalone              bool     `env:"STANDALONE" envDefault:"false"`
 	VerificationCodeExpires int      `env:"VERIFICATION_CODE_EXPIRES" envDefault:"10"`
 	SiteName                string   `env:"SITE_NAME" envDefault:"Open Tree Hole"`
 }
@@ -37,21 +42,28 @@ func InitConfig() {
 	var err error
 	err = env.Parse(&Config)
 	if err != nil {
-		log.Panic().Err(err)
+		log.Fatal().Err(err)
 	}
 	log.Info().Any("config", Config).Send()
 
 	initFileConfig()
 
 	if FileConfig.IdentifierSalt == "" {
-		DecryptedIdentifierSalt = []byte("123456")
+		if Config.Mode == "production" {
+			log.Fatal().Msg("identifier salt not set")
+		} else {
+			DecryptedIdentifierSalt = []byte("123456")
+		}
 	} else {
 		DecryptedIdentifierSalt, err = base64.StdEncoding.DecodeString(FileConfig.IdentifierSalt)
 		if err != nil {
-			panic(err)
+			log.Fatal().Err(err).Msg("decode identifier salt error")
 		}
 	}
 
+	if FileConfig.RegisterApikeySeed == "" && Config.Mode == "production" {
+		log.Fatal().Msg("register apikey seed not set")
+	}
 	RegisterApikeySecret = base32.StdEncoding.EncodeToString([]byte(FileConfig.RegisterApikeySeed))
 }
 
@@ -64,7 +76,7 @@ func initFileConfig() {
 				case env.LoadFileContentError:
 					continue
 				default:
-					log.Panic().Err(err).Msg("init file config error")
+					log.Fatal().Err(err).Msg("init file config error")
 				}
 			}
 		}

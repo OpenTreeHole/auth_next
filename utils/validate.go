@@ -4,6 +4,7 @@ import (
 	"auth_next/config"
 	"github.com/go-playground/validator/v10"
 	"github.com/opentreehole/go-common"
+	"github.com/rs/zerolog/log"
 	"strconv"
 	"strings"
 )
@@ -11,7 +12,7 @@ import (
 func init() {
 	err := common.Validate.RegisterValidation("isValidEmail", ValidateEmailFunc, false)
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("register validation failed")
 	}
 }
 
