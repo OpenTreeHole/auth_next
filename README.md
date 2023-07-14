@@ -1,6 +1,7 @@
 # Open Tree Hole Auth Next
 
-Next Generation of Auth microservice integrated with [Kong Gateway](https://github.com/Kong/kong) for registration and issuing tokens
+Next Generation of Auth microservice integrated with [Kong Gateway](https://github.com/Kong/kong) for registration and
+issuing tokens
 
 ## Features
 
@@ -10,7 +11,40 @@ Next Generation of Auth microservice integrated with [Kong Gateway](https://gith
 
 ## Usage
 
-### Prerequisite
+### Configurations
+
+Environment Variables
+
+|           Name            |     Default     |         Valid values         |                                 Description                                  |
+|:-------------------------:|:---------------:|:----------------------------:|:----------------------------------------------------------------------------:|
+|           MODE            |       dev       | dev, production, test, bench |                          if dev, log gorm debug sql                          |
+|          DB_URL           |                 |                              |                 Database DSN, required in "production" mode                  |
+|         KONG_URL          |                 |                              |         if STANDALONE is false, required to connect to kong gateway          |
+|         REDIS_URL         |                 |                              |                       if not set, use go-cache instead                       |
+|     NOTIFICATION_URL      |                 |                              |                   if not set, no notification will be sent                   |
+|      EMAIL_WHITELIST      |                 |                              |           use ',' to separate emails; if not set, allow all emails           |
+| EMAIL_SERVER_NO_REPLY_URL |                 |                              | required in "production" mode; if not set, unable to send verification email |
+|       EMAIL_DOMAIN        |                 |                              | required in "production" mode; if not set, unable to send verification email |
+|         EMAIL_DEV         | dev@fduhole.com |                              |                      send email if shamir update failed                      |
+|      SHAMIR_FEATURE       |      true       |                              |   if enabled, check email shamir encryption when users register and login    |
+|        STANDALONE         |      false      |                              |          if not set, this application not required to set KONG_URL           |
+| VERIFICATION_CODE_EXPIRES |       10        |           integers           |                  register verification code expiration time                  |
+|         SITE_NAME         | Open Tree Hole  |                              |                      title prefix of verification email                      |
+
+File settings, required in production mode
+
+|       Env Name       |             Default Path              | Default |                         Description                         |
+|:--------------------:|:-------------------------------------:|:-------:|:-----------------------------------------------------------:|
+|   IDENTIFIER_SALT    |   /var/run/secrets/identifier_salt    | 123456  | hash salt for encrypting email; required in production mode |
+| REGISTER_APIKEY_SEED | /var/run/secrets/register_apikey_seed |         |        register apikey; required in production mode         |
+|      KONG_TOKEN      |      /var/run/secrets/kong_token      |         |                       kong api token                        |
+
+### Debug Development Prerequisite
+
+1. set STANDALONE environment to true
+2. if `SHAMIR_FEATURE` set true, it will create table `shamir_public_key` automatically, and insert default shamir private keys defined in ./data/*-private.key
+
+### Production Deploy Prerequisite
 
 1. Kong Gateway deployed, see https://docs.konghq.com/gateway/latest/
 
@@ -19,11 +53,12 @@ Next Generation of Auth microservice integrated with [Kong Gateway](https://gith
 Create table `shamir_public_key`
 
 ```mysql
-CREATE TABLE `shamir_public_key` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `identity_name` longtext NOT NULL,
-  `armored_public_key` longtext NOT NULL,
-  PRIMARY KEY (`id`)
+CREATE TABLE `shamir_public_key`
+(
+    `id`                 bigint   NOT NULL AUTO_INCREMENT,
+    `identity_name`      longtext NOT NULL,
+    `armored_public_key` longtext NOT NULL,
+    PRIMARY KEY (`id`)
 );
 ```
 
@@ -31,115 +66,20 @@ Insert at least 7 PGP key administrator info into this table
 
 `identity_name`: PGP identity name or `uid`, including username, ( comment ) and < email >
 
-`armored_public_key`: the public key begin with `-----BEGIN PGP PUBLIC KEY BLOCK-----` and end with `-----END PGP PUBLIC KEY BLOCK-----`
+`armored_public_key`: the public key begin with `-----BEGIN PGP PUBLIC KEY BLOCK-----` and end
+with `-----END PGP PUBLIC KEY BLOCK-----`
 
-3. Environment variables
-
-`MODE` optional
-
-This variable controls info logger and user authorization. 
-
-one of `production`, `dev`, `test` or `bench`. 
-
-default: `dev`.
-
-`DB_URL` **required**
-
-This variable specified the dsn for database connecting.
-
-format: `username:password@tcp(hostname:port)/database?parseTime=true&loc=[Timezone]`
-
-eg: `auth:auth@tcp(mysql:3306)/auth?parseTime=true&loc=Asia%2FShanghai`
-
-`KONG_URL` **required**
-
-This variable specified the Kong Gateway Url
-
-eg: `http://kong:8001`
-
-`REDIS_URL` optional
-
-This variable specified redis url for verification code storage and other cache fields.
-
-If not set, use local memory cache powered by [go-cache](https://github.com/patrickmn/go-cache).
-
-`EMAIL_WHITELIST` optional
-
-This variable is the email whitelist checked when user register, seperated by comma.
-
-eg: `qq.com,gmail.com,hotmail.com`
-
-if not set, mean allowing all email address.
-
-`EMAIL_SERVER_NO_REPLY_URL` **required**
-
-This variable specified smtp server url for sending verification code email.
-
-format: `smtps://username:password@stmp_host:port`
-
-eg: `smtps://no-reply:xxx@smtp.feishu.cn:465`
-
-`EMAIL_DOMAIN` **required**
-
-This variable specified the sending email domain name and will send email from `username@domain`.
-
-eg: `fduhole.com`
-
-`SHAMIR_FEATURE` optional
-
-This variable is set to open or close shamir feature.
-
-default: `true`
-
-`VERIFICATION_CODE_EXPIRES` optional
-
-verification code expire time in minute.
-
-default: `10`
-
-`SITE_NAME` optional
-
-Send site name when sending verification code email
-
-default: `Open Tree Hole`
-
-4. Environment variables to load data from file
-
-> These files must exist, otherwise the program will panic.
-
-`IDENTIFIER_SALT`
-
-A base64 encrypted secret for encrypting user email into identifier.
-
-default: `/var/run/secrets/identifier_salt`
-
-`PROVISION_KEY`
-
-For oauth, set empty if not needed
-
-default: `/var/run/secrets/provision_key`
-
-`REGISTER_APIKEY_SEED`
-
-For apikey register and login
-
-default: `/var/run/secrets/register_apikey_seed`
-
-`KONG_TOKEN`
-
-Kong basic auth token, set empty if not needed.
-
-default: `/var/run/secrets/kong_token`
-
-### Deploy
+### Docker Deploy
 
 This project continuously integrates with docker. Go check it out if you don't have docker locally installed.
+
+Note: this docker image use MODE `production` as default, please check your configuration when deploying.
 
 ```shell
 docker run -d -p 8000:8000 opentreehole/auth_next
 ```
 
-or use docker-compose file: 
+or use [docker compose](./docker-compose.yml)
 
 For api documentation, please open http://localhost:8000/docs after running app
 
@@ -158,7 +98,8 @@ For api documentation, please open http://localhost:8000/docs after running app
 
 ## Contributing
 
-Feel free to dive in! [Open an issue](https://github.com/OpenTreeHole/auth_next/issues/new) or [Submit PRs](https://github.com/OpenTreeHole/auth_next/compare).
+Feel free to dive in! [Open an issue](https://github.com/OpenTreeHole/auth_next/issues/new)
+or [Submit PRs](https://github.com/OpenTreeHole/auth_next/compare).
 
 ### Contributors
 

@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/base32"
 	"encoding/base64"
+	"errors"
 	"github.com/caarlos0/env/v9"
 	"github.com/rs/zerolog/log"
 	"net/url"
@@ -13,19 +14,19 @@ const (
 )
 
 var Config struct {
-	Mode                    string   `env:"MODE" envDefault:"dev"`
-	DbUrl                   string   `env:"DB_URL"`
-	KongUrl                 string   `env:"KONG_URL"`
-	RedisUrl                string   `env:"REDIS_URL"`
-	NotificationUrl         string   `env:"NOTIFICATION_URL"`
-	EmailWhitelist          []string `env:"EMAIL_WHITELIST"`
-	EmailServerNoReplyUrl   url.URL  `env:"EMAIL_SERVER_NO_REPLY_URL,required"`
-	EmailDomain             string   `env:"EMAIL_DOMAIN,required"`
-	EmailDev                string   `env:"EMAIL_DEV" envDefault:"dev@fduhole.com"`
-	ShamirFeature           bool     `env:"SHAMIR_FEATURE" envDefault:"true"`
-	Standalone              bool     `env:"STANDALONE" envDefault:"false"`
-	VerificationCodeExpires int      `env:"VERIFICATION_CODE_EXPIRES" envDefault:"10"`
-	SiteName                string   `env:"SITE_NAME" envDefault:"Open Tree Hole"`
+	Mode                    string `envDefault:"dev"`
+	DbUrl                   string
+	KongUrl                 string
+	RedisUrl                string
+	NotificationUrl         string
+	EmailWhitelist          []string
+	EmailServerNoReplyUrl   url.URL
+	EmailDomain             string
+	EmailDev                string `envDefault:"dev@fduhole.com"`
+	ShamirFeature           bool   `envDefault:"true"`
+	Standalone              bool
+	VerificationCodeExpires int    `envDefault:"10"`
+	SiteName                string `envDefault:"Open Tree Hole"`
 }
 
 var FileConfig struct {
@@ -40,10 +41,26 @@ var RegisterApikeySecret string
 
 func InitConfig() {
 	var err error
-	err = env.Parse(&Config)
+	err = env.ParseWithOptions(&Config, env.Options{UseFieldNameByDefault: true})
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(err).Send()
 	}
+	if Config.Mode == "production" {
+		var innerErr error
+		if Config.DbUrl == "" {
+			innerErr = errors.Join(innerErr, errors.New("db url not set"))
+		}
+		if Config.EmailServerNoReplyUrl.String() == "" {
+			innerErr = errors.Join(innerErr, errors.New("email server no reply url not set"))
+		}
+		if Config.EmailDomain == "" {
+			innerErr = errors.Join(innerErr, errors.New("email domain not set"))
+		}
+		if innerErr != nil {
+			log.Fatal().Err(innerErr).Send()
+		}
+	}
+
 	log.Info().Any("config", Config).Send()
 
 	initFileConfig()
@@ -63,8 +80,9 @@ func InitConfig() {
 
 	if FileConfig.RegisterApikeySeed == "" && Config.Mode == "production" {
 		log.Fatal().Msg("register apikey seed not set")
+	} else {
+		RegisterApikeySecret = base32.StdEncoding.EncodeToString([]byte(FileConfig.RegisterApikeySeed))
 	}
-	RegisterApikeySecret = base32.StdEncoding.EncodeToString([]byte(FileConfig.RegisterApikeySeed))
 }
 
 func initFileConfig() {
