@@ -3,7 +3,6 @@ package models
 import (
 	"auth_next/config"
 	"auth_next/utils/shamir"
-	"errors"
 	"fmt"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/rs/zerolog/log"
@@ -112,10 +111,25 @@ func InitShamirPublicKey() {
 	}
 }
 
-func CreateShamirEmails(tx *gorm.DB, userID int, shares []shamir.Share) error {
-	if len(shares) != len(ShamirPublicKeys) {
-		return errors.New("shares len != shamir public key len, please check your public key or share settings")
+func CreateShamirEmails(tx *gorm.DB, userID int, email string) error {
+	shamirEmails, err := GenerateShamirEmails(userID, email)
+	if err != nil {
+		return err
 	}
+
+	// save into database
+	return tx.Create(shamirEmails).Error
+}
+
+func GenerateShamirEmails(userID int, email string) ([]ShamirEmail, error) {
+	num := len(ShamirPublicKeys)
+	threshold := num/2 + 1
+
+	shares, err := shamir.Encrypt(email, num, threshold)
+	if err != nil {
+		return nil, err
+	}
+
 	shamirEmails := make([]ShamirEmail, 0, len(shares))
 
 	// encrypt with pgp public keys
@@ -124,11 +138,11 @@ func CreateShamirEmails(tx *gorm.DB, userID int, shares []shamir.Share) error {
 		sharePlanMessage := crypto.NewPlainMessageFromString(shareText)
 		pgpMessage, err := ShamirPublicKeys[i].PublicKey.Encrypt(sharePlanMessage, nil)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		armoredPGPMessage, err := pgpMessage.GetArmored()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		shamirEmails = append(shamirEmails, ShamirEmail{
 			UserID:      userID,
@@ -137,6 +151,5 @@ func CreateShamirEmails(tx *gorm.DB, userID int, shares []shamir.Share) error {
 		})
 	}
 
-	// save into database
-	return tx.Create(shamirEmails).Error
+	return shamirEmails, nil
 }

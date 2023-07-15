@@ -32,6 +32,10 @@ func RegisterRoutes(app *fiber.App) {
 	routes.Put("/register", ChangePassword)
 	routes.Delete("/users/me", DeleteUser)
 
+	// account management debug only
+	routes.Post("/debug/register", RegisterDebug)
+	routes.Post("/debug/register/_batch", RegisterDebugInBatch)
+
 	// user info
 	routes.Get("/users/me", GetCurrentUser)
 	routes.Get("/users/admin", ListAdmin)

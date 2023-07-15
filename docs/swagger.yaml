@@ -201,6 +201,72 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/apis.Info'
+  /debug/register:
+    post:
+      consumes:
+      - application/json
+      description: register with email, password, not need verification code
+      parameters:
+      - description: json
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/apis.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apis.TokenResponse'
+        "400":
+          description: 用户已注册
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: register, debug only
+      tags:
+      - account
+  /debug/register/_batch:
+    post:
+      consumes:
+      - application/json
+      description: register with email, password, not need verification code
+      parameters:
+      - description: json
+        in: body
+        name: json
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/apis.RegisterRequest'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apis.TokenResponse'
+        "400":
+          description: 用户已注册
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: register in batch, debug only
+      tags:
+      - account
   /login:
     post:
       consumes:

@@ -87,6 +87,13 @@ func initDB() {
 		DB = DB.Debug()
 	}
 
+	sqlDB, err := DB.DB()
+	if err != nil {
+		log.Fatal().Err(err).Msg("get sql.DB failed")
+	}
+
+	sqlDB.SetConnMaxLifetime(time.Hour)
+
 	// migrate database
 	err = DB.AutoMigrate(
 		User{},

@@ -53,6 +53,7 @@ func main() {
 		JSONEncoder:           json.Marshal,
 		JSONDecoder:           json.Unmarshal,
 		DisableStartupMessage: true,
+		BodyLimit:             128 * 1024 * 1024,
 	})
 	RegisterMiddlewares(app)
 	apis.RegisterRoutes(app)

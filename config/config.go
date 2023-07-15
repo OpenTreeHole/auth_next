@@ -20,7 +20,7 @@ var Config struct {
 	RedisUrl                string
 	NotificationUrl         string
 	EmailWhitelist          []string
-	EmailServerNoReplyUrl   url.URL
+	EmailServerNoReplyUrl   url.URL `env:"EMAIL_SERVER_NO_REPLY_URL"`
 	EmailDomain             string
 	EmailDev                string `envDefault:"dev@fduhole.com"`
 	ShamirFeature           bool   `envDefault:"true"`
@@ -78,11 +78,7 @@ func InitConfig() {
 		}
 	}
 
-	if FileConfig.RegisterApikeySeed == "" && Config.Mode == "production" {
-		log.Fatal().Msg("register apikey seed not set")
-	} else {
-		RegisterApikeySecret = base32.StdEncoding.EncodeToString([]byte(FileConfig.RegisterApikeySeed))
-	}
+	RegisterApikeySecret = base32.StdEncoding.EncodeToString([]byte(FileConfig.RegisterApikeySeed))
 }
 
 func initFileConfig() {

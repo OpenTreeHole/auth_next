@@ -31,6 +31,10 @@ type RegisterRequest struct {
 	Verification VerificationType `json:"verification" minLength:"6" maxLength:"6" swaggerType:"string"`
 }
 
+type RegisterInBatchRequest struct {
+	Data []LoginRequest `json:"data"`
+}
+
 type VerificationType string
 
 func (v *VerificationType) UnmarshalJSON(data []byte) error {
@@ -95,7 +99,7 @@ type PGPMessageResponse struct {
 
 type UserShare struct {
 	UserID int          `json:"user_id"`
-	Share  shamir.Share `json:"share"`
+	Share  shamir.Share `json:"share" swaggerType:"string"`
 }
 
 type UploadSharesRequest struct {

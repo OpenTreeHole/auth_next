@@ -4,7 +4,7 @@ package apis
 
 import (
 	"auth_next/config"
-	"auth_next/models"
+	. "auth_next/models"
 	"auth_next/utils"
 	"auth_next/utils/shamir"
 	"encoding/json"
@@ -16,20 +16,22 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/exp/slices"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+	"runtime"
 	"strings"
 )
 
 // GetPGPMessageByUserID godoc
 //
-//	@Summary	get shamir PGP message
-//	@Tags		shamir
-//	@Produce	json
-//	@Router		/shamir/{user_id} [get]
-//	@Param		user_id			path		int					true	"Target UserID"
-//	@Param		identity_name	query		PGPMessageRequest	true	"recipient uid"
-//	@Success	200				{object}	PGPMessageResponse
-//	@Failure	400				{object}	common.MessageResponse
-//	@Failure	500				{object}	common.MessageResponse
+// @Summary get shamir PGP message
+// @Tags shamir
+// @Produce json
+// @Router /shamir/{user_id} [get]
+// @Param user_id path int true "Target UserID"
+// @Param identity_name query PGPMessageRequest true "recipient uid"
+// @Success 200 {object} PGPMessageResponse
+// @Failure 400 {object} common.MessageResponse
+// @Failure 500 {object} common.MessageResponse
 func GetPGPMessageByUserID(c *fiber.Ctx) error {
 	// get identity
 	var query PGPMessageRequest
@@ -49,7 +51,7 @@ func GetPGPMessageByUserID(c *fiber.Ctx) error {
 
 	// get related pgp message key
 	var key string
-	result := models.DB.Model(&models.ShamirEmail{}).Select("key").
+	result := DB.Model(&ShamirEmail{}).Select("key").
 		Where("encrypted_by = ? AND user_id = ?", query.IdentityName, targetUserID).
 		Take(&key)
 	// DB.Take raise error when take nothing
@@ -69,14 +71,14 @@ func GetPGPMessageByUserID(c *fiber.Ctx) error {
 
 // ListPGPMessages godoc
 //
-//	@Summary	list related shamir PGP messages
-//	@Tags		shamir
-//	@Produce	json
-//	@Router		/shamir [get]
-//	@Param		identity_name	query		string	true	"recipient uid"
-//	@Success	200				{array}		PGPMessageResponse
-//	@Failure	400				{object}	common.MessageResponse
-//	@Failure	500				{object}	common.MessageResponse
+// @Summary list related shamir PGP messages
+// @Tags shamir
+// @Produce json
+// @Router /shamir [get]
+// @Param identity_name query string true "recipient uid"
+// @Success 200 {array} PGPMessageResponse
+// @Failure 400 {object} common.MessageResponse
+// @Failure 500 {object} common.MessageResponse
 func ListPGPMessages(c *fiber.Ctx) error {
 	// get identity
 	var query PGPMessageRequest
@@ -87,7 +89,7 @@ func ListPGPMessages(c *fiber.Ctx) error {
 
 	// list pgp messages
 	messages := make([]PGPMessageResponse, 0, 10)
-	result := models.DB.Table("shamir_email").Order("user_id asc").
+	result := DB.Table("shamir_email").Order("user_id asc").
 		Where("encrypted_by = ?", query.IdentityName).
 		Find(&messages)
 	if result.Error != nil {
@@ -105,15 +107,15 @@ func ListPGPMessages(c *fiber.Ctx) error {
 
 // UploadAllShares godoc
 //
-//	@Summary	upload all shares of all users, cached
-//	@Tags		shamir
-//	@Produce	json
-//	@Router		/shamir/shares [post]
-//	@Param		shares	body		UploadSharesRequest	true	"shares"
-//	@Success	200		{object}	common.MessageResponse{data=IdentityNameResponse}
-//	@Success	201		{object}	common.MessageResponse{data=IdentityNameResponse}
-//	@Failure	400		{object}	common.MessageResponse
-//	@Failure	500		{object}	common.MessageResponse
+// @Summary upload all shares of all users, cached
+// @Tags shamir
+// @Produce json
+// @Router /shamir/shares [post]
+// @Param shares body UploadSharesRequest true "shares"
+// @Success 200 {object} common.MessageResponse{data=IdentityNameResponse}
+// @Success 201 {object} common.MessageResponse{data=IdentityNameResponse}
+// @Failure 400 {object} common.MessageResponse
+// @Failure 500 {object} common.MessageResponse
 func UploadAllShares(c *fiber.Ctx) error {
 	// get shares
 	var body UploadSharesRequest
@@ -149,7 +151,7 @@ func UploadAllShares(c *fiber.Ctx) error {
 
 	return c.JSON(common.MessageResponse{
 		Message: "上传成功",
-		Data: models.Map{
+		Data: Map{
 			"identity_name":      body.IdentityName,
 			"now_updated_shares": GlobalUploadShamirStatus.UploadedSharesIdentityNames,
 		},
@@ -158,15 +160,15 @@ func UploadAllShares(c *fiber.Ctx) error {
 
 // UploadPublicKey godoc
 //
-//	@Summary	upload all PGP PublicKeys for encryption, admin only
-//	@Tags		shamir
-//	@Produce	json
-//	@Router		/shamir/key [post]
-//	@Param		public_keys	body		UploadPublicKeyRequest	true	"public keys"
-//	@Success	200			{array}		common.MessageResponse{data=IdentityNameResponse}
-//	@Failure	400			{object}	common.MessageResponse
-//	@Failure	403			{object}	common.MessageResponse	"非管理员"
-//	@Failure	500			{object}	common.MessageResponse
+// @Summary upload all PGP PublicKeys for encryption, admin only
+// @Tags shamir
+// @Produce json
+// @Router /shamir/key [post]
+// @Param public_keys body UploadPublicKeyRequest true "public keys"
+// @Success 200 {array} common.MessageResponse{data=IdentityNameResponse}
+// @Failure 400 {object} common.MessageResponse
+// @Failure 403 {object} common.MessageResponse "非管理员"
+// @Failure 500 {object} common.MessageResponse
 func UploadPublicKey(c *fiber.Ctx) error {
 	var body UploadPublicKeyRequest
 	err := common.ValidateBody(c, &body)
@@ -192,7 +194,7 @@ func UploadPublicKey(c *fiber.Ctx) error {
 		}
 
 		// save new public keys with assigned id, for save to database
-		status.NewPublicKeys = append(status.NewPublicKeys, models.ShamirPublicKey{
+		status.NewPublicKeys = append(status.NewPublicKeys, ShamirPublicKey{
 			ID:               i + 1,
 			IdentityName:     publicKey.GetEntity().PrimaryIdentity().Name,
 			ArmoredPublicKey: armoredPublicKey,
@@ -212,14 +214,14 @@ func UploadPublicKey(c *fiber.Ctx) error {
 
 // GetShamirStatus godoc
 //
-//	@Summary	get shamir info
-//	@Tags		shamir
-//	@Produce	json
-//	@Router		/shamir/status [get]
-//	@Success	200	{object}	ShamirStatusResponse
-//	@Failure	400	{object}	common.MessageResponse
-//	@Failure	403	{object}	common.MessageResponse	"非管理员"
-//	@Failure	500	{object}	common.MessageResponse
+// @Summary get shamir info
+// @Tags shamir
+// @Produce json
+// @Router /shamir/status [get]
+// @Success 200 {object} ShamirStatusResponse
+// @Failure 400 {object} common.MessageResponse
+// @Failure 403 {object} common.MessageResponse "非管理员"
+// @Failure 500 {object} common.MessageResponse
 func GetShamirStatus(c *fiber.Ctx) error {
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
@@ -229,14 +231,14 @@ func GetShamirStatus(c *fiber.Ctx) error {
 
 // UpdateShamir godoc
 //
-//	@Summary	trigger for updating shamir
-//	@Tags		shamir
-//	@Produce	json
-//	@Router		/shamir/update [post]
-//	@Success	200	{object}	common.MessageResponse
-//	@Failure	400	{object}	common.MessageResponse
-//	@Failure	403	{object}	common.MessageResponse	"非管理员"
-//	@Failure	500	{object}	common.MessageResponse
+// @Summary trigger for updating shamir
+// @Tags shamir
+// @Produce json
+// @Router /shamir/update [post]
+// @Success 200 {object} common.MessageResponse
+// @Failure 400 {object} common.MessageResponse
+// @Failure 403 {object} common.MessageResponse "非管理员"
+// @Failure 500 {object} common.MessageResponse
 func UpdateShamir(c *fiber.Ctx) error {
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
@@ -287,15 +289,20 @@ func RefreshShamir(c *fiber.Ctx) error {
 
 // only background running in goroutine
 func updateShamir() {
+	var err error
+	const taskScope = "shamir update"
+
 	defer func() {
-		if err := recover(); err != nil {
+		panicErr := recover()
+		if panicErr != nil {
 			GlobalUploadShamirStatus.Lock()
 			defer GlobalUploadShamirStatus.Unlock()
 			status := &GlobalUploadShamirStatus
 
-			status.FailMessage = fmt.Sprintf("recover from panic: %v", err)
+			status.FailMessage = fmt.Sprintf("recover from panic: %v", panicErr)
 		}
 	}()
+
 	// prepare
 	GlobalUploadShamirStatus.Lock()
 
@@ -303,20 +310,17 @@ func updateShamir() {
 	GlobalUploadShamirStatus.ShamirUpdating = true
 
 	// backup old public keys
-	oldShamirPublicKey := models.ShamirPublicKeys
+	oldShamirPublicKey := ShamirPublicKeys
 
 	// copy new public keys
-	models.ShamirPublicKeys = GlobalUploadShamirStatus.NewPublicKeys
-	GlobalUploadShamirStatus.CurrentPublicKeys = models.ShamirPublicKeys
+	ShamirPublicKeys = GlobalUploadShamirStatus.NewPublicKeys
+	GlobalUploadShamirStatus.CurrentPublicKeys = ShamirPublicKeys
 
 	// all the shares for decrypt
 	allShares := GlobalUploadShamirStatus.UploadedShares
 
-	// debug
-	log.Debug().Any("all_shares", allShares).Send()
-
 	if len(allShares) == 0 {
-		log.Error().Msg("no shares uploaded")
+		log.Error().Str("scope", taskScope).Msg("no shares uploaded")
 		GlobalUploadShamirStatus.Unlock()
 		return
 	}
@@ -332,82 +336,125 @@ func updateShamir() {
 
 	var warningMessage strings.Builder
 
-	const (
-		shamirTableName       = "shamir_email"
-		backupShamirTableName = "shamir_email_backup"
-	)
+	const shamirTableName = "shamir_email"
 
-	err := models.DB.Transaction(func(tx *gorm.DB) error {
+	err = DB.Session(&gorm.Session{
+		Logger:            DB.Logger.LogMode(logger.Warn),
+		NewDB:             true,
+		AllowGlobalUpdate: true,
+		CreateBatchSize:   1000,
+	}).Transaction(func(tx *gorm.DB) error {
 
-		// backup old table
+		// concurrently compute
+		taskChan := make(chan func(), 100)
+		errChan := make(chan error)
+		warningMessageChan := make(chan string, 1000)
+		shamirEmailResultChan := make(chan []ShamirEmail, 100)
+		defer func() {
+			close(taskChan)
+			close(errChan)
+			close(warningMessageChan)
+			close(shamirEmailResultChan)
+		}()
 
-		if tx.Migrator().HasTable(backupShamirTableName) {
-			err := tx.Migrator().DropTable(backupShamirTableName)
-			if err != nil {
-				return err
-			}
+		shamirEmails := make([]ShamirEmail, 0, len(ShamirPublicKeys)*len(userIDs))
+
+		// task executor
+		for i := 0; i < runtime.NumCPU(); i++ {
+			go func() {
+				for task := range taskChan {
+					task()
+				}
+			}()
 		}
-		if tx.Migrator().HasTable(shamirTableName) {
-			err := tx.Migrator().RenameTable(shamirTableName, backupShamirTableName)
-			if err != nil {
-				return err
+
+		// task sender
+		go func() {
+
+			// main loop
+			for _, userID := range userIDs {
+
+				userID := userID
+				// get shares
+				shares := allShares[userID]
+				if len(shares) < 4 {
+					warningMessageChan <- fmt.Sprintf("user %v don't have enough shares\n", userID)
+					continue
+				}
+
+				taskChan <- func() {
+
+					// decrypt email
+					email := shamir.Decrypt(shares)
+					if !utils.ValidateEmail(email) {
+						if !utils.IsEmail(email) {
+							// decrypt error
+							errChan <- fmt.Errorf("[email decrypt error] invalid email, user_id = %d, email: %v", userID, email)
+							return
+						} else {
+							// filter invalid emails
+							warningMessageChan <- fmt.Sprintf("user %v don't have valid email: %v\n", userID, email)
+							return
+						}
+					}
+
+					// generate shamir emails
+					var innerShamirEmails []ShamirEmail
+					innerShamirEmails, err = GenerateShamirEmails(userID, email)
+					if err != nil {
+						errChan <- err
+						return
+					}
+
+					shamirEmailResultChan <- innerShamirEmails
+				}
 			}
+		}()
+
+		// receive task results
+		taskCount := 0
+		for range userIDs {
+			select {
+			case err = <-errChan:
+				return err
+			case innerWarningMessage := <-warningMessageChan:
+				warningMessage.WriteString(innerWarningMessage)
+			case innerShamirEmails := <-shamirEmailResultChan:
+				shamirEmails = append(shamirEmails, innerShamirEmails...)
+			}
+			taskCount++
+			if taskCount%1000 == 0 {
+				log.Info().Str("scope", taskScope).Msgf("processed %v users", taskCount)
+			}
+			GlobalUploadShamirStatus.Lock()
+			GlobalUploadShamirStatus.NowUserID = taskCount
+			GlobalUploadShamirStatus.Unlock()
 		}
-		// create new table
-		err := tx.AutoMigrate(models.ShamirEmail{})
+
+		// delete old table
+		if tx.Dialector.Name() == "sqlite" {
+			//goland:noinspection SqlWithoutWhere
+			err = tx.Exec(`DELETE FROM ` + shamirTableName).Error
+		} else {
+			err = tx.Exec(`TRUNCATE ` + shamirTableName).Error
+		}
 		if err != nil {
 			return err
 		}
 
-		// main loop
-		for _, userID := range userIDs {
-			// update userID status
-			GlobalUploadShamirStatus.Lock()
-			GlobalUploadShamirStatus.NowUserID = userID
-			GlobalUploadShamirStatus.Unlock()
-
-			// get shares
-			shares := allShares[userID]
-			if len(shares) < 4 {
-				warningMessage.WriteString(fmt.Sprintf("user %v don't have enough shares\n", userID))
-				continue
-			}
-
-			// decrypt email
-			email := shamir.Decrypt(shares)
-			if !utils.ValidateEmail(email) {
-				if !utils.IsEmail(email) {
-					// decrypt error
-					return fmt.Errorf("[email decrypt error] invalid email, user_id = %d, email: %v", userID, email)
-				} else {
-					// filter invalid emails
-					warningMessage.WriteString(fmt.Sprintf("user %v don't have valid email: %v\n", userID, email))
-				}
-			}
-
-			// get new shares
-			newShares, err := shamir.Encrypt(email, 7, 4)
-			if err != nil {
-				return err
-			}
-
-			// store to database
-			err = models.CreateShamirEmails(tx, userID, newShares)
-			if err != nil {
-				return err
-			}
-		}
-
-		// drop table shamir_email_backup
-		if tx.Migrator().HasTable(backupShamirTableName) {
-			err := tx.Migrator().DropTable(backupShamirTableName)
-			if err != nil {
-				return err
-			}
+		// insert new shamir emails
+		err = tx.Create(shamirEmails).Error
+		if err != nil {
+			return err
 		}
 
 		// save new public keys
-		return tx.Save(models.ShamirPublicKeys).Error
+		err = tx.Save(ShamirPublicKeys).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 
 	GlobalUploadShamirStatus.Lock()
@@ -421,7 +468,7 @@ func updateShamir() {
 		delete(status.UploadedShares, userID)
 	}
 	status.UploadedSharesIdentityNames = []string{}
-	status.NewPublicKeys = []models.ShamirPublicKey{}
+	status.NewPublicKeys = []ShamirPublicKey{}
 	status.NowUserID = 0
 
 	var subject string
@@ -430,32 +477,22 @@ func updateShamir() {
 	if err != nil {
 		// rollback
 		status.FailMessage = err.Error()
-		status.NewPublicKeys = models.ShamirPublicKeys
+		status.NewPublicKeys = ShamirPublicKeys
 		status.CurrentPublicKeys = oldShamirPublicKey
-		models.ShamirPublicKeys = oldShamirPublicKey
-
-		if models.DB.Migrator().HasTable(backupShamirTableName) {
-			err := models.DB.Migrator().RenameTable(backupShamirTableName, shamirTableName)
-			if err != nil {
-				log.Err(err).Msg("rename table error")
-			}
-		}
+		ShamirPublicKeys = oldShamirPublicKey
 
 		subject = "shamir update failed"
 	} else {
 		subject = "shamir update success"
 	}
 
-	content, err = json.Marshal(&status)
-	if err != nil {
-		content = []byte(err.Error())
-	}
+	content, _ = json.Marshal(&status)
 
 	// send email to update
 	err = utils.SendEmail(subject, string(content), []string{config.Config.EmailDev})
 	if err != nil {
-		log.Printf("error sending emails: %v\nsubject: %v\ncontent: %v", err.Error(), subject, string(content))
+		log.Warn().Err(err).Str("scope", taskScope).Str("subject", subject).Msg("sending email failed")
 	}
 
-	log.Info().Msg("updateShamir function finished")
+	log.Info().Str("scope", taskScope).Msg("updateShamir function finished")
 }

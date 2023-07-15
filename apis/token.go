@@ -1,10 +1,10 @@
 package apis
 
 import (
+	"auth_next/config"
 	. "auth_next/models"
 	"auth_next/utils/auth"
 	"auth_next/utils/kong"
-	"auth_next/utils/shamir"
 	"github.com/gofiber/fiber/v2"
 	"github.com/opentreehole/go-common"
 )
@@ -47,21 +47,18 @@ func Login(c *fiber.Ctx) error {
 		return ErrLogin
 	}
 
-	// if no shamir email, insert it
-	var hasShamir int64
-	err = DB.Model(&ShamirEmail{}).Where("user_id = ?", user.ID).Count(&hasShamir).Error
-	if err != nil {
-		return err
-	}
-	if hasShamir == 0 {
-		shares, err := shamir.Encrypt(body.Email, 7, 4)
+	if config.Config.ShamirFeature {
+		// if no shamir email, insert it
+		var hasShamir int64
+		err = DB.Model(&ShamirEmail{}).Where("user_id = ?", user.ID).Count(&hasShamir).Error
 		if err != nil {
 			return err
 		}
-
-		err = CreateShamirEmails(DB, user.ID, shares)
-		if err != nil {
-			return err
+		if hasShamir == 0 {
+			err = CreateShamirEmails(DB, user.ID, body.Email)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

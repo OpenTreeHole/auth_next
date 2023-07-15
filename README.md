@@ -33,11 +33,11 @@ Environment Variables
 
 File settings, required in production mode
 
-|       Env Name       |             Default Path              | Default |                         Description                         |
-|:--------------------:|:-------------------------------------:|:-------:|:-----------------------------------------------------------:|
-|   IDENTIFIER_SALT    |   /var/run/secrets/identifier_salt    | 123456  | hash salt for encrypting email; required in production mode |
-| REGISTER_APIKEY_SEED | /var/run/secrets/register_apikey_seed |         |        register apikey; required in production mode         |
-|      KONG_TOKEN      |      /var/run/secrets/kong_token      |         |                       kong api token                        |
+|       Env Name       |             Default Path              | Default |                          Description                          |
+|:--------------------:|:-------------------------------------:|:-------:|:-------------------------------------------------------------:|
+|   IDENTIFIER_SALT    |   /var/run/secrets/identifier_salt    | 123456  |  hash salt for encrypting email; required in production mode  |
+| REGISTER_APIKEY_SEED | /var/run/secrets/register_apikey_seed |         | register apikey; if not set, disable apikey register function |
+|      KONG_TOKEN      |      /var/run/secrets/kong_token      |         |                        kong api token                         |
 
 ### Debug Development Prerequisite
 
