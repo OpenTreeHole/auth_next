@@ -64,6 +64,13 @@ definitions:
       user_id:
         type: integer
     type: object
+  apis.RegisterInBatchRequest:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/apis.LoginRequest'
+        type: array
+    type: object
   apis.RegisterRequest:
     properties:
       email:
@@ -212,7 +219,7 @@ paths:
         name: json
         required: true
         schema:
-          $ref: '#/definitions/apis.RegisterRequest'
+          $ref: '#/definitions/apis.LoginRequest'
       produces:
       - application/json
       responses:
@@ -244,9 +251,7 @@ paths:
         name: json
         required: true
         schema:
-          items:
-            $ref: '#/definitions/apis.RegisterRequest'
-          type: array
+          $ref: '#/definitions/apis.RegisterInBatchRequest'
       produces:
       - application/json
       responses:
@@ -750,15 +755,15 @@ paths:
       - application/json
       responses:
         "200":
-          description: 用户未注册“
+          description: 用户未注册
           schema:
             $ref: '#/definitions/common.MessageResponse'
         "403":
-          description: apikey不正确“
+          description: apikey不正确
           schema:
             $ref: '#/definitions/common.MessageResponse'
         "409":
-          description: 用户已注册“
+          description: 用户已注册
           schema:
             $ref: '#/definitions/common.MessageResponse'
         "500":

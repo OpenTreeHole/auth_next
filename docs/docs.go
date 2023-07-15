@@ -64,7 +64,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apis.RegisterRequest"
+                            "$ref": "#/definitions/apis.LoginRequest"
                         }
                     }
                 ],
@@ -115,10 +115,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/apis.RegisterRequest"
-                            }
+                            "$ref": "#/definitions/apis.RegisterInBatchRequest"
                         }
                     }
                 ],
@@ -897,19 +894,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "用户未注册“",
+                        "description": "用户未注册",
                         "schema": {
                             "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "403": {
-                        "description": "apikey不正确“",
+                        "description": "apikey不正确",
                         "schema": {
                             "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "409": {
-                        "description": "用户已注册“",
+                        "description": "用户已注册",
                         "schema": {
                             "$ref": "#/definitions/common.MessageResponse"
                         }
@@ -1120,6 +1117,17 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "apis.RegisterInBatchRequest": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apis.LoginRequest"
+                    }
                 }
             }
         },

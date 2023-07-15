@@ -83,7 +83,7 @@ func RegisterDebug(c *fiber.Ctx) (err error) {
 // @Accept json
 // @Produce json
 // @Router /debug/register/_batch [post]
-// @Param json object RegisterInBatchRequest true "json"
+// @Param json body RegisterInBatchRequest true "json"
 // @Success 201 {object} TokenResponse
 // @Failure 400 {object} common.MessageResponse "用户已注册"
 // @Failure 500 {object} common.MessageResponse
