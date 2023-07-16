@@ -16,7 +16,7 @@ type User struct {
 	ID            int            `json:"id" gorm:"primaryKey"`
 	UserID        int            `json:"user_id" gorm:"-"`
 	Nickname      string         `json:"nickname" gorm:"default:user;size:32"`
-	Email         string         `json:"-" gorm:"-"`
+	Email         string         `json:"-" gorm:"-:all"`
 	Identifier    string         `json:"-" gorm:"size:128;uniqueIndex:idx_user_identifier,length:10"`
 	Password      string         `json:"-" gorm:"size:128"`
 	IsAdmin       bool           `json:"is_admin" gorm:"default:false;index"`
