@@ -338,13 +338,9 @@ func updateShamir() {
 
 	const shamirTableName = "shamir_email"
 
-	err = DB.Session(&gorm.Session{
-		Logger:            DB.Logger.LogMode(logger.Warn),
-		NewDB:             true,
-		AllowGlobalUpdate: true,
-		CreateBatchSize:   1000,
-	}).Transaction(func(tx *gorm.DB) error {
+	shamirEmails := make([]ShamirEmail, 0, len(ShamirPublicKeys)*len(userIDs))
 
+	err = func() (err error) {
 		// concurrently compute
 		taskChan := make(chan func(), 100)
 		errChan := make(chan error)
@@ -356,8 +352,6 @@ func updateShamir() {
 			close(warningMessageChan)
 			close(shamirEmailResultChan)
 		}()
-
-		shamirEmails := make([]ShamirEmail, 0, len(ShamirPublicKeys)*len(userIDs))
 
 		// task executor
 		for i := 0; i < runtime.NumCPU(); i++ {
@@ -431,31 +425,39 @@ func updateShamir() {
 			GlobalUploadShamirStatus.Unlock()
 		}
 
-		// delete old table
-		if tx.Dialector.Name() == "sqlite" {
-			//goland:noinspection SqlWithoutWhere
-			err = tx.Exec(`DELETE FROM ` + shamirTableName).Error
-		} else {
-			err = tx.Exec(`TRUNCATE ` + shamirTableName).Error
-		}
-		if err != nil {
-			return err
-		}
+		return DB.Session(&gorm.Session{
+			Logger:            DB.Logger.LogMode(logger.Warn),
+			NewDB:             true,
+			AllowGlobalUpdate: true,
+			CreateBatchSize:   1000,
+		}).Transaction(func(tx *gorm.DB) error {
 
-		// insert new shamir emails
-		err = tx.Create(shamirEmails).Error
-		if err != nil {
-			return err
-		}
+			// delete old table
+			if tx.Dialector.Name() == "sqlite" {
+				//goland:noinspection SqlWithoutWhere
+				err = tx.Exec(`DELETE FROM ` + shamirTableName).Error
+			} else {
+				err = tx.Exec(`TRUNCATE ` + shamirTableName).Error
+			}
+			if err != nil {
+				return err
+			}
 
-		// save new public keys
-		err = tx.Save(ShamirPublicKeys).Error
-		if err != nil {
-			return err
-		}
+			// insert new shamir emails
+			err = tx.Create(shamirEmails).Error
+			if err != nil {
+				return err
+			}
 
-		return nil
-	})
+			// save new public keys
+			err = tx.Save(ShamirPublicKeys).Error
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+	}()
 
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
