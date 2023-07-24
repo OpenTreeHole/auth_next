@@ -20,7 +20,21 @@ import (
 // @router /register/questions [get]
 // @param version query int false "version"
 // @success 200 {object} QuestionConfig
-func RetrieveQuestions(c *fiber.Ctx) error {
+func RetrieveQuestions(c *fiber.Ctx) (err error) {
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return
+	}
+
+	user, err := LoadUserFromDB(userID)
+	if err != nil {
+		return
+	}
+
+	if user.HasAnsweredQuestions {
+		return common.BadRequest("you have answered questions")
+	}
+
 	version := c.QueryInt("version")
 	if version == 0 {
 		GlobalQuestionConfig.RLock()
