@@ -4,9 +4,10 @@ import (
 	"encoding/base32"
 	"encoding/base64"
 	"errors"
+	"net/url"
+
 	"github.com/caarlos0/env/v9"
 	"github.com/rs/zerolog/log"
-	"net/url"
 )
 
 const (
@@ -27,6 +28,7 @@ var Config struct {
 	Standalone              bool
 	VerificationCodeExpires int    `envDefault:"10"`
 	SiteName                string `envDefault:"Open Tree Hole"`
+	EnableRegisterQuestions bool   `envDefault:"false"`
 }
 
 var FileConfig struct {

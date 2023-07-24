@@ -1,29 +1,32 @@
 package models
 
 import (
-	"auth_next/config"
+	"strings"
+	"sync/atomic"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/opentreehole/go-common"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/exp/slices"
 	"gorm.io/gorm"
-	"strings"
-	"sync/atomic"
-	"time"
+
+	"auth_next/config"
 )
 
 type User struct {
-	ID            int            `json:"id" gorm:"primaryKey"`
-	UserID        int            `json:"user_id" gorm:"-"`
-	Nickname      string         `json:"nickname" gorm:"default:user;size:32"`
-	Email         string         `json:"-" gorm:"-:all"`
-	Identifier    string         `json:"-" gorm:"size:128;uniqueIndex:idx_user_identifier,length:10"`
-	Password      string         `json:"-" gorm:"size:128"`
-	IsAdmin       bool           `json:"is_admin" gorm:"default:false;index"`
-	IsActive      bool           `json:"-" gorm:"default:true"`
-	JoinedTime    time.Time      `json:"joined_time" gorm:"autoCreateTime"`
-	LastLogin     time.Time      `json:"last_login" gorm:"autoUpdateTime"`
-	UserJwtSecret *UserJwtSecret `json:"-" gorm:"foreignKey:ID;references:ID"`
+	ID                   int            `json:"id" gorm:"primaryKey"`
+	UserID               int            `json:"user_id" gorm:"-"`
+	Nickname             string         `json:"nickname" gorm:"default:user;size:32"`
+	Email                string         `json:"-" gorm:"-:all"`
+	Identifier           string         `json:"-" gorm:"size:128;uniqueIndex:idx_user_identifier,length:10"`
+	Password             string         `json:"-" gorm:"size:128"`
+	IsAdmin              bool           `json:"is_admin" gorm:"default:false;index"`
+	IsActive             bool           `json:"-" gorm:"default:true"`
+	JoinedTime           time.Time      `json:"joined_time" gorm:"autoCreateTime"`
+	LastLogin            time.Time      `json:"last_login" gorm:"autoUpdateTime"`
+	UserJwtSecret        *UserJwtSecret `json:"-" gorm:"foreignKey:ID;references:ID"`
+	HasAnsweredQuestions bool           `json:"has_answered_questions" gorm:"default:false"`
 }
 
 // AdminIDList refresh every 1 minutes

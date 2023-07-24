@@ -18,11 +18,10 @@ FROM alpine
 
 WORKDIR /app
 
-COPY --from=builder /app/auth /app/
-COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY data data
 
-ENV TZ=Asia/Shanghai
+VOLUME ["/app/data"]
+
 ENV MODE=production
 
 EXPOSE 8000

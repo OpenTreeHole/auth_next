@@ -64,6 +64,94 @@ definitions:
       user_id:
         type: integer
     type: object
+  apis.Question:
+    properties:
+      analysis:
+        description: 题目解析，预留，可选
+        type: string
+      answer:
+        description: |-
+          答案描述，单选、判断、多选
+          如果是单选题，则只有一个答案
+          如果是多选题，则有一个或多个答案
+          如果是判断题，则只有一个答案，且只能是 true 或者 false
+        items:
+          type: string
+        minItems: 1
+        type: array
+      group:
+        description: 题目分组，可选或必选
+        enum:
+        - optional
+        - required
+        type: string
+      id:
+        description: 题目 ID，题库解析时自动生成，题库中不必填写，发送给客户端时必须包含
+        type: integer
+      options:
+        description: |-
+          选项描述，单选、判断、多选
+          有一个或多个选项，如果是判断题，则选项只能是 true 或者 false
+          如果 Answer 中的答案不在 Options 中，则会在解析时加到 Options 中
+        items:
+          type: string
+        type: array
+      question:
+        description: 问题描述
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/apis.QuestionType'
+        description: 题目类型，单选、判断、多选
+        enum:
+        - single-selection
+        - true-or-false
+        - multi-selection
+    required:
+    - question
+    type: object
+  apis.QuestionConfig:
+    properties:
+      questions:
+        description: 题目列表
+        items:
+          $ref: '#/definitions/apis.Question'
+        type: array
+      spec:
+        allOf:
+        - $ref: '#/definitions/apis.QuestionSpec'
+        description: 出题规格
+      version:
+        description: 表示题库的版本号，用于判题时判断对应的题库，保障题库的平滑更新，必须填写
+        minimum: 1
+        type: integer
+    required:
+    - version
+    type: object
+  apis.QuestionSpec:
+    properties:
+      in_order:
+        description: 表示是否由题目声明顺序由上到下顺序出题，默认为 false，即乱序出题
+        type: boolean
+      number_of_questions:
+        description: |-
+          表示总的题目数量。
+          发送题目时，题库中的必做题都会发送，可选题会根据题目数量随机发送。
+          如果总的题目数量小于题库中的必做题数量，将会在解析时返回错误。
+          如果设置为 0 或者不设置，则题库中的所有题目都会发送
+          如果设置为 -1，则题库中的必做题都会发送，可选题不会发送
+        type: integer
+    type: object
+  apis.QuestionType:
+    enum:
+    - single-selection
+    - true-or-false
+    - multi-selection
+    type: string
+    x-enum-varnames:
+    - SingleSelection
+    - TrueOrFalse
+    - MultiSelection
   apis.RegisterInBatchRequest:
     properties:
       data:
@@ -109,6 +197,51 @@ definitions:
       warning_message:
         type: string
     type: object
+  apis.SubmitAnswer:
+    properties:
+      answer:
+        description: 答案描述，单选、判断、多选
+        items:
+          type: string
+        minItems: 1
+        type: array
+      id:
+        description: 题目 ID，用于判题，必须填写
+        type: integer
+    required:
+    - id
+    type: object
+  apis.SubmitRequest:
+    properties:
+      answers:
+        description: 答案列表
+        items:
+          $ref: '#/definitions/apis.SubmitAnswer'
+        minItems: 1
+        type: array
+      version:
+        description: 表示题库的版本号，如果不填会使用最新的版本号判题，建议填写
+        type: integer
+    required:
+    - answers
+    type: object
+  apis.SubmitResponse:
+    properties:
+      access:
+        type: string
+      correct:
+        description: 表示是否正确
+        type: boolean
+      message:
+        type: string
+      refresh:
+        type: string
+      wrong_question_ids:
+        description: 如果提交的答案不正确，返回错误的题目 ID
+        items:
+          type: integer
+        type: array
+    type: object
   apis.TokenResponse:
     properties:
       access:
@@ -148,6 +281,26 @@ definitions:
     type: object
   big.Int:
     type: object
+  common.ErrorDetailElement:
+    properties:
+      field:
+        type: string
+      tag:
+        type: string
+      value:
+        type: string
+    type: object
+  common.HttpError:
+    properties:
+      code:
+        type: integer
+      detail:
+        items:
+          $ref: '#/definitions/common.ErrorDetailElement'
+        type: array
+      message:
+        type: string
+    type: object
   common.MessageResponse:
     properties:
       data: {}
@@ -165,6 +318,8 @@ definitions:
     type: object
   models.User:
     properties:
+      has_answered_questions:
+        type: boolean
       id:
         type: integer
       is_admin:
@@ -392,6 +547,75 @@ paths:
       summary: reset password
       tags:
       - account
+  /register/questions:
+    get:
+      description: Retrieve questions
+      parameters:
+      - description: version
+        in: query
+        name: version
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apis.QuestionConfig'
+      summary: Retrieve questions
+      tags:
+      - question
+  /register/questions/_answer:
+    post:
+      description: Answer questions
+      parameters:
+      - description: answers
+        in: body
+        name: answers
+        required: true
+        schema:
+          $ref: '#/definitions/apis.SubmitRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: answer correct or not
+          schema:
+            $ref: '#/definitions/apis.SubmitResponse'
+        "400":
+          description: already answered, or bad request
+          schema:
+            $ref: '#/definitions/common.HttpError'
+        "403":
+          description: forbidden
+          schema:
+            $ref: '#/definitions/common.HttpError'
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Answer questions
+      tags:
+      - question
+  /register/questions/_reload:
+    post:
+      description: Reload questions, admin only
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: forbidden
+          schema:
+            $ref: '#/definitions/common.HttpError'
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Reload questions
+      tags:
+      - question
   /shamir:
     get:
       parameters:

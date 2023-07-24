@@ -30,6 +30,7 @@ Environment Variables
 |        STANDALONE         |      false      |                              |          if not set, this application not required to set KONG_URL           |
 | VERIFICATION_CODE_EXPIRES |       10        |           integers           |                  register verification code expiration time                  |
 |         SITE_NAME         | Open Tree Hole  |                              |                      title prefix of verification email                      |
+| ENABLE_REGISTER_QUESTIONS |      false      |                              |    if set, user will be set "have not answered questions" when registered    |
 
 File settings, required in production mode
 

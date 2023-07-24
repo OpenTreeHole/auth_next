@@ -1,18 +1,20 @@
 package apis
 
 import (
-	"auth_next/config"
-	. "auth_next/models"
-	"auth_next/utils"
-	"auth_next/utils/auth"
-	"auth_next/utils/kong"
 	"fmt"
+	"runtime"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/opentreehole/go-common"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"runtime"
+
+	"auth_next/config"
+	. "auth_next/models"
+	"auth_next/utils"
+	"auth_next/utils/auth"
+	"auth_next/utils/kong"
 )
 
 // Register godoc
@@ -296,6 +298,10 @@ func register(c *fiber.Ctx, email, password string, batch bool) error {
 	user.Password, err = auth.MakePassword(password)
 	if err != nil {
 		return err
+	}
+
+	if !config.Config.EnableRegisterQuestions {
+		user.HasAnsweredQuestions = true
 	}
 
 	err = DB.Transaction(func(tx *gorm.DB) error {

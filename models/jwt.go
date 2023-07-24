@@ -1,14 +1,16 @@
 package models
 
 import (
-	"auth_next/config"
-	"auth_next/utils/kong"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/thanhpk/randstr"
 	"gorm.io/gorm"
-	"time"
+
+	"auth_next/config"
+	"auth_next/utils/kong"
 )
 
 type UserJwtSecret struct {
@@ -18,13 +20,14 @@ type UserJwtSecret struct {
 
 type UserClaims struct {
 	jwt.RegisteredClaims
-	ID         int       `json:"id"`
-	UserID     int       `json:"user_id"`
-	UID        int       `json:"uid"`
-	Type       string    `json:"type"`
-	Nickname   string    `json:"nickname"`
-	JoinedTime time.Time `json:"joined_time"`
-	IsAdmin    bool      `json:"is_admin"`
+	ID                   int       `json:"id"`
+	UserID               int       `json:"user_id"`
+	UID                  int       `json:"uid"`
+	Type                 string    `json:"type"`
+	Nickname             string    `json:"nickname"`
+	JoinedTime           time.Time `json:"joined_time"`
+	IsAdmin              bool      `json:"is_admin"`
+	HasAnsweredQuestions bool      `json:"has_answered_questions"`
 }
 
 const (
@@ -65,19 +68,24 @@ func (user *User) CreateJWTToken() (accessToken, refreshToken string, err error)
 	}
 
 	// create JWT token
+	hasAnsweredQuestions := true
+	if config.Config.EnableRegisterQuestions {
+		hasAnsweredQuestions = user.HasAnsweredQuestions
+	}
 	claim := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    key,
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute)), // // 30 minutes
 		},
-		ID:         user.ID,
-		UserID:     user.UserID,
-		UID:        user.UserID,
-		Nickname:   user.Nickname,
-		JoinedTime: user.JoinedTime,
-		IsAdmin:    user.IsAdmin,
-		Type:       JWTTypeAccess,
+		ID:                   user.ID,
+		UserID:               user.UserID,
+		UID:                  user.UserID,
+		Nickname:             user.Nickname,
+		JoinedTime:           user.JoinedTime,
+		IsAdmin:              user.IsAdmin,
+		Type:                 JWTTypeAccess,
+		HasAnsweredQuestions: hasAnsweredQuestions,
 	}
 
 	// access payload

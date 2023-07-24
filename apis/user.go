@@ -1,9 +1,10 @@
 package apis
 
 import (
-	. "auth_next/models"
 	"github.com/gofiber/fiber/v2"
 	"github.com/opentreehole/go-common"
+
+	. "auth_next/models"
 )
 
 // GetCurrentUser godoc

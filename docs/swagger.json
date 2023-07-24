@@ -316,6 +316,112 @@
                 }
             }
         },
+        "/register/questions": {
+            "get": {
+                "description": "Retrieve questions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "question"
+                ],
+                "summary": "Retrieve questions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "version",
+                        "name": "version",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apis.QuestionConfig"
+                        }
+                    }
+                }
+            }
+        },
+        "/register/questions/_answer": {
+            "post": {
+                "description": "Answer questions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "question"
+                ],
+                "summary": "Answer questions",
+                "parameters": [
+                    {
+                        "description": "answers",
+                        "name": "answers",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apis.SubmitRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "answer correct or not",
+                        "schema": {
+                            "$ref": "#/definitions/apis.SubmitResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "already answered, or bad request",
+                        "schema": {
+                            "$ref": "#/definitions/common.HttpError"
+                        }
+                    },
+                    "403": {
+                        "description": "forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.HttpError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/register/questions/_reload": {
+            "post": {
+                "description": "Reload questions, admin only",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "question"
+                ],
+                "summary": "Reload questions",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.HttpError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/shamir": {
             "get": {
                 "produces": [
@@ -1113,6 +1219,116 @@
                 }
             }
         },
+        "apis.Question": {
+            "type": "object",
+            "required": [
+                "question"
+            ],
+            "properties": {
+                "analysis": {
+                    "description": "题目解析，预留，可选",
+                    "type": "string"
+                },
+                "answer": {
+                    "description": "答案描述，单选、判断、多选\n如果是单选题，则只有一个答案\n如果是多选题，则有一个或多个答案\n如果是判断题，则只有一个答案，且只能是 true 或者 false",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "group": {
+                    "description": "题目分组，可选或必选",
+                    "type": "string",
+                    "enum": [
+                        "optional",
+                        "required"
+                    ]
+                },
+                "id": {
+                    "description": "题目 ID，题库解析时自动生成，题库中不必填写，发送给客户端时必须包含",
+                    "type": "integer"
+                },
+                "options": {
+                    "description": "选项描述，单选、判断、多选\n有一个或多个选项，如果是判断题，则选项只能是 true 或者 false\n如果 Answer 中的答案不在 Options 中，则会在解析时加到 Options 中",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "question": {
+                    "description": "问题描述",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "题目类型，单选、判断、多选",
+                    "enum": [
+                        "single-selection",
+                        "true-or-false",
+                        "multi-selection"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/apis.QuestionType"
+                        }
+                    ]
+                }
+            }
+        },
+        "apis.QuestionConfig": {
+            "type": "object",
+            "required": [
+                "version"
+            ],
+            "properties": {
+                "questions": {
+                    "description": "题目列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apis.Question"
+                    }
+                },
+                "spec": {
+                    "description": "出题规格",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/apis.QuestionSpec"
+                        }
+                    ]
+                },
+                "version": {
+                    "description": "表示题库的版本号，用于判题时判断对应的题库，保障题库的平滑更新，必须填写",
+                    "type": "integer",
+                    "minimum": 1
+                }
+            }
+        },
+        "apis.QuestionSpec": {
+            "type": "object",
+            "properties": {
+                "in_order": {
+                    "description": "表示是否由题目声明顺序由上到下顺序出题，默认为 false，即乱序出题",
+                    "type": "boolean"
+                },
+                "number_of_questions": {
+                    "description": "表示总的题目数量。\n发送题目时，题库中的必做题都会发送，可选题会根据题目数量随机发送。\n如果总的题目数量小于题库中的必做题数量，将会在解析时返回错误。\n如果设置为 0 或者不设置，则题库中的所有题目都会发送\n如果设置为 -1，则题库中的必做题都会发送，可选题不会发送",
+                    "type": "integer"
+                }
+            }
+        },
+        "apis.QuestionType": {
+            "type": "string",
+            "enum": [
+                "single-selection",
+                "true-or-false",
+                "multi-selection"
+            ],
+            "x-enum-varnames": [
+                "SingleSelection",
+                "TrueOrFalse",
+                "MultiSelection"
+            ]
+        },
         "apis.RegisterInBatchRequest": {
             "type": "object",
             "properties": {
@@ -1180,6 +1396,71 @@
                 }
             }
         },
+        "apis.SubmitAnswer": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "answer": {
+                    "description": "答案描述，单选、判断、多选",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "description": "题目 ID，用于判题，必须填写",
+                    "type": "integer"
+                }
+            }
+        },
+        "apis.SubmitRequest": {
+            "type": "object",
+            "required": [
+                "answers"
+            ],
+            "properties": {
+                "answers": {
+                    "description": "答案列表",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/apis.SubmitAnswer"
+                    }
+                },
+                "version": {
+                    "description": "表示题库的版本号，如果不填会使用最新的版本号判题，建议填写",
+                    "type": "integer"
+                }
+            }
+        },
+        "apis.SubmitResponse": {
+            "type": "object",
+            "properties": {
+                "access": {
+                    "type": "string"
+                },
+                "correct": {
+                    "description": "表示是否正确",
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "refresh": {
+                    "type": "string"
+                },
+                "wrong_question_ids": {
+                    "description": "如果提交的答案不正确，返回错误的题目 ID",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
         "apis.TokenResponse": {
             "type": "object",
             "properties": {
@@ -1240,6 +1521,37 @@
         "big.Int": {
             "type": "object"
         },
+        "common.ErrorDetailElement": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string"
+                },
+                "tag": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.HttpError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "detail": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.ErrorDetailElement"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "common.MessageResponse": {
             "type": "object",
             "properties": {
@@ -1266,6 +1578,9 @@
         "models.User": {
             "type": "object",
             "properties": {
+                "has_answered_questions": {
+                    "type": "boolean"
+                },
                 "id": {
                     "type": "integer"
                 },

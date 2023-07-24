@@ -15,13 +15,13 @@
 package main
 
 import (
-	"auth_next/apis"
-	"auth_next/config"
-	_ "auth_next/docs"
-	"auth_next/models"
-	"auth_next/utils/auth"
-	"auth_next/utils/kong"
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+	_ "time/tzdata"
+
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -29,16 +29,26 @@ import (
 	"github.com/opentreehole/go-common"
 	"github.com/robfig/cron/v3"
 	"github.com/rs/zerolog/log"
-	"os"
-	"os/signal"
-	"syscall"
+
+	"auth_next/apis"
+	"auth_next/config"
+	_ "auth_next/docs"
+	"auth_next/models"
+	"auth_next/utils/auth"
+	"auth_next/utils/kong"
 )
+
+func init() {
+	// set default time zone
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	time.Local = loc
+}
 
 func main() {
 	config.InitConfig()
 	auth.InitVerificationCodeCache()
 	models.InitDB()
-	apis.InitShamirStatus()
+	apis.Init()
 
 	// connect to kong
 	if !config.Config.Standalone {

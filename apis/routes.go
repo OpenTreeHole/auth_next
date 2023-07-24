@@ -3,6 +3,8 @@ package apis
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
+
+	"auth_next/config"
 )
 
 func RegisterRoutes(app *fiber.App) {
@@ -31,6 +33,13 @@ func RegisterRoutes(app *fiber.App) {
 	routes.Post("/register", Register)
 	routes.Put("/register", ChangePassword)
 	routes.Delete("/users/me", DeleteUser)
+
+	// register questions
+	if config.Config.EnableRegisterQuestions {
+		routes.Get("/register/questions", RetrieveQuestions)
+		routes.Post("/register/questions/_answer", AnswerQuestions)
+		routes.Post("/register/questions/_reload", ReloadQuestions)
+	}
 
 	// account management debug only
 	routes.Post("/debug/register", RegisterDebug)

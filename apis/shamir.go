@@ -3,13 +3,12 @@ package apis
 // apis in this page won't check permission, and should be terminated by api gateway in production environment
 
 import (
-	"auth_next/config"
-	. "auth_next/models"
-	"auth_next/utils"
-	"auth_next/utils/shamir"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"runtime"
+	"strings"
+
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/gofiber/fiber/v2"
 	"github.com/opentreehole/go-common"
@@ -17,8 +16,11 @@ import (
 	"golang.org/x/exp/slices"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"runtime"
-	"strings"
+
+	"auth_next/config"
+	. "auth_next/models"
+	"auth_next/utils"
+	"auth_next/utils/shamir"
 )
 
 // GetPGPMessageByUserID godoc
