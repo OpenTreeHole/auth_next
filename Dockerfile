@@ -18,6 +18,7 @@ FROM alpine
 
 WORKDIR /app
 
+COPY --from=builder /app/auth /app/
 COPY data data
 
 VOLUME ["/app/data"]
