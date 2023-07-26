@@ -1,11 +1,14 @@
 package auth
 
 import (
-	"auth_next/config"
 	"context"
 	"crypto/rand"
 	"fmt"
+	"math/big"
+	"time"
+
 	"github.com/eko/gocache/lib/v4/cache"
+	"github.com/eko/gocache/lib/v4/store"
 	gocacheStore "github.com/eko/gocache/store/go_cache/v4"
 	redisStore "github.com/eko/gocache/store/redis/v4"
 	gocache "github.com/patrickmn/go-cache"
@@ -13,8 +16,8 @@ import (
 	"github.com/pquerna/otp/totp"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
-	"math/big"
-	"time"
+
+	"auth_next/config"
 )
 
 var verificationCodeCache *cache.Cache[string]
@@ -55,6 +58,7 @@ func SetVerificationCode(email, scope string) (string, error) {
 		context.Background(),
 		fmt.Sprintf("%v-%v", scope, MakeIdentifier(email)),
 		code,
+		store.WithExpiration(time.Duration(config.Config.VerificationCodeExpires)*time.Minute),
 	)
 }
 
