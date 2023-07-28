@@ -614,13 +614,17 @@ func DeleteUser(c *fiber.Ctx) error {
 		}
 
 		err = tx.Model(&User{}).Where("id=?", user.ID).
-			Updates(map[string]interface{}{"IsActive": false, "identifier": nil}).Error
+			UpdateColumns(map[string]interface{}{"is_active": false, "identifier": nil}).Error
 		if err != nil {
 			return err
 		}
 
 		return AddDeletedEmail(tx, body.Email)
 	})
+
+	if err != nil {
+		return err
+	}
 
 	err = kong.DeleteJwtCredential(user.ID)
 	if err != nil {

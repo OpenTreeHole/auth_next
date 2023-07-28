@@ -13,9 +13,8 @@ type EmailList struct {
 }
 
 type DeleteIdentifier struct {
-	ID         int    `json:"id" gorm:"primaryKey"`
-	UserID     int    `json:"user_id" gorm:"uniqueIndex:idx_key_uid,priority:2"`
-	Identifier string `json:"identifier" gorm:"size:128;uniqueIndex:idx_user_identifier,priority:1,length:10"`
+	UserID     int    `json:"user_id" gorm:"primaryKey"`
+	Identifier string `json:"identifier" gorm:"size:128;uniqueIndex:,length:10"`
 }
 
 func Sha3SumEmail(email string) string {
@@ -66,5 +65,5 @@ func DeleteDeletedEmail(tx *gorm.DB, email string) error {
 func AddDeletedIdentifier(tx *gorm.DB, userID int, identifier string) error {
 	return tx.Model(&DeleteIdentifier{}).
 		Clauses(clause.OnConflict{DoNothing: true}).
-		Create(Map{"user_id": userID, "identifier": identifier}).Error
+		Create(&DeleteIdentifier{UserID: userID, Identifier: identifier}).Error
 }
