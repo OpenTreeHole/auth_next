@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/hex"
+
 	"golang.org/x/crypto/sha3"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -9,6 +10,12 @@ import (
 
 type EmailList struct {
 	Hash string `json:"hash" gorm:"primaryKey;size:128"`
+}
+
+type DeleteIdentifier struct {
+	ID         int    `json:"id" gorm:"primaryKey"`
+	UserID     int    `json:"user_id" gorm:"uniqueIndex:idx_key_uid,priority:2"`
+	Identifier string `json:"identifier" gorm:"size:128;uniqueIndex:idx_user_identifier,priority:1,length:10"`
 }
 
 func Sha3SumEmail(email string) string {
@@ -54,4 +61,10 @@ func AddDeletedEmail(tx *gorm.DB, email string) error {
 
 func DeleteDeletedEmail(tx *gorm.DB, email string) error {
 	return deleteEmail(tx, DeletedEmail{}, email)
+}
+
+func AddDeletedIdentifier(tx *gorm.DB, userID int, identifier string) error {
+	return tx.Model(&DeleteIdentifier{}).
+		Clauses(clause.OnConflict{DoNothing: true}).
+		Create(Map{"user_id": userID, "identifier": identifier}).Error
 }

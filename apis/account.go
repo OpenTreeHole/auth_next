@@ -608,8 +608,13 @@ func DeleteUser(c *fiber.Ctx) error {
 			return common.Forbidden("密码错误")
 		}
 
-		user.IsActive = false
-		err = tx.Save(&user).Error
+		err = AddDeletedIdentifier(tx, user.UserID, user.Identifier)
+		if err != nil {
+			return err
+		}
+
+		err = tx.Model(&User{}).Where("id=?", user.ID).
+			Updates(map[string]interface{}{"IsActive": false, "identifier": nil}).Error
 		if err != nil {
 			return err
 		}
