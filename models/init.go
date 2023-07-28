@@ -1,15 +1,17 @@
 package models
 
 import (
-	"auth_next/config"
+	"os"
+	"time"
+
 	"github.com/rs/zerolog/log"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
-	"os"
-	"time"
+
+	"auth_next/config"
 )
 
 func InitDB() {
@@ -101,6 +103,7 @@ func initDB() {
 		RegisteredEmail{},
 		DeletedEmail{},
 		ActiveStatus{},
+		DeleteIdentifier{},
 	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("auto migrate failed")
