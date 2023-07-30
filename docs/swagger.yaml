@@ -840,6 +840,29 @@ paths:
       summary: list all users
       tags:
       - user
+  /users/{id}:
+    delete:
+      description: delete user and related jwt credentials
+      parameters:
+      - description: user id
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: 用户不存在
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+      summary: delete user by id, admin only
+      tags:
+      - account
   /users/{user_id}:
     get:
       description: get user by id in path, owner or admin
@@ -929,11 +952,11 @@ paths:
         "204":
           description: No Content
         "400":
-          description: 密码错误“
+          description: 密码错误
           schema:
             $ref: '#/definitions/common.MessageResponse'
         "404":
-          description: 用户不存在“
+          description: 用户不存在
           schema:
             $ref: '#/definitions/common.MessageResponse'
         "500":

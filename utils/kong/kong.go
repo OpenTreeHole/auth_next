@@ -1,16 +1,18 @@
 package kong
 
 import (
-	"auth_next/config"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog/log"
+
+	"auth_next/config"
 )
 
 type JwtCredential struct {
@@ -43,12 +45,12 @@ func kongRequestDo(Method, URI string, body io.Reader, contentType string) (int,
 		req.Header.Set("Authorization", config.FileConfig.KongToken)
 	}
 	rsp, err := kongClient.Do(req)
-	defer func() {
-		_ = rsp.Body.Close()
-	}()
 	if err != nil {
 		return 500, nil, err
 	}
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
 	data, err := io.ReadAll(rsp.Body)
 	return rsp.StatusCode, data, err
 }

@@ -1,6 +1,7 @@
 package apis
 
 import (
+	"database/sql"
 	"fmt"
 	"runtime"
 
@@ -103,16 +104,16 @@ func RegisterDebugInBatch(c *fiber.Ctx) (err error) {
 	// check registered
 	var emailHashes []string
 	for _, data := range body.Data {
-		emailHashes = append(emailHashes, Sha3SumEmail(data.Email))
+		emailHashes = append(emailHashes, auth.MakeIdentifier(data.Email))
 	}
 
-	var count int64
-	err = DB.Model(&RegisteredEmail{}).Where("hash IN ?", emailHashes).Count(&count).Error
+	var exists bool
+	err = DB.Raw(`SELECT EXISTS (SELECT 1 FROM user WHERE identifier IN (?))`, emailHashes).Scan(&exists).Error
 	if err != nil {
 		return err
 	}
 
-	if count > 0 {
+	if exists {
 		return common.BadRequest("用户已注册")
 	}
 
@@ -151,7 +152,7 @@ func RegisterDebugInBatch(c *fiber.Ctx) (err error) {
 				tasksChan <- func() {
 					var user User
 					user.Email = data.Email
-					user.Identifier = auth.MakeIdentifier(data.Email)
+					user.Identifier = sql.NullString{String: auth.MakeIdentifier(data.Email), Valid: true}
 					user.Password, err = auth.MakePassword(data.Password)
 					if err != nil {
 						errChan <- err
@@ -186,21 +187,6 @@ func RegisterDebugInBatch(c *fiber.Ctx) (err error) {
 		}
 
 		log.Info().Str("scope", taskScope).Msgf("create users: %d", len(users))
-
-		// create registered emails
-		var registeredEmails []RegisteredEmail
-		for _, hash := range emailHashes {
-			registeredEmails = append(registeredEmails, RegisteredEmail{
-				Hash: hash,
-			})
-		}
-
-		err = tx.Create(&registeredEmails).Error
-		if err != nil {
-			return err
-		}
-
-		log.Info().Str("scope", taskScope).Msgf("create registered emails: %d", len(registeredEmails))
 
 		if config.Config.ShamirFeature {
 
@@ -294,7 +280,7 @@ func register(c *fiber.Ctx, email, password string, batch bool) error {
 
 	// not registered
 
-	user.Identifier = auth.MakeIdentifier(email)
+	user.Identifier = sql.NullString{String: auth.MakeIdentifier(email), Valid: true}
 	user.Password, err = auth.MakePassword(password)
 	if err != nil {
 		return err
@@ -306,11 +292,6 @@ func register(c *fiber.Ctx, email, password string, batch bool) error {
 
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		err = tx.Create(&user).Error
-		if err != nil {
-			return err
-		}
-
-		err = AddRegisteredEmail(tx, email)
 		if err != nil {
 			return err
 		}
@@ -597,8 +578,8 @@ func VerifyWithApikey(c *fiber.Ctx) error {
 // @Router /users/me [delete]
 // @Param json body LoginRequest true "email, password"
 // @Success 204
-// @Failure 400 {object} common.MessageResponse "密码错误“
-// @Failure 404 {object} common.MessageResponse "用户不存在“
+// @Failure 400 {object} common.MessageResponse "密码错误"
+// @Failure 404 {object} common.MessageResponse "用户不存在"
 // @Failure 500 {object} common.MessageResponse
 func DeleteUser(c *fiber.Ctx) error {
 	var body LoginRequest
@@ -617,6 +598,10 @@ func DeleteUser(c *fiber.Ctx) error {
 			return err
 		}
 
+		if !user.Identifier.Valid {
+			return common.BadRequest("账户已注销")
+		}
+
 		ok, err := auth.CheckPassword(body.Password, user.Password)
 		if err != nil {
 			return err
@@ -625,27 +610,83 @@ func DeleteUser(c *fiber.Ctx) error {
 			return common.Forbidden("密码错误")
 		}
 
-		err = AddDeletedIdentifier(tx, user.UserID, user.Identifier)
-		if err != nil {
-			return err
-		}
-
-		err = tx.Model(&User{}).Where("id=?", user.ID).
-			UpdateColumns(map[string]interface{}{"is_active": false, "identifier": nil}).Error
-		if err != nil {
-			return err
-		}
-
-		return AddDeletedEmail(tx, body.Email)
+		return DeleteUserService(tx, user.ID, user.Identifier.String)
 	})
 
 	if err != nil {
 		return err
 	}
 
-	err = kong.DeleteJwtCredential(user.ID)
+	// delete jwt credentials
+	if !config.Config.Standalone {
+		userID := user.ID
+		go func() {
+			err = kong.DeleteJwtCredential(userID)
+			if err != nil {
+				log.Warn().Err(err).Int("user_id", userID).Msg("failed to delete jwt credential")
+			}
+		}()
+	}
+
+	return c.SendStatus(204)
+}
+
+// DeleteUserByID godoc
+//
+// @Summary delete user by id, admin only
+// @Description delete user and related jwt credentials
+// @Tags account
+// @Router /users/{id} [delete]
+// @Param id path int true "user id"
+// @Success 204
+// @Failure 404 {object} common.MessageResponse "用户不存在"
+// @Failure 500 {object} common.MessageResponse
+func DeleteUserByID(c *fiber.Ctx) error {
+	operatorID, err := common.GetUserID(c)
 	if err != nil {
 		return err
+	}
+	if !IsAdmin(operatorID) {
+		return common.Forbidden()
+	}
+
+	userID, err := c.ParamsInt("id")
+	if err != nil {
+		return err
+	}
+
+	if operatorID == userID {
+		return common.Forbidden("不能注销自己")
+	}
+
+	var user User
+	err = DB.Transaction(func(tx *gorm.DB) error {
+		err = tx.
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ?", userID).
+			Take(&user).Error
+		if err != nil {
+			return err
+		}
+
+		if !user.Identifier.Valid {
+			return common.BadRequest("账户已注销")
+		}
+
+		return DeleteUserService(tx, user.ID, user.Identifier.String)
+	})
+	if err != nil {
+		return err
+	}
+
+	// delete jwt credentials
+	if !config.Config.Standalone {
+		go func() {
+			err = kong.DeleteJwtCredential(userID)
+			if err != nil {
+				log.Warn().Err(err).Int("user_id", userID).Msg("failed to delete jwt credential")
+			}
+		}()
 	}
 
 	return c.SendStatus(204)

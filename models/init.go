@@ -100,8 +100,6 @@ func initDB() {
 	err = DB.AutoMigrate(
 		User{},
 		ShamirEmail{},
-		RegisteredEmail{},
-		DeletedEmail{},
 		ActiveStatus{},
 		DeleteIdentifier{},
 	)

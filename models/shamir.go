@@ -1,13 +1,15 @@
 package models
 
 import (
-	"auth_next/config"
-	"auth_next/utils/shamir"
 	"fmt"
+	"os"
+
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
-	"os"
+
+	"auth_next/config"
+	"auth_next/utils/shamir"
 )
 
 type ShamirEmail struct {

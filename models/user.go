@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -10,8 +11,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/exp/slices"
 	"gorm.io/gorm"
-
-	"auth_next/config"
 )
 
 type User struct {
@@ -19,7 +18,7 @@ type User struct {
 	UserID               int            `json:"user_id" gorm:"-"`
 	Nickname             string         `json:"nickname" gorm:"default:user;size:32"`
 	Email                string         `json:"-" gorm:"-:all"`
-	Identifier           string         `json:"-" gorm:"size:128;uniqueIndex:idx_user_identifier,length:10"`
+	Identifier           sql.NullString `json:"-" gorm:"size:128;uniqueIndex:,length:10"`
 	Password             string         `json:"-" gorm:"size:128"`
 	IsAdmin              bool           `json:"is_admin" gorm:"default:false;index"`
 	IsActive             bool           `json:"-" gorm:"default:true"`
@@ -71,9 +70,6 @@ func (user *User) AfterFind(_ *gorm.DB) error {
 }
 
 func IsAdmin(userID int) bool {
-	if config.Config.Mode == "dev" {
-		return true
-	}
 	_, ok := slices.BinarySearch(AdminIDList.Load().([]int), userID)
 	return ok
 }
@@ -122,4 +118,15 @@ func GetUserByRefreshToken(c *fiber.Ctx) (string, *User, error) {
 	user, err := LoadUserFromDB(userID)
 
 	return tokenString, user, err
+}
+
+func DeleteUserService(tx *gorm.DB, userID int, identifier string) error {
+	return tx.Transaction(func(tx *gorm.DB) error {
+		err := AddDeletedIdentifier(tx, userID, identifier)
+		if err != nil {
+			return err
+		}
+
+		return tx.Model(&User{ID: userID}).UpdateColumns(map[string]any{"is_active": false, "identifier": nil}).Error
+	})
 }

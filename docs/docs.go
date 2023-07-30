@@ -862,13 +862,48 @@ const docTemplate = `{
                         "description": "No Content"
                     },
                     "400": {
-                        "description": "密码错误“",
+                        "description": "密码错误",
                         "schema": {
                             "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "404": {
-                        "description": "用户不存在“",
+                        "description": "用户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}": {
+            "delete": {
+                "description": "delete user and related jwt credentials",
+                "tags": [
+                    "account"
+                ],
+                "summary": "delete user by id, admin only",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "user id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "用户不存在",
                         "schema": {
                             "$ref": "#/definitions/common.MessageResponse"
                         }

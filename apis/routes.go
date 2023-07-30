@@ -33,6 +33,7 @@ func RegisterRoutes(app *fiber.App) {
 	routes.Post("/register", Register)
 	routes.Put("/register", ChangePassword)
 	routes.Delete("/users/me", DeleteUser)
+	routes.Delete("/users/:id", DeleteUserByID)
 
 	// register questions
 	if config.Config.EnableRegisterQuestions {
