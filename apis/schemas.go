@@ -66,8 +66,9 @@ func (v *VerificationType) UnmarshalText(data []byte) error {
 }
 
 type EmailVerifyResponse struct {
-	Message string `json:"message"`
-	Scope   string `json:"scope" enums:"register,reset"`
+	Message    string `json:"message"`
+	Registered bool   `json:"registered"`
+	Scope      string `json:"scope" enums:"register,reset"`
 }
 
 type ApikeyRequest struct {

@@ -433,7 +433,7 @@ func ChangePassword(c *fiber.Ctx) error {
 func VerifyWithEmailOld(c *fiber.Ctx) error {
 	email := c.Params("email")
 	scope := c.Query("scope")
-	return verifyWithEmail(c, email, scope)
+	return verifyWithEmail(c, email, scope, false)
 }
 
 // VerifyWithEmail godoc
@@ -445,6 +445,7 @@ func VerifyWithEmailOld(c *fiber.Ctx) error {
 // @Router /verify/email [get]
 // @Param email query string true "email"
 // @Param scope query string false "scope"
+// @Param check query bool false "check"
 // @Success 200 {object} EmailVerifyResponse
 // @Failure 400 {object} common.MessageResponse
 // @Failure 403 {object} common.MessageResponse “email不在白名单中”
@@ -452,10 +453,11 @@ func VerifyWithEmailOld(c *fiber.Ctx) error {
 func VerifyWithEmail(c *fiber.Ctx) error {
 	email := c.Query("email")
 	scope := c.Query("scope")
-	return verifyWithEmail(c, email, scope)
+	check := c.QueryBool("check")
+	return verifyWithEmail(c, email, scope, check)
 }
 
-func verifyWithEmail(c *fiber.Ctx, email, givenScope string) error {
+func verifyWithEmail(c *fiber.Ctx, email, givenScope string, check bool) error {
 	if !utils.ValidateEmail(email) {
 		return common.BadRequest("email invalid")
 	}
@@ -481,6 +483,19 @@ func verifyWithEmail(c *fiber.Ctx, email, givenScope string) error {
 	} else {
 		scope = "reset"
 	}
+
+	if check {
+		message := "该邮箱已注册"
+		if !registered {
+			message = "该邮箱未注册"
+		}
+		return c.JSON(EmailVerifyResponse{
+			Message:    message,
+			Registered: registered,
+			Scope:      scope,
+		})
+	}
+
 	if givenScope == "register" && scope == "reset" {
 		return common.BadRequest("该用户已注册，请使用重置密码功能")
 	} else if givenScope == "reset" && scope == "register" {
@@ -513,8 +528,9 @@ func verifyWithEmail(c *fiber.Ctx, email, givenScope string) error {
 	}
 
 	return c.JSON(EmailVerifyResponse{
-		Message: "验证邮件已发送，请查收\n如未收到，请检查邮件地址是否正确，检查垃圾箱，或重试",
-		Scope:   scope,
+		Message:    "验证邮件已发送，请查收\n如未收到，请检查邮件地址是否正确，检查垃圾箱，或重试",
+		Registered: registered,
+		Scope:      scope,
 	})
 }
 
@@ -523,6 +539,7 @@ func verifyWithEmail(c *fiber.Ctx, email, givenScope string) error {
 // @Summary verify with email in query and apikey
 // @Description verify with email in query, return verification code
 // @Tags account
+// @Deprecated
 // @Produce json
 // @Router /verify/apikey [get]
 // @Param email query ApikeyRequest true "apikey, email"

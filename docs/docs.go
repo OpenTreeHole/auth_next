@@ -978,6 +978,7 @@ const docTemplate = `{
                     "account"
                 ],
                 "summary": "verify with email in query and apikey",
+                "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
@@ -1048,6 +1049,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "scope",
                         "name": "scope",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "check",
+                        "name": "check",
                         "in": "query"
                     }
                 ],
@@ -1138,6 +1145,9 @@ const docTemplate = `{
                 "message": {
                     "type": "string"
                 },
+                "registered": {
+                    "type": "boolean"
+                },
                 "scope": {
                     "type": "string",
                     "enum": [
@@ -1152,6 +1162,9 @@ const docTemplate = `{
             "properties": {
                 "message": {
                     "type": "string"
+                },
+                "registered": {
+                    "type": "boolean"
                 },
                 "scope": {
                     "type": "string",

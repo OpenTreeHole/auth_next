@@ -6,6 +6,8 @@ definitions:
         type: string
       message:
         type: string
+      registered:
+        type: boolean
       scope:
         enum:
         - register
@@ -16,6 +18,8 @@ definitions:
     properties:
       message:
         type: string
+      registered:
+        type: boolean
       scope:
         enum:
         - register
@@ -961,6 +965,7 @@ paths:
       - user
   /verify/apikey:
     get:
+      deprecated: true
       description: verify with email in query, return verification code
       parameters:
       - in: query
@@ -1010,6 +1015,10 @@ paths:
         in: query
         name: scope
         type: string
+      - description: check
+        in: query
+        name: check
+        type: boolean
       produces:
       - application/json
       responses:
