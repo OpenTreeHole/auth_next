@@ -20,7 +20,7 @@ func HasRegisteredEmail(tx *gorm.DB, email string) (bool, error) {
 
 func HasDeletedEmail(tx *gorm.DB, email string) (bool, error) {
 	var exists bool
-	err := tx.Raw("SELECT EXISTS (SELECT 1 FROM deleted_identifier WHERE identifier = ?)", auth.MakeIdentifier(email)).Scan(&exists).Error
+	err := tx.Raw("SELECT EXISTS (SELECT 1 FROM delete_identifier WHERE identifier = ?)", auth.MakeIdentifier(email)).Scan(&exists).Error
 	return exists, err
 }
 
