@@ -529,45 +529,43 @@ func verifyWithEmail(c *fiber.Ctx, email, givenScope string, check bool) error {
 // @Failure 403 {object} common.MessageResponse "apikey不正确"
 // @Failure 409 {object} common.MessageResponse "用户已注册"
 // @Failure 500 {object} common.MessageResponse
-func VerifyWithApikey(c *fiber.Ctx) error {
-	if config.RegisterApikeySecret == "" {
-		return common.Forbidden("API Key 注册已禁用")
-	}
+func VerifyWithApikey(_ *fiber.Ctx) error {
+	return common.Forbidden("API Key 注册已禁用")
 
-	var query ApikeyRequest
-	err := common.ValidateQuery(c, &query)
-	if err != nil {
-		return err
-	}
-
-	scope := "register"
-	if !auth.CheckApikey(query.Apikey) {
-		return common.Forbidden("API Key 不正确，您可以选择使用旦夕账号登录，或者在 auth.fduhole.com 注册旦夕账户")
-	}
-	ok, err := HasRegisteredEmail(DB, query.Email)
-	if err != nil {
-		return err
-	}
-
-	if ok {
-		return c.Status(409).JSON(common.HttpError{Code: 409, Message: "用户已注册"})
-	}
-	if query.CheckRegister {
-		return c.Status(200).JSON(common.HttpError{Code: 200, Message: "用户已注册"})
-	}
-
-	code, err := auth.SetVerificationCode(query.Email, scope)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(ApikeyResponse{
-		EmailVerifyResponse: EmailVerifyResponse{
-			Message: "验证成功",
-			Scope:   scope,
-		},
-		Code: code,
-	})
+	//var query ApikeyRequest
+	//err := common.ValidateQuery(c, &query)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//scope := "register"
+	//if !auth.CheckApikey(query.Apikey) {
+	//	return common.Forbidden("API Key 不正确，您可以选择使用旦夕账号登录，或者在 auth.fduhole.com 注册旦夕账户")
+	//}
+	//ok, err := HasRegisteredEmail(DB, query.Email)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//if ok {
+	//	return c.Status(409).JSON(common.HttpError{Code: 409, Message: "用户已注册"})
+	//}
+	//if query.CheckRegister {
+	//	return c.Status(200).JSON(common.HttpError{Code: 200, Message: "用户已注册"})
+	//}
+	//
+	//code, err := auth.SetVerificationCode(query.Email, scope)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//return c.JSON(ApikeyResponse{
+	//	EmailVerifyResponse: EmailVerifyResponse{
+	//		Message: "验证成功",
+	//		Scope:   scope,
+	//	},
+	//	Code: code,
+	//})
 }
 
 // DeleteUser godoc
