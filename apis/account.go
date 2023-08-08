@@ -547,7 +547,7 @@ func verifyWithEmail(c *fiber.Ctx, email, givenScope string, check bool) error {
 // @Failure 409 {object} common.MessageResponse "用户已注册"
 // @Failure 500 {object} common.MessageResponse
 func VerifyWithApikey(_ *fiber.Ctx) error {
-	return common.Forbidden("API Key 注册已禁用")
+	return common.Forbidden("快捷登录/注册已停用，请返回并使用旦夕账户直接登录。注册账户请前往 https://auth.fduhole.com")
 
 	//var query ApikeyRequest
 	//err := common.ValidateQuery(c, &query)
