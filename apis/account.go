@@ -348,6 +348,23 @@ func ChangePassword(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+
+	registered, err := HasRegisteredEmail(DB, body.Email)
+	if err != nil {
+		return err
+	}
+	deleted, err := HasDeletedEmail(DB, body.Email)
+	if err != nil {
+		return err
+	}
+
+	if !registered {
+		return common.BadRequest("该用户未注册")
+	}
+	if deleted {
+		return common.BadRequest("账户已注销，禁止修改密码")
+	}
+
 	ok := auth.CheckVerificationCode(body.Email, scope, string(body.Verification))
 	if !ok {
 		return common.BadRequest("验证码错误，请多次尝试或者重新获取验证码")
