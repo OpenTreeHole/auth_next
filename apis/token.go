@@ -1,15 +1,14 @@
 package apis
 
 import (
+	"github.com/gofiber/fiber/v2"
+	"github.com/opentreehole/go-common"
+
 	"auth_next/config"
 	. "auth_next/models"
 	"auth_next/utils/auth"
 	"auth_next/utils/kong"
-	"github.com/gofiber/fiber/v2"
-	"github.com/opentreehole/go-common"
 )
-
-var ErrLogin = common.Forbidden("邮箱或密码错误")
 
 // Login godoc
 //
@@ -36,7 +35,7 @@ func Login(c *fiber.Ctx) error {
 		Where("identifier = ? AND is_active = true", auth.MakeIdentifier(body.Email)).
 		Take(&user).Error
 	if err != nil {
-		return ErrLogin
+		return common.Forbidden("账号未注册")
 	}
 
 	ok, err := auth.CheckPassword(body.Password, user.Password)
@@ -44,7 +43,7 @@ func Login(c *fiber.Ctx) error {
 		return err
 	}
 	if !ok {
-		return ErrLogin
+		return common.Unauthorized("密码错误")
 	}
 
 	if config.Config.ShamirFeature {
