@@ -1,12 +1,14 @@
 package utils
 
 import (
-	"auth_next/config"
+	"strconv"
+	"strings"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/opentreehole/go-common"
 	"github.com/rs/zerolog/log"
-	"strconv"
-	"strings"
+
+	"auth_next/config"
 )
 
 func init() {

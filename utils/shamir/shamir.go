@@ -1,11 +1,12 @@
 package shamir
 
 import (
-	"auth_next/utils"
 	"crypto/rand"
 	"errors"
 	"fmt"
 	. "math/big"
+
+	"auth_next/utils"
 )
 
 var P *Int

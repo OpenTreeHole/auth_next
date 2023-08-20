@@ -1,10 +1,12 @@
 package utils
 
 import (
-	"auth_next/config"
 	"fmt"
-	"github.com/go-playground/assert/v2"
 	"testing"
+
+	"github.com/go-playground/assert/v2"
+
+	"auth_next/config"
 )
 
 func TestValidateEmail(t *testing.T) {

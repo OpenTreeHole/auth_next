@@ -1,11 +1,13 @@
 package utils
 
 import (
-	"auth_next/config"
 	"crypto/tls"
+	"net/smtp"
+
 	"github.com/jordan-wright/email"
 	"github.com/opentreehole/go-common"
-	"net/smtp"
+
+	"auth_next/config"
 )
 
 func SendEmail(subject, content string, receiver []string) error {

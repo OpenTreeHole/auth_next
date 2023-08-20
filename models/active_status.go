@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/rs/zerolog/log"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type ActiveStatus struct {

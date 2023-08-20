@@ -1,19 +1,21 @@
 package auth
 
 import (
-	"auth_next/config"
 	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"golang.org/x/crypto/pbkdf2"
-	"golang.org/x/crypto/sha3"
 	"hash"
 	"math/big"
 	"strconv"
 	"strings"
+
+	"golang.org/x/crypto/pbkdf2"
+	"golang.org/x/crypto/sha3"
+
+	"auth_next/config"
 )
 
 func MakeIdentifier(email string) string {
