@@ -29,7 +29,7 @@ type TokenResponse struct {
 
 type RegisterRequest struct {
 	LoginRequest
-	Verification VerificationType `json:"verification" minLength:"6" maxLength:"6" swaggerType:"string"`
+	Verification VerificationType `json:"verification" swaggerType:"string"`
 }
 
 type RegisterInBatchRequest struct {

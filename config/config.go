@@ -86,12 +86,11 @@ func InitConfig() {
 func initFileConfig() {
 	err := env.Parse(&FileConfig)
 	if err != nil {
-		if e, ok := err.(*env.AggregateError); ok {
+		var e *env.AggregateError
+		if errors.As(err, &e) {
 			for _, innerErr := range e.Errors {
-				switch innerErr.(type) {
-				case env.LoadFileContentError:
-					continue
-				default:
+				var loadFileContentError env.LoadFileContentError
+				if !errors.As(innerErr, &loadFileContentError) {
 					log.Fatal().Err(err).Msg("init file config error")
 				}
 			}
