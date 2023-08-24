@@ -487,7 +487,7 @@ func verifyWithEmail(c *fiber.Ctx, email, givenScope string, check bool) error {
 		if !registered {
 			message = "该邮箱未注册"
 		}
-		return c.JSON(EmailVerifyResponse{
+		return c.Status(400).JSON(EmailVerifyResponse{
 			Message:    message,
 			Registered: registered,
 			Scope:      scope,
