@@ -172,8 +172,6 @@ definitions:
         minLength: 8
         type: string
       verification:
-        maxLength: 6
-        minLength: 6
         type: string
     type: object
   apis.ShamirStatusResponse:
@@ -279,11 +277,9 @@ definitions:
   apis.UserShare:
     properties:
       share:
-        $ref: '#/definitions/shamir.Share'
+        type: string
       user_id:
         type: integer
-    type: object
-  big.Int:
     type: object
   common.ErrorDetailElement:
     properties:
@@ -336,13 +332,6 @@ definitions:
         type: string
       user_id:
         type: integer
-    type: object
-  shamir.Share:
-    properties:
-      x:
-        $ref: '#/definitions/big.Int'
-      "y":
-        $ref: '#/definitions/big.Int'
     type: object
 host: localhost:8000
 info:

@@ -1407,9 +1407,7 @@ const docTemplate = `{
                     "minLength": 8
                 },
                 "verification": {
-                    "type": "string",
-                    "maxLength": 6,
-                    "minLength": 6
+                    "type": "string"
                 }
             }
         },
@@ -1566,15 +1564,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "share": {
-                    "$ref": "#/definitions/shamir.Share"
+                    "type": "string"
                 },
                 "user_id": {
                     "type": "integer"
                 }
             }
-        },
-        "big.Int": {
-            "type": "object"
         },
         "common.ErrorDetailElement": {
             "type": "object",
@@ -1653,17 +1648,6 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "integer"
-                }
-            }
-        },
-        "shamir.Share": {
-            "type": "object",
-            "properties": {
-                "x": {
-                    "$ref": "#/definitions/big.Int"
-                },
-                "y": {
-                    "$ref": "#/definitions/big.Int"
                 }
             }
         }

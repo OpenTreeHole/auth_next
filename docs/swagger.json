@@ -1400,9 +1400,7 @@
                     "minLength": 8
                 },
                 "verification": {
-                    "type": "string",
-                    "maxLength": 6,
-                    "minLength": 6
+                    "type": "string"
                 }
             }
         },
@@ -1559,15 +1557,12 @@
             "type": "object",
             "properties": {
                 "share": {
-                    "$ref": "#/definitions/shamir.Share"
+                    "type": "string"
                 },
                 "user_id": {
                     "type": "integer"
                 }
             }
-        },
-        "big.Int": {
-            "type": "object"
         },
         "common.ErrorDetailElement": {
             "type": "object",
@@ -1646,17 +1641,6 @@
                 },
                 "user_id": {
                     "type": "integer"
-                }
-            }
-        },
-        "shamir.Share": {
-            "type": "object",
-            "properties": {
-                "x": {
-                    "$ref": "#/definitions/big.Int"
-                },
-                "y": {
-                    "$ref": "#/definitions/big.Int"
                 }
             }
         }

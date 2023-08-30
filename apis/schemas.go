@@ -29,7 +29,7 @@ type TokenResponse struct {
 
 type RegisterRequest struct {
 	LoginRequest
-	Verification VerificationType `json:"verification" swaggerType:"string"`
+	Verification VerificationType `json:"verification" swaggertype:"string"`
 }
 
 type RegisterInBatchRequest struct {
@@ -206,7 +206,7 @@ type PGPMessageResponse struct {
 
 type UserShare struct {
 	UserID int          `json:"user_id"`
-	Share  shamir.Share `json:"share" swaggerType:"string"`
+	Share  shamir.Share `json:"share" swaggertype:"string"`
 }
 
 type UploadSharesRequest struct {
