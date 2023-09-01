@@ -472,6 +472,134 @@ const docTemplate = `{
                 }
             }
         },
+        "/shamir/decrypt": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "shamir"
+                ],
+                "summary": "upload shares of one user",
+                "parameters": [
+                    {
+                        "description": "shares",
+                        "name": "shares",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apis.UploadShareRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.MessageResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/apis.IdentityNameResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/shamir/decrypt/status/{user_id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "shamir"
+                ],
+                "summary": "get decrypt status by userID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Target UserID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apis.ShamirUserSharesResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/shamir/decrypt/{user_id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "shamir"
+                ],
+                "summary": "get decrypted email of one user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Target UserID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apis.DecryptedUserEmailResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/shamir/key": {
             "post": {
                 "produces": [
@@ -1192,6 +1320,23 @@ const docTemplate = `{
                 }
             }
         },
+        "apis.DecryptedUserEmailResponse": {
+            "type": "object",
+            "properties": {
+                "identity_names": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "user_email": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "apis.EmailVerifyResponse": {
             "type": "object",
             "properties": {
@@ -1407,9 +1552,7 @@ const docTemplate = `{
                     "minLength": 8
                 },
                 "verification": {
-                    "type": "string",
-                    "maxLength": 6,
-                    "minLength": 6
+                    "type": "string"
                 }
             }
         },
@@ -1448,6 +1591,20 @@ const docTemplate = `{
                 },
                 "warning_message": {
                     "type": "string"
+                }
+            }
+        },
+        "apis.ShamirUserSharesResponse": {
+            "type": "object",
+            "properties": {
+                "shamir_upload_ready": {
+                    "type": "boolean"
+                },
+                "uploaded_shares_identity_names": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -1545,6 +1702,23 @@ const docTemplate = `{
                 }
             }
         },
+        "apis.UploadShareRequest": {
+            "type": "object",
+            "required": [
+                "identity_name"
+            ],
+            "properties": {
+                "identity_name": {
+                    "type": "string"
+                },
+                "share": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "apis.UploadSharesRequest": {
             "type": "object",
             "required": [
@@ -1566,15 +1740,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "share": {
-                    "$ref": "#/definitions/shamir.Share"
+                    "type": "string"
                 },
                 "user_id": {
                     "type": "integer"
                 }
             }
-        },
-        "big.Int": {
-            "type": "object"
         },
         "common.ErrorDetailElement": {
             "type": "object",
@@ -1653,17 +1824,6 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "integer"
-                }
-            }
-        },
-        "shamir.Share": {
-            "type": "object",
-            "properties": {
-                "x": {
-                    "$ref": "#/definitions/big.Int"
-                },
-                "y": {
-                    "$ref": "#/definitions/big.Int"
                 }
             }
         }
