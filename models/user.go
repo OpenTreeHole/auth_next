@@ -21,6 +21,7 @@ type User struct {
 	Identifier           sql.NullString `json:"-" gorm:"size:128;uniqueIndex:,length:10"`
 	Password             string         `json:"-" gorm:"size:128"`
 	IsAdmin              bool           `json:"is_admin" gorm:"default:false;index"`
+	IsShamirAdmin        bool           `json:"is_shamir_admin" gorm:"default:false;index"`
 	IsActive             bool           `json:"-" gorm:"default:true"`
 	JoinedTime           time.Time      `json:"joined_time" gorm:"autoCreateTime"`
 	LastLogin            time.Time      `json:"last_login" gorm:"autoUpdateTime"`
@@ -28,8 +29,9 @@ type User struct {
 	HasAnsweredQuestions bool           `json:"has_answered_questions" gorm:"default:false"`
 }
 
-// AdminIDList refresh every 1 minutes
+// AdminIDList and ShamirAdminIDList refresh every 1 minutes
 var AdminIDList atomic.Value
+var ShamirAdminIDList atomic.Value
 
 func InitAdminList() {
 	err := LoadAdminList()
@@ -37,6 +39,15 @@ func InitAdminList() {
 		log.Fatal().Err(err).Msg("initial admin list failed")
 	}
 	go RefreshAdminList()
+}
+
+func InitShamirAdminList() {
+	// init shamir admin list
+	err := LoadShamirAdminList()
+	if err != nil {
+		log.Fatal().Err(err).Msg("initial shamir admin list failed")
+	}
+	go RefreshShamirAdminList()
 }
 
 func LoadAdminList() error {
@@ -49,10 +60,31 @@ func LoadAdminList() error {
 	return nil
 }
 
+func LoadShamirAdminList() error {
+	// load shamir admin list
+	shamirAdminIDs := make([]int, 0, 10)
+	err := DB.Model(&User{}).Where("is_shamir_admin = true").Pluck("id", &shamirAdminIDs).Error
+	if err != nil {
+		return err
+	}
+	ShamirAdminIDList.Store(shamirAdminIDs)
+	return nil
+}
+
 func RefreshAdminList() {
 	ticker := time.NewTicker(1 * time.Minute)
 	for range ticker.C {
 		err := LoadAdminList()
+		if err != nil {
+			log.Err(err).Msg("refresh admin list failed")
+		}
+	}
+}
+
+func RefreshShamirAdminList() {
+	ticker := time.NewTicker(1 * time.Minute)
+	for range ticker.C {
+		err := LoadShamirAdminList()
 		if err != nil {
 			log.Err(err).Msg("refresh admin list failed")
 		}
@@ -71,6 +103,11 @@ func (user *User) AfterFind(_ *gorm.DB) error {
 
 func IsAdmin(userID int) bool {
 	_, ok := slices.BinarySearch(AdminIDList.Load().([]int), userID)
+	return ok
+}
+
+func IsShamirAdmin(userID int) bool {
+	_, ok := slices.BinarySearch(ShamirAdminIDList.Load().([]int), userID)
 	return ok
 }
 
