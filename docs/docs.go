@@ -463,6 +463,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
+                    "403": {
+                        "description": "非管理员",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -517,6 +523,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
+                    "403": {
+                        "description": "非管理员",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -549,6 +561,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/apis.ShamirUserSharesResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "非管理员",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
                     "500": {
@@ -587,6 +605,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "非管理员",
                         "schema": {
                             "$ref": "#/definitions/common.MessageResponse"
                         }
@@ -673,6 +697,12 @@ const docTemplate = `{
                     "204": {
                         "description": "No Content"
                     },
+                    "403": {
+                        "description": "非管理员",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -741,6 +771,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "非管理员",
                         "schema": {
                             "$ref": "#/definitions/common.MessageResponse"
                         }
@@ -861,6 +897,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "非管理员",
                         "schema": {
                             "$ref": "#/definitions/common.MessageResponse"
                         }
@@ -1322,6 +1364,9 @@ const docTemplate = `{
         },
         "apis.DecryptedUserEmailResponse": {
             "type": "object",
+            "required": [
+                "user_email"
+            ],
             "properties": {
                 "identity_names": {
                     "type": "array",
@@ -1811,6 +1856,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "is_admin": {
+                    "type": "boolean"
+                },
+                "is_shamir_admin": {
                     "type": "boolean"
                 },
                 "joined_time": {

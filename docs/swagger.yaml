@@ -24,6 +24,8 @@ definitions:
         type: string
       user_id:
         type: integer
+    required:
+    - user_email
     type: object
   apis.EmailVerifyResponse:
     properties:
@@ -355,6 +357,8 @@ definitions:
         type: integer
       is_admin:
         type: boolean
+      is_shamir_admin:
+        type: boolean
       joined_time:
         type: string
       last_login:
@@ -661,6 +665,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/common.MessageResponse'
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -689,6 +697,10 @@ paths:
             $ref: '#/definitions/apis.PGPMessageResponse'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+        "403":
+          description: 非管理员
           schema:
             $ref: '#/definitions/common.MessageResponse'
         "500":
@@ -723,6 +735,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/common.MessageResponse'
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -749,6 +765,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/common.MessageResponse'
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -771,6 +791,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/apis.ShamirUserSharesResponse'
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -821,6 +845,10 @@ paths:
       responses:
         "204":
           description: No Content
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -860,6 +888,10 @@ paths:
               type: object
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+        "403":
+          description: 非管理员
           schema:
             $ref: '#/definitions/common.MessageResponse'
         "500":
