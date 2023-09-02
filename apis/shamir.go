@@ -34,6 +34,7 @@ import (
 // @Param identity_name query PGPMessageRequest true "recipient uid"
 // @Success 200 {object} PGPMessageResponse
 // @Failure 400 {object} common.MessageResponse
+// @Failure 403 {object} common.MessageResponse "非管理员"
 // @Failure 500 {object} common.MessageResponse
 func GetPGPMessageByUserID(c *fiber.Ctx) error {
 	// get identity
@@ -41,6 +42,16 @@ func GetPGPMessageByUserID(c *fiber.Ctx) error {
 	err := common.ValidateQuery(c, &query)
 	if err != nil {
 		return err
+	}
+
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can reload questions")
 	}
 
 	// get target user id
@@ -81,6 +92,7 @@ func GetPGPMessageByUserID(c *fiber.Ctx) error {
 // @Param identity_name query string true "recipient uid"
 // @Success 200 {array} PGPMessageResponse
 // @Failure 400 {object} common.MessageResponse
+// @Failure 403 {object} common.MessageResponse "非管理员"
 // @Failure 500 {object} common.MessageResponse
 func ListPGPMessages(c *fiber.Ctx) error {
 	// get identity
@@ -88,6 +100,16 @@ func ListPGPMessages(c *fiber.Ctx) error {
 	err := common.ValidateQuery(c, &query)
 	if err != nil {
 		return err
+	}
+
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can reload questions")
 	}
 
 	// list pgp messages
@@ -118,6 +140,7 @@ func ListPGPMessages(c *fiber.Ctx) error {
 // @Success 200 {object} common.MessageResponse{data=IdentityNameResponse}
 // @Success 201 {object} common.MessageResponse{data=IdentityNameResponse}
 // @Failure 400 {object} common.MessageResponse
+// @Failure 403 {object} common.MessageResponse "非管理员"
 // @Failure 500 {object} common.MessageResponse
 func UploadAllShares(c *fiber.Ctx) error {
 	// get shares
@@ -125,6 +148,16 @@ func UploadAllShares(c *fiber.Ctx) error {
 	err := common.ValidateBody(c, &body)
 	if err != nil {
 		return err
+	}
+
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can reload questions")
 	}
 
 	// lock
@@ -179,6 +212,16 @@ func UploadPublicKey(c *fiber.Ctx) error {
 		return err
 	}
 
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can reload questions")
+	}
+
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
 	status := &GlobalUploadShamirStatus
@@ -226,6 +269,16 @@ func UploadPublicKey(c *fiber.Ctx) error {
 // @Failure 403 {object} common.MessageResponse "非管理员"
 // @Failure 500 {object} common.MessageResponse
 func GetShamirStatus(c *fiber.Ctx) error {
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can reload questions")
+	}
+
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
 
@@ -243,6 +296,16 @@ func GetShamirStatus(c *fiber.Ctx) error {
 // @Failure 403 {object} common.MessageResponse "非管理员"
 // @Failure 500 {object} common.MessageResponse
 func UpdateShamir(c *fiber.Ctx) error {
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can reload questions")
+	}
+
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
 	status := &GlobalUploadShamirStatus
@@ -271,8 +334,19 @@ func UpdateShamir(c *fiber.Ctx) error {
 // @Tags shamir
 // @Router /shamir/refresh [put]
 // @Success 204
+// @Failure 403 {object} common.MessageResponse "非管理员"
 // @failure 500 {object} common.MessageResponse
 func RefreshShamir(c *fiber.Ctx) error {
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can reload questions")
+	}
+
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
 	status := &GlobalUploadShamirStatus
@@ -511,12 +585,23 @@ func updateShamir() {
 // @Param shares body UploadShareRequest true "shares"
 // @Success 200 {object} common.MessageResponse{data=IdentityNameResponse}
 // @Failure 400 {object} common.MessageResponse
+// @Failure 403 {object} common.MessageResponse "非管理员"
 // @Failure 500 {object} common.MessageResponse
 func UploadUserShares(c *fiber.Ctx) error {
 	var body UploadShareRequest
 	err := common.ValidateBody(c, &body)
 	if err != nil {
 		return err
+	}
+
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can reload questions")
 	}
 
 	GlobalUserSharesStatus.Lock()
@@ -555,8 +640,19 @@ func UploadUserShares(c *fiber.Ctx) error {
 // @Param user_id path int true "Target UserID"
 // @Success 200 {object} DecryptedUserEmailResponse
 // @Failure 400 {object} common.MessageResponse
+// @Failure 403 {object} common.MessageResponse "非管理员"
 // @Failure 500 {object} common.MessageResponse
 func GetDecryptedUserEmail(c *fiber.Ctx) error {
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can reload questions")
+	}
+
 	// get target user id
 	targetUserID, err := c.ParamsInt("id", 0)
 	if err != nil {
@@ -609,8 +705,19 @@ func GetDecryptedUserEmail(c *fiber.Ctx) error {
 // @Router /shamir/decrypt/status/{user_id} [get]
 // @Param user_id path int true "Target UserID"
 // @Success 200 {object} ShamirUserSharesResponse
+// @Failure 403 {object} common.MessageResponse "非管理员"
 // @Failure 500 {object} common.MessageResponse
 func GetDecryptStatusbyUserID(c *fiber.Ctx) error {
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can reload questions")
+	}
+
 	// get target user id
 	targetUserID, err := c.ParamsInt("id", 0)
 	if err != nil {
