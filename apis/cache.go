@@ -25,6 +25,7 @@ var GlobalUploadShamirStatus struct {
 
 func Init() {
 	InitShamirStatus()
+	InitUserSharesStatus()
 
 	if config.Config.EnableRegisterQuestions {
 		err := InitQuestions()
@@ -212,4 +213,17 @@ LOAD_FILES:
 	GlobalQuestionConfig.Unlock()
 
 	return nil
+}
+
+var GlobalUserSharesStatus struct {
+	sync.Mutex
+	ShamirUsersSharesResponse
+}
+
+func InitUserSharesStatus() {
+	GlobalUserSharesStatus.ShamirUsersSharesResponse = ShamirUsersSharesResponse{
+		UploadedShares:              make(map[int]shamir.Shares, 0),
+		UploadedSharesIdentityNames: make(map[int][]string, 0),
+		ShamirUploadReady:           make(map[int]bool, 0),
+	}
 }

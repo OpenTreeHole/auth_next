@@ -14,6 +14,19 @@ definitions:
         - reset
         type: string
     type: object
+  apis.DecryptedUserEmailResponse:
+    properties:
+      identity_names:
+        items:
+          type: string
+        type: array
+      user_email:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - user_email
+    type: object
   apis.EmailVerifyResponse:
     properties:
       message:
@@ -199,6 +212,15 @@ definitions:
       warning_message:
         type: string
     type: object
+  apis.ShamirUserSharesResponse:
+    properties:
+      shamir_upload_ready:
+        type: boolean
+      uploaded_shares_identity_names:
+        items:
+          type: string
+        type: array
+    type: object
   apis.SubmitAnswer:
     properties:
       answer:
@@ -263,6 +285,17 @@ definitions:
     required:
     - data
     type: object
+  apis.UploadShareRequest:
+    properties:
+      identity_name:
+        type: string
+      share:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - identity_name
+    type: object
   apis.UploadSharesRequest:
     properties:
       identity_name:
@@ -323,6 +356,8 @@ definitions:
       id:
         type: integer
       is_admin:
+        type: boolean
+      is_shamir_admin:
         type: boolean
       joined_time:
         type: string
@@ -630,6 +665,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/common.MessageResponse'
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -660,11 +699,107 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/common.MessageResponse'
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/common.MessageResponse'
       summary: get shamir PGP message
+      tags:
+      - shamir
+  /shamir/decrypt:
+    post:
+      parameters:
+      - description: shares
+        in: body
+        name: shares
+        required: true
+        schema:
+          $ref: '#/definitions/apis.UploadShareRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.MessageResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/apis.IdentityNameResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+      summary: upload shares of one user
+      tags:
+      - shamir
+  /shamir/decrypt/{user_id}:
+    get:
+      parameters:
+      - description: Target UserID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apis.DecryptedUserEmailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+      summary: get decrypted email of one user
+      tags:
+      - shamir
+  /shamir/decrypt/status/{user_id}:
+    get:
+      parameters:
+      - description: Target UserID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apis.ShamirUserSharesResponse'
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+      summary: get decrypt status by userID
       tags:
       - shamir
   /shamir/key:
@@ -710,6 +845,10 @@ paths:
       responses:
         "204":
           description: No Content
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -749,6 +888,10 @@ paths:
               type: object
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+        "403":
+          description: 非管理员
           schema:
             $ref: '#/definitions/common.MessageResponse'
         "500":

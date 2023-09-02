@@ -61,4 +61,7 @@ func RegisterRoutes(app *fiber.App) {
 	routes.Post("/shamir/key", UploadPublicKey)
 	routes.Post("/shamir/update", UpdateShamir)
 	routes.Put("/shamir/refresh", RefreshShamir)
+	routes.Post("/shamir/decrypt", UploadUserShares)
+	routes.Get("/shamir/decrypt/:id", GetDecryptedUserEmail)
+	routes.Get("/shamir/decrypt/status/:id", GetDecryptStatusbyUserID)
 }
