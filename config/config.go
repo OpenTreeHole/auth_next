@@ -21,6 +21,7 @@ var Config struct {
 	RedisUrl                string
 	NotificationUrl         string
 	EmailWhitelist          []string
+	ValidateEmailWhitelist  []string
 	EmailServerNoReplyUrl   url.URL `env:"EMAIL_SERVER_NO_REPLY_URL"`
 	EmailDomain             string
 	EmailDev                string `envDefault:"dev@fduhole.com"`
