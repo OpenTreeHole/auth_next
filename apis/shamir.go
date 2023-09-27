@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/opentreehole/go-common"
 	"github.com/rs/zerolog/log"
@@ -33,6 +34,7 @@ import (
 // @Param identity_name query PGPMessageRequest true "recipient uid"
 // @Success 200 {object} PGPMessageResponse
 // @Failure 400 {object} common.MessageResponse
+// @Failure 403 {object} common.MessageResponse "非管理员"
 // @Failure 500 {object} common.MessageResponse
 func GetPGPMessageByUserID(c *fiber.Ctx) error {
 	// get identity
@@ -40,6 +42,16 @@ func GetPGPMessageByUserID(c *fiber.Ctx) error {
 	err := common.ValidateQuery(c, &query)
 	if err != nil {
 		return err
+	}
+
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can get pgp message")
 	}
 
 	// get target user id
@@ -80,6 +92,7 @@ func GetPGPMessageByUserID(c *fiber.Ctx) error {
 // @Param identity_name query string true "recipient uid"
 // @Success 200 {array} PGPMessageResponse
 // @Failure 400 {object} common.MessageResponse
+// @Failure 403 {object} common.MessageResponse "非管理员"
 // @Failure 500 {object} common.MessageResponse
 func ListPGPMessages(c *fiber.Ctx) error {
 	// get identity
@@ -87,6 +100,16 @@ func ListPGPMessages(c *fiber.Ctx) error {
 	err := common.ValidateQuery(c, &query)
 	if err != nil {
 		return err
+	}
+
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can get pgp message")
 	}
 
 	// list pgp messages
@@ -117,6 +140,7 @@ func ListPGPMessages(c *fiber.Ctx) error {
 // @Success 200 {object} common.MessageResponse{data=IdentityNameResponse}
 // @Success 201 {object} common.MessageResponse{data=IdentityNameResponse}
 // @Failure 400 {object} common.MessageResponse
+// @Failure 403 {object} common.MessageResponse "非管理员"
 // @Failure 500 {object} common.MessageResponse
 func UploadAllShares(c *fiber.Ctx) error {
 	// get shares
@@ -124,6 +148,16 @@ func UploadAllShares(c *fiber.Ctx) error {
 	err := common.ValidateBody(c, &body)
 	if err != nil {
 		return err
+	}
+
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can upload shares")
 	}
 
 	// lock
@@ -178,6 +212,16 @@ func UploadPublicKey(c *fiber.Ctx) error {
 		return err
 	}
 
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can upload public keys")
+	}
+
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
 	status := &GlobalUploadShamirStatus
@@ -225,6 +269,16 @@ func UploadPublicKey(c *fiber.Ctx) error {
 // @Failure 403 {object} common.MessageResponse "非管理员"
 // @Failure 500 {object} common.MessageResponse
 func GetShamirStatus(c *fiber.Ctx) error {
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can get shamir status")
+	}
+
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
 
@@ -242,6 +296,16 @@ func GetShamirStatus(c *fiber.Ctx) error {
 // @Failure 403 {object} common.MessageResponse "非管理员"
 // @Failure 500 {object} common.MessageResponse
 func UpdateShamir(c *fiber.Ctx) error {
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can update shamir")
+	}
+
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
 	status := &GlobalUploadShamirStatus
@@ -270,8 +334,19 @@ func UpdateShamir(c *fiber.Ctx) error {
 // @Tags shamir
 // @Router /shamir/refresh [put]
 // @Success 204
+// @Failure 403 {object} common.MessageResponse "非管理员"
 // @failure 500 {object} common.MessageResponse
 func RefreshShamir(c *fiber.Ctx) error {
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can refresh shamir")
+	}
+
 	GlobalUploadShamirStatus.Lock()
 	defer GlobalUploadShamirStatus.Unlock()
 	status := &GlobalUploadShamirStatus
@@ -499,4 +574,164 @@ func updateShamir() {
 	}
 
 	log.Info().Str("scope", taskScope).Msg("updateShamir function finished")
+}
+
+// UploadUserShares godoc
+//
+// @Summary upload shares of one user
+// @Tags shamir
+// @Produce json
+// @Router /shamir/decrypt [post]
+// @Param shares body UploadShareRequest true "shares"
+// @Success 200 {object} common.MessageResponse{data=IdentityNameResponse}
+// @Failure 400 {object} common.MessageResponse
+// @Failure 403 {object} common.MessageResponse "非管理员"
+// @Failure 500 {object} common.MessageResponse
+func UploadUserShares(c *fiber.Ctx) error {
+	var body UploadShareRequest
+	err := common.ValidateBody(c, &body)
+	if err != nil {
+		return err
+	}
+
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can upload user shares")
+	}
+
+	GlobalUserSharesStatus.Lock()
+	defer GlobalUserSharesStatus.Unlock()
+	status := &GlobalUserSharesStatus
+
+	// save Identity Names for User
+	if utils.InUnorderedSlice(status.UploadedSharesIdentityNames[body.UserID], body.IdentityName) {
+		return common.BadRequest("您已经上传过，请不要重复上传")
+	}
+	status.UploadedSharesIdentityNames[body.UserID] = append(status.UploadedSharesIdentityNames[body.UserID], body.IdentityName)
+
+	// save shares
+	status.UploadedShares[body.UserID] = append(status.UploadedShares[body.UserID], body.Share)
+
+	if len(status.UploadedSharesIdentityNames[body.UserID]) >= 4 {
+		status.ShamirUploadReady[body.UserID] = true
+	}
+
+	return c.JSON(common.MessageResponse{
+		Message: "上传成功",
+		Data: Map{
+			"identity_name":      body.IdentityName,
+			"user_id":            body.UserID,
+			"now_updated_shares": status.UploadedSharesIdentityNames[body.UserID],
+		},
+	})
+}
+
+// GetDecryptedUserEmail godoc
+//
+// @Summary get decrypted email of one user
+// @Tags shamir
+// @Produce json
+// @Router /shamir/decrypt/{user_id} [get]
+// @Param user_id path int true "Target UserID"
+// @Success 200 {object} DecryptedUserEmailResponse
+// @Failure 400 {object} common.MessageResponse
+// @Failure 403 {object} common.MessageResponse "非管理员"
+// @Failure 500 {object} common.MessageResponse
+func GetDecryptedUserEmail(c *fiber.Ctx) error {
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can decrypt email")
+	}
+
+	// get target user id
+	targetUserID, err := c.ParamsInt("id", 0)
+	if err != nil {
+		return err
+	}
+	if targetUserID <= 0 {
+		return errors.New("user_id at least 1")
+	}
+
+	GlobalUserSharesStatus.Lock()
+	defer GlobalUserSharesStatus.Unlock()
+	status := &GlobalUserSharesStatus
+
+	if !status.ShamirUploadReady[targetUserID] {
+		if len(status.UploadedSharesIdentityNames[targetUserID]) < 4 {
+			return common.BadRequest("坐标点数量不够，无法解密")
+		} else {
+			return common.BadRequest("无法解密")
+		}
+	}
+
+	email := shamir.Decrypt(status.UploadedShares[targetUserID])
+	identityName := status.UploadedSharesIdentityNames[targetUserID]
+
+	delete(status.UploadedShares, targetUserID)
+	delete(status.UploadedSharesIdentityNames, targetUserID)
+	status.ShamirUploadReady[targetUserID] = false
+
+	response := DecryptedUserEmailResponse{
+		UserID:        targetUserID,
+		UserEmail:     email,
+		IdentityNames: identityName,
+	}
+
+	// validate email
+	validate := validator.New()
+	err = validate.Struct(response)
+	if err != nil {
+		return common.BadRequest("解密失败，请重新输入坐标点")
+	}
+
+	return c.JSON(response)
+}
+
+// GetDecryptStatusbyUserID godoc
+//
+// @Summary get decrypt status by userID
+// @Tags shamir
+// @Produce json
+// @Router /shamir/decrypt/status/{user_id} [get]
+// @Param user_id path int true "Target UserID"
+// @Success 200 {object} ShamirUserSharesResponse
+// @Failure 403 {object} common.MessageResponse "非管理员"
+// @Failure 500 {object} common.MessageResponse
+func GetDecryptStatusbyUserID(c *fiber.Ctx) error {
+	// identify shamir admin
+	userID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if !IsShamirAdmin(userID) {
+		return common.Forbidden("only admin can get decrypt status")
+	}
+
+	// get target user id
+	targetUserID, err := c.ParamsInt("id", 0)
+	if err != nil {
+		return err
+	}
+	if targetUserID <= 0 {
+		return errors.New("user_id at least 1")
+	}
+
+	GlobalUserSharesStatus.Lock()
+	defer GlobalUserSharesStatus.Unlock()
+
+	return c.JSON(ShamirUserSharesResponse{
+		ShamirUploadReady:           GlobalUserSharesStatus.ShamirUploadReady[targetUserID],
+		UploadedSharesIdentityNames: GlobalUserSharesStatus.UploadedSharesIdentityNames[targetUserID],
+	})
 }

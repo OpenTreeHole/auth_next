@@ -40,11 +40,16 @@ func ValidateEmailFudan(email string) error {
 
 	if emailSplit[1] == "fudan.edu.cn" {
 		if year >= 21 {
-			return common.BadRequest("21级及以后的同学请使用m.fudan.edu.cn邮箱。" + messageSuffix)
+			// check in whitelist
+			if !InUnorderedSlice(config.Config.ValidateEmailWhitelist, email) {
+				return common.BadRequest("21级及以后的同学请使用m.fudan.edu.cn邮箱。" + messageSuffix)
+			}
 		}
 	} else if emailSplit[1] == "m.fudan.edu.cn" {
 		if year <= 20 {
-			return common.BadRequest("20级及以前的同学请使用fudan.edu.cn邮箱。" + messageSuffix)
+			if !InUnorderedSlice(config.Config.ValidateEmailWhitelist, email) {
+				return common.BadRequest("20级及以前的同学请使用fudan.edu.cn邮箱。" + messageSuffix)
+			}
 		}
 	}
 	return nil

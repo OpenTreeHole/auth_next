@@ -214,6 +214,11 @@ type UploadSharesRequest struct {
 	Shares []UserShare `json:"shares" query:"shares"`
 }
 
+type UploadShareRequest struct {
+	PGPMessageRequest
+	UserShare
+}
+
 type UploadPublicKeyRequest struct {
 	Data []string `json:"data" validate:"required,len=7"` // all standalone public keys
 }
@@ -232,4 +237,21 @@ type ShamirStatusResponse struct {
 	NowUserID                   int                      `json:"now_user_id,omitempty"`
 	FailMessage                 string                   `json:"fail_message,omitempty"`
 	WarningMessage              string                   `json:"warning_message,omitempty"`
+}
+
+type ShamirUsersSharesResponse struct {
+	ShamirUploadReady           map[int]bool          `json:"shamir_upload_ready"`
+	UploadedSharesIdentityNames map[int][]string      `json:"uploaded_shares_identity_names"`
+	UploadedShares              map[int]shamir.Shares `json:"-"`
+}
+
+type ShamirUserSharesResponse struct {
+	ShamirUploadReady           bool     `json:"shamir_upload_ready"`
+	UploadedSharesIdentityNames []string `json:"uploaded_shares_identity_names"`
+}
+
+type DecryptedUserEmailResponse struct {
+	UserID        int      `json:"user_id"`
+	UserEmail     string   `json:"user_email" validate:"required,email"`
+	IdentityNames []string `json:"identity_names"`
 }

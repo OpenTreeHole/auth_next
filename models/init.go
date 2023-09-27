@@ -21,6 +21,9 @@ func InitDB() {
 	// get admin list for admin check and start admin refresh task
 	InitAdminList()
 
+	// get shamir admin list and start refresh task
+	InitShamirAdminList()
+
 	// get pgp public key for register
 	InitShamirPublicKey()
 }

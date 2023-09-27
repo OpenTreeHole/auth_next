@@ -463,6 +463,158 @@ const docTemplate = `{
                             "$ref": "#/definitions/common.MessageResponse"
                         }
                     },
+                    "403": {
+                        "description": "非管理员",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/shamir/decrypt": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "shamir"
+                ],
+                "summary": "upload shares of one user",
+                "parameters": [
+                    {
+                        "description": "shares",
+                        "name": "shares",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apis.UploadShareRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.MessageResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/apis.IdentityNameResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "非管理员",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/shamir/decrypt/status/{user_id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "shamir"
+                ],
+                "summary": "get decrypt status by userID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Target UserID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apis.ShamirUserSharesResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "非管理员",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/shamir/decrypt/{user_id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "shamir"
+                ],
+                "summary": "get decrypted email of one user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Target UserID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apis.DecryptedUserEmailResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "非管理员",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -545,6 +697,12 @@ const docTemplate = `{
                     "204": {
                         "description": "No Content"
                     },
+                    "403": {
+                        "description": "非管理员",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -613,6 +771,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "非管理员",
                         "schema": {
                             "$ref": "#/definitions/common.MessageResponse"
                         }
@@ -733,6 +897,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "非管理员",
                         "schema": {
                             "$ref": "#/definitions/common.MessageResponse"
                         }
@@ -1192,6 +1362,26 @@ const docTemplate = `{
                 }
             }
         },
+        "apis.DecryptedUserEmailResponse": {
+            "type": "object",
+            "required": [
+                "user_email"
+            ],
+            "properties": {
+                "identity_names": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "user_email": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "apis.EmailVerifyResponse": {
             "type": "object",
             "properties": {
@@ -1449,6 +1639,20 @@ const docTemplate = `{
                 }
             }
         },
+        "apis.ShamirUserSharesResponse": {
+            "type": "object",
+            "properties": {
+                "shamir_upload_ready": {
+                    "type": "boolean"
+                },
+                "uploaded_shares_identity_names": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "apis.SubmitAnswer": {
             "type": "object",
             "required": [
@@ -1540,6 +1744,23 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "apis.UploadShareRequest": {
+            "type": "object",
+            "required": [
+                "identity_name"
+            ],
+            "properties": {
+                "identity_name": {
+                    "type": "string"
+                },
+                "share": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -1635,6 +1856,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "is_admin": {
+                    "type": "boolean"
+                },
+                "is_shamir_admin": {
                     "type": "boolean"
                 },
                 "joined_time": {
