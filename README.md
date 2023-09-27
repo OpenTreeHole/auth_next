@@ -15,22 +15,23 @@ issuing tokens
 
 Environment Variables
 
-|           Name            |     Default     |         Valid values         |                                 Description                                  |
-|:-------------------------:|:---------------:|:----------------------------:|:----------------------------------------------------------------------------:|
-|           MODE            |       dev       | dev, production, test, bench |                          if dev, log gorm debug sql                          |
-|          DB_URL           |                 |                              |                 Database DSN, required in "production" mode                  |
-|         KONG_URL          |                 |                              |         if STANDALONE is false, required to connect to kong gateway          |
-|         REDIS_URL         |                 |                              |                       if not set, use go-cache instead                       |
-|     NOTIFICATION_URL      |                 |                              |                   if not set, no notification will be sent                   |
-|      EMAIL_WHITELIST      |                 |                              |           use ',' to separate emails; if not set, allow all emails           |
-| EMAIL_SERVER_NO_REPLY_URL |                 |                              | required in "production" mode; if not set, unable to send verification email |
-|       EMAIL_DOMAIN        |                 |                              | required in "production" mode; if not set, unable to send verification email |
-|         EMAIL_DEV         | dev@fduhole.com |                              |                      send email if shamir update failed                      |
-|      SHAMIR_FEATURE       |      true       |                              |   if enabled, check email shamir encryption when users register and login    |
-|        STANDALONE         |      false      |                              |          if not set, this application not required to set KONG_URL           |
-| VERIFICATION_CODE_EXPIRES |       10        |           integers           |                  register verification code expiration time                  |
-|         SITE_NAME         | Open Tree Hole  |                              |                      title prefix of verification email                      |
-| ENABLE_REGISTER_QUESTIONS |      false      |                              |    if set, user will be set "have not answered questions" when registered    |
+|           Name            |     Default     |         Valid values         |                                     Description                                      |
+|:-------------------------:|:---------------:|:----------------------------:|:------------------------------------------------------------------------------------:|
+|           MODE            |       dev       | dev, production, test, bench |                              if dev, log gorm debug sql                              |
+|          DB_URL           |                 |                              |                     Database DSN, required in "production" mode                      |
+|         KONG_URL          |                 |                              |             if STANDALONE is false, required to connect to kong gateway              |
+|         REDIS_URL         |                 |                              |                           if not set, use go-cache instead                           |
+|     NOTIFICATION_URL      |                 |                              |                       if not set, no notification will be sent                       |
+|      EMAIL_WHITELIST      |                 |                              |               use ',' to separate emails; if not set, allow all emails               |
+| VALIDATE_EMAIL_WHITELIST  |                 |                              | use ',' to separate emails; the emails in it will not be checked for year vs. suffix |
+| EMAIL_SERVER_NO_REPLY_URL |                 |                              |     required in "production" mode; if not set, unable to send verification email     |
+|       EMAIL_DOMAIN        |                 |                              |     required in "production" mode; if not set, unable to send verification email     |
+|         EMAIL_DEV         | dev@fduhole.com |                              |                          send email if shamir update failed                          |
+|      SHAMIR_FEATURE       |      true       |                              |       if enabled, check email shamir encryption when users register and login        |
+|        STANDALONE         |      false      |                              |              if not set, this application not required to set KONG_URL               |
+| VERIFICATION_CODE_EXPIRES |       10        |           integers           |                      register verification code expiration time                      |
+|         SITE_NAME         | Open Tree Hole  |                              |                          title prefix of verification email                          |
+| ENABLE_REGISTER_QUESTIONS |      false      |                              |        if set, user will be set "have not answered questions" when registered        |
 
 File settings, required in production mode
 
