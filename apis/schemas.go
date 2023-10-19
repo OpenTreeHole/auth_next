@@ -18,7 +18,7 @@ type EmailModel struct {
 
 type LoginRequest struct {
 	EmailModel
-	Password string `json:"password" minLength:"8"`
+	Password string `json:"password" minLength:"8" validate:"required,min=8"`
 }
 
 type TokenResponse struct {
