@@ -223,7 +223,7 @@ func AnswerQuestions(c *fiber.Ctx) (err error) {
 		case SingleSelection:
 			fallthrough
 		case TrueOrFalse:
-			if len(answer.Answer) != 1 || answer.Answer[0] != question.Answer[0] {
+			if len(answer.Answer) != 1 || answer.Answer[0] != question.AnswerOptions[0] {
 				wrongQuestions = append(wrongQuestions, answer.ID)
 				continue
 			}
@@ -231,7 +231,7 @@ func AnswerQuestions(c *fiber.Ctx) (err error) {
 			sortedAnswer := make([]string, len(answer.Answer))
 			copy(sortedAnswer, answer.Answer)
 			sort.Strings(sortedAnswer)
-			if slices.Equal(sortedAnswer, question.Answer) {
+			if !slices.Equal(sortedAnswer, question.AnswerOptions) {
 				wrongQuestions = append(wrongQuestions, answer.ID)
 				continue
 			}

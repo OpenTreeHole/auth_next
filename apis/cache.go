@@ -10,7 +10,6 @@ import (
 	"github.com/goccy/go-json"
 	"github.com/opentreehole/go-common"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
 
 	"auth_next/config"
@@ -159,11 +158,9 @@ LOAD_FILES:
 					valid = false
 					continue
 				}
-				if !slices.Contains(currentQuestion.Options, currentQuestion.Answer[0]) {
-					currentQuestion.Options = append(currentQuestion.Options, currentQuestion.Answer[0])
-				}
+				currentQuestion.AnswerOptions = append(currentQuestion.AnswerOptions, currentQuestion.Options[currentQuestion.Answer[0]])
 			case TrueOrFalse:
-				if len(currentQuestion.Answer) != 1 || (currentQuestion.Answer[0] != "true" && currentQuestion.Answer[0] != "false") {
+				if len(currentQuestion.Answer) != 1 || (currentQuestion.Answer[0] != 0 && currentQuestion.Answer[0] != 1) {
 					log.Warn().
 						Str("filename", file.Name()).
 						Str("question", currentQuestion.Question).
@@ -172,6 +169,8 @@ LOAD_FILES:
 					valid = false
 					continue
 				}
+				currentQuestion.AnswerOptions = append(currentQuestion.AnswerOptions,
+					currentQuestion.Options[currentQuestion.Answer[0]])
 			case MultiSelection:
 				if len(currentQuestion.Answer) < 1 {
 					log.Warn().
@@ -182,12 +181,13 @@ LOAD_FILES:
 					valid = false
 					continue
 				}
-				for _, answer := range currentQuestion.Answer {
-					if !slices.Contains(currentQuestion.Options, answer) {
-						currentQuestion.Options = append(currentQuestion.Options, answer)
+				currentQuestion.AnswerOptions = make([]string, 0, len(currentQuestion.Answer))
+				for _, index := range currentQuestion.Answer {
+					if index < len(currentQuestion.Options) {
+						currentQuestion.AnswerOptions = append(currentQuestion.AnswerOptions, currentQuestion.Options[index])
 					}
 				}
-				sort.Strings(currentQuestion.Answer)
+				sort.Strings(currentQuestion.AnswerOptions)
 			}
 		}
 		if !valid {
