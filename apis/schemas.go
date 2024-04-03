@@ -109,11 +109,14 @@ type Question struct {
 	// 问题描述
 	Question string `json:"question" yaml:"question" validate:"required"`
 
-	// 答案描述，单选、判断、多选
+	// 答案索引，单选、判断、多选，从 0 开始
+	Answer []int `json:"answer,omitempty" yaml:"answer,omitempty" validate:"min=1"`
+
+	// 根据Answer的索引解析出的答案, 单选、判断、多选
 	// 如果是单选题，则只有一个答案
 	// 如果是多选题，则有一个或多个答案
 	// 如果是判断题，则只有一个答案，且只能是 true 或者 false
-	Answer []string `json:"answer,omitempty" yaml:"answer,omitempty" validate:"min=1"`
+	AnswerOptions []string `json:"-" yaml:"-"`
 
 	// 选项描述，单选、判断、多选
 	// 有一个或多个选项，如果是判断题，则选项只能是 true 或者 false
