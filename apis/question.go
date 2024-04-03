@@ -156,9 +156,9 @@ func AnswerQuestions(c *fiber.Ctx) (err error) {
 		return
 	}
 
-	if user.HasAnsweredQuestions {
-		return common.BadRequest("you have answered questions")
-	}
+	//if user.HasAnsweredQuestions {
+	//	return common.BadRequest("you have answered questions")
+	//}
 
 	var body SubmitRequest
 	err = common.ValidateBody(c, &body)
