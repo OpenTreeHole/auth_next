@@ -26,14 +26,14 @@ func RetrieveQuestions(c *fiber.Ctx) (err error) {
 		return
 	}
 
-	user, err := LoadUserFromDB(userID)
+	_, err = LoadUserFromDB(userID)
 	if err != nil {
 		return
 	}
 
-	if user.HasAnsweredQuestions {
-		return common.BadRequest("you have answered questions")
-	}
+	//if user.HasAnsweredQuestions {
+	//	return common.BadRequest("you have answered questions")
+	//}
 
 	version := c.QueryInt("version")
 	if version == 0 {
@@ -246,6 +246,7 @@ func AnswerQuestions(c *fiber.Ctx) (err error) {
 		})
 	}
 
+	user.HasAnsweredQuestions = true
 	err = DB.Model(&user).Update("has_answered_questions", true).Error
 	if err != nil {
 		return
