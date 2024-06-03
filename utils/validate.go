@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"golang.org/x/exp/slices"
 	"strconv"
 	"strings"
 
@@ -26,7 +27,7 @@ func ValidateEmail(email string) bool {
 	if len(config.Config.EmailWhitelist) == 0 {
 		return true
 	}
-	return InUnorderedSlice(config.Config.EmailWhitelist, emailSplit[1])
+	return slices.Contains(config.Config.EmailWhitelist, emailSplit[1])
 }
 
 func ValidateEmailFudan(email string) error {

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"github.com/opentreehole/go-common"
 	"testing"
 
 	"github.com/go-playground/assert/v2"
@@ -22,4 +23,13 @@ func TestValidateEmailFudan(t *testing.T) {
 	fmt.Println(ValidateEmailFudan("20307130001@m.fudan.edu.cn"))
 	fmt.Println(ValidateEmailFudan("20307130001@fudan.edu.cn"))
 	fmt.Println(ValidateEmailFudan("abcd@fudan.edu.cn"))
+}
+
+func TestValidateAll(t *testing.T) {
+	type TempStruct struct {
+		Email string `validate:"isValidEmail"`
+	}
+	config.Config.EmailWhitelist = []string{"fudan.edu.cn", "m.fudan.edu.cn"}
+	err := common.ValidateStruct(TempStruct{Email: "abcd@fudan.edu.cn"})
+	assert.Equal(t, err, nil)
 }

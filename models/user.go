@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -115,7 +116,7 @@ func LoadUserFromDB(userID int) (*User, error) {
 	var user User
 	err := DB.Where("is_active = true").Take(&user, userID).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, common.NotFound("User Not Found")
 		} else {
 			return nil, err
