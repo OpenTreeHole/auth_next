@@ -115,7 +115,7 @@ func Logout(c *fiber.Ctx) error {
 //	@Router			/refresh [post]
 //	@Success		200	{object}	TokenResponse
 func Refresh(c *fiber.Ctx) error {
-	refreshToken, user, err := GetUserByRefreshToken(c)
+	_, user, err := GetUserByRefreshToken(c)
 	if err != nil {
 		return err
 	}
@@ -126,14 +126,14 @@ func Refresh(c *fiber.Ctx) error {
 		return err
 	}
 
-	access, _, err := user.CreateJWTToken()
+	access, refresh, err := user.CreateJWTToken()
 	if err != nil {
 		return err
 	}
 
 	return c.JSON(TokenResponse{
 		Access:  access,
-		Refresh: refreshToken, // using old refreshToken instead
+		Refresh: refresh, // using new refreshToken
 		Message: "refresh successful",
 	})
 }
