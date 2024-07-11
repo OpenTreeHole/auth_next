@@ -73,6 +73,8 @@ definitions:
       password:
         minLength: 8
         type: string
+    required:
+    - password
     type: object
   apis.PGPMessageResponse:
     properties:
@@ -87,13 +89,9 @@ definitions:
         description: 题目解析，预留，可选
         type: string
       answer:
-        description: |-
-          答案描述，单选、判断、多选
-          如果是单选题，则只有一个答案
-          如果是多选题，则有一个或多个答案
-          如果是判断题，则只有一个答案，且只能是 true 或者 false
+        description: 答案索引，单选、判断、多选，从 0 开始
         items:
-          type: string
+          type: integer
         minItems: 1
         type: array
       group:
@@ -186,6 +184,8 @@ definitions:
         type: string
       verification:
         type: string
+    required:
+    - password
     type: object
   apis.ShamirStatusResponse:
     properties:
@@ -318,10 +318,15 @@ definitions:
     properties:
       field:
         type: string
+      message:
+        type: string
+      param:
+        type: string
+      struct_field:
+        type: string
       tag:
         type: string
-      value:
-        type: string
+      value: {}
     type: object
   common.HttpError:
     properties:
@@ -517,6 +522,35 @@ paths:
       tags:
       - token
   /register:
+    patch:
+      consumes:
+      - application/json
+      description: reset password, reset jwt credential
+      parameters:
+      - description: json
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/apis.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apis.TokenResponse'
+        "400":
+          description: 验证码错误
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+      summary: reset password
+      tags:
+      - account
     post:
       consumes:
       - application/json
@@ -841,6 +875,21 @@ paths:
       tags:
       - shamir
   /shamir/refresh:
+    patch:
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: 非管理员
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+      summary: trigger for refresh uploaded shares
+      tags:
+      - shamir
     put:
       responses:
         "204":
@@ -1027,6 +1076,33 @@ paths:
       tags:
       - user
     put:
+      description: modify user, owner or admin
+      parameters:
+      - description: UserID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.User'
+        "403":
+          description: 不是管理员
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+      summary: modify user
+      tags:
+      - user
+  /users/{user_id}/_modify:
+    patch:
       description: modify user, owner or admin
       parameters:
       - description: UserID

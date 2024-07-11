@@ -333,6 +333,7 @@ func UpdateShamir(c *fiber.Ctx) error {
 // @Summary trigger for refresh uploaded shares
 // @Tags shamir
 // @Router /shamir/refresh [put]
+// @Router /shamir/refresh [patch]
 // @Success 204
 // @Failure 403 {object} common.MessageResponse "非管理员"
 // @failure 500 {object} common.MessageResponse

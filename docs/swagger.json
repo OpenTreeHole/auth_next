@@ -314,6 +314,50 @@
                         }
                     }
                 }
+            },
+            "patch": {
+                "description": "reset password, reset jwt credential",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "account"
+                ],
+                "summary": "reset password",
+                "parameters": [
+                    {
+                        "description": "json",
+                        "name": "json",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apis.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apis.TokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "验证码错误",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    }
+                }
             }
         },
         "/register/questions": {
@@ -682,6 +726,29 @@
         },
         "/shamir/refresh": {
             "put": {
+                "tags": [
+                    "shamir"
+                ],
+                "summary": "trigger for refresh uploaded shares",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "非管理员",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
                 "tags": [
                     "shamir"
                 ],
@@ -1166,6 +1233,47 @@
                 }
             }
         },
+        "/users/{user_id}/_modify": {
+            "patch": {
+                "description": "modify user, owner or admin",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "modify user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "UserID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "403": {
+                        "description": "不是管理员",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/verify/apikey": {
             "get": {
                 "description": "verify with email in query, return verification code",
@@ -1435,6 +1543,9 @@
         },
         "apis.LoginRequest": {
             "type": "object",
+            "required": [
+                "password"
+            ],
             "properties": {
                 "email": {
                     "description": "email in email blacklist",
@@ -1468,11 +1579,11 @@
                     "type": "string"
                 },
                 "answer": {
-                    "description": "答案描述，单选、判断、多选\n如果是单选题，则只有一个答案\n如果是多选题，则有一个或多个答案\n如果是判断题，则只有一个答案，且只能是 true 或者 false",
+                    "description": "答案索引，单选、判断、多选，从 0 开始",
                     "type": "array",
                     "minItems": 1,
                     "items": {
-                        "type": "string"
+                        "type": "integer"
                     }
                 },
                 "group": {
@@ -1580,6 +1691,9 @@
         },
         "apis.RegisterRequest": {
             "type": "object",
+            "required": [
+                "password"
+            ],
             "properties": {
                 "email": {
                     "description": "email in email blacklist",
@@ -1791,12 +1905,19 @@
                 "field": {
                     "type": "string"
                 },
+                "message": {
+                    "type": "string"
+                },
+                "param": {
+                    "type": "string"
+                },
+                "struct_field": {
+                    "type": "string"
+                },
                 "tag": {
                     "type": "string"
                 },
-                "value": {
-                    "type": "string"
-                }
+                "value": {}
             }
         },
         "common.HttpError": {

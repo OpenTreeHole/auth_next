@@ -95,6 +95,7 @@ func ListAdmin(c *fiber.Ctx) error {
 //	@Tags			user
 //	@Produce		json
 //	@Router			/users/{user_id} [put]
+//	@Router			/users/{user_id}/_modify [patch]
 //	@Param			user_id	path		int	true	"UserID"
 //	@Success		201		{object}	User
 //	@Failure		403		{object}	common.MessageResponse	"不是管理员"
