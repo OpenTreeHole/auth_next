@@ -77,6 +77,10 @@ func RetrieveQuestions(c *fiber.Ctx) (err error) {
 		return common.InternalServerError("[retrieve questions]: number of campus questions invalid")
 	}
 
+	if number == 0 {
+		return common.InternalServerError("[retrieve questions]: number of questions too small")
+	}
+
 	var questionsResponse = QuestionConfig{
 		Version: version,
 		Spec: QuestionSpec{
@@ -89,25 +93,8 @@ func RetrieveQuestions(c *fiber.Ctx) (err error) {
 
 	questionsResponse.Questions = make([]Question, number)
 	tmpQuestions := make([]*Question, 0, number)
-
-	if number == 0 {
-		return common.InternalServerError("[retrieve questions]: number of questions too small")
-	}
-
 	tmpQuestions = append(tmpQuestions, requiredQuestions...)
 
-	jsonTmpQuestions, _ := json.Marshal(questionConfig)
-	log.Debug().Msgf("questionsResponse: %s", string(jsonTmpQuestions))
-
-	jsonTmpQuestions, _ = json.Marshal(tmpQuestions)
-	log.Debug().Msgf("questionsResponse: %s", string(jsonTmpQuestions))
-
-	// for i, question := range requiredQuestions {
-	// 	tmpQuestions[i] = question
-	// 	// questionsResponse.Questions[i] = *question
-	// }
-
-	// questionConfig.Questions = append(questionConfig.Questions, optionalQuestions...)
 	if numberOfOptionalQuestions == -1 {
 		// send all opntional questions
 		tmpQuestions = append(tmpQuestions, optionalQuestions...)
@@ -136,9 +123,6 @@ func RetrieveQuestions(c *fiber.Ctx) (err error) {
 		tmpQuestions = append(tmpQuestions, chosenCampusQuestions[:numberOfCampusQuestions]...)
 	}
 
-	jsonTmpQuestions, _ = json.Marshal(tmpQuestions)
-	log.Debug().Msgf("questionsResponse: %s", string(jsonTmpQuestions))
-
 	if !inOrder {
 		rand.Shuffle(len(tmpQuestions), func(i, j int) {
 			tmpQuestions[i], tmpQuestions[j] = tmpQuestions[j], tmpQuestions[i]
@@ -148,9 +132,6 @@ func RetrieveQuestions(c *fiber.Ctx) (err error) {
 			return tmpQuestions[i].ID < tmpQuestions[j].ID
 		})
 	}
-
-	jsonTmpQuestions, _ = json.Marshal(tmpQuestions)
-	log.Debug().Msgf("questionsResponse: %s", string(jsonTmpQuestions))
 
 	for i, question := range tmpQuestions {
 		questionsResponse.Questions[i] = *question

@@ -132,16 +132,19 @@ type Question struct {
 
 // QuestionSpec 题库的发题、判题的规格 schema
 type QuestionSpec struct {
+	// 总题目数量
+	// Deprecated
 	NumberOfQuestions int `json:"number_of_questions" yaml:"number_of_questions"`
 
-	// 表示可选题的题目数量。
-	// 发送题目时，题库中的必做题都会发送，可选题会根据题目数量随机发送。
-	// 如果总的题目数量小于题库中的必做题数量，将会在解析时返回错误。
-	// 如果设置为 0 或者不设置，则题库中的所有题目都会发送
-	// 如果设置为 -1，则题库中的必做题都会发送，可选题不会发送
+	// 可选题的题目数量
+	// 发送题目时，题库中的必做题都会发送，可选题会根据题目数量随机发送
+	// 如果可选题的题目数量大于题库中的可选题数量，将会在解析时返回错误
+	// 如果设置为 0 或者不设置，可选题不会发送
+	// 如果设置为 -1，则题库中的可选题都会发送
 	NumberOfOptionalQuestions int `json:"number_of_optional_questions" yaml:"number_of_optional_questions"`
 
 	// 校园题的数量
+	// 其余规则同可选题
 	NumberOfCampusQuestions int `json:"number_of_campus_questions" yaml:"number_of_campus_questions"`
 
 	// 表示是否由题目声明顺序由上到下顺序出题，默认为 false，即乱序出题
