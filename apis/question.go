@@ -1,15 +1,17 @@
 package apis
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 
+	. "auth_next/models"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/opentreehole/go-common"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/exp/rand"
 	"golang.org/x/exp/slices"
-
-	. "auth_next/models"
 )
 
 // RetrieveQuestions godoc
@@ -128,8 +130,6 @@ func RetrieveQuestions(c *fiber.Ctx) (err error) {
 		tmpQuestions = append(tmpQuestions, chosenCampusQuestions[:numberOfCampusQuestions]...)
 	}
 
-	
-
 	if !inOrder {
 		rand.Shuffle(len(tmpQuestions), func(i, j int) {
 			tmpQuestions[i], tmpQuestions[j] = tmpQuestions[j], tmpQuestions[i]
@@ -143,6 +143,9 @@ func RetrieveQuestions(c *fiber.Ctx) (err error) {
 	for i, question := range tmpQuestions {
 		questionsResponse.Questions[i] = *question
 	}
+
+	jsonQuestions, _ := json.Marshal(questionsResponse)
+	log.Debug().Msgf("questionsResponse: %s", string(jsonQuestions))
 
 	// shuffle options
 	for i := range questionsResponse.Questions {
@@ -161,6 +164,9 @@ func RetrieveQuestions(c *fiber.Ctx) (err error) {
 		questionsResponse.Questions[i].Answer = nil
 		questionsResponse.Questions[i].Option = questionsResponse.Questions[i].Options
 	}
+
+	jsonQuestions, _ = json.Marshal(questionsResponse)
+	log.Debug().Msgf("questionsResponse: %s", string(jsonQuestions))
 
 	return c.JSON(questionsResponse)
 }
