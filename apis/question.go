@@ -49,72 +49,99 @@ func RetrieveQuestions(c *fiber.Ctx) (err error) {
 	}
 
 	var (
-		questions         = questionConfig.Questions
-		requiredQuestions = questionConfig.RequiredQuestions
-		optionalQuestions = questionConfig.OptionalQuestions
-		number            = questionConfig.Spec.NumberOfQuestions
-		inOrder           = questionConfig.Spec.InOrder
+		// questions                 = questionConfig.Questions
+		// number                    = questionConfig.Spec.NumberOfQuestions
+		requiredQuestions         = questionConfig.RequiredQuestions
+		optionalQuestions         = questionConfig.OptionalQuestions
+		campusQuestions           = questionConfig.CampusQuestions
+		numberOfOptionalQuestions = questionConfig.Spec.NumberOfOptionalQuestions
+		numberOfCampusQuestions   = questionConfig.Spec.NumberOfCampusQuestions
+		inOrder                   = questionConfig.Spec.InOrder
 	)
+
+	number := len(requiredQuestions)
+	if numberOfOptionalQuestions == -1 {
+		number += len(optionalQuestions)
+	} else if numberOfOptionalQuestions >= 0 {
+		number += numberOfOptionalQuestions
+	} else {
+		return common.InternalServerError("[retrieve questions]: number of optional questions invalid")
+	}
+	if numberOfCampusQuestions == -1 {
+		number += len(campusQuestions)
+	} else if numberOfCampusQuestions >= 0 {
+		number += numberOfCampusQuestions
+	} else {
+		return common.InternalServerError("[retrieve questions]: number of campus questions invalid")
+	}
 
 	var questionsResponse = QuestionConfig{
 		Version: version,
 		Spec: QuestionSpec{
-			NumberOfQuestions: number,
-			InOrder:           inOrder,
+			NumberOfOptionalQuestions: numberOfOptionalQuestions,
+			NumberOfCampusQuestions:   numberOfCampusQuestions,
+			NumberOfQuestions:         number,
+			InOrder:                   inOrder,
 		},
 	}
 
+	questionsResponse.Questions = make([]Question, number)
+	tmpQuestions := make([]*Question, 0, number)
+
 	if number == 0 {
-		// send all questions
-		questionsResponse.Questions = make([]Question, len(questions))
-		copy(questionsResponse.Questions, questions)
-
-	} else if number == -1 {
-		// send all required questions
-		questionsResponse.Questions = make([]Question, len(requiredQuestions))
-
-		for i, question := range requiredQuestions {
-			questionsResponse.Questions[i] = *question
-		}
-	} else {
-		// send all required questions and part of random optional questions according to number
-		// be sure that number == len(requiredQuestions) + len(chosenOptionalQuestions)
-		// if number < len(requiredQuestions), return error
-		questionsResponse.Questions = make([]Question, number)
-		optionalQuestionsNumber := number - len(requiredQuestions)
-		if optionalQuestionsNumber < 0 {
-			return common.InternalServerError("[retrieve questions]: number of questions too small")
-		}
-
-		for i, question := range requiredQuestions {
-			questionsResponse.Questions[i] = *question
-		}
-
-		// shuffle optional questions
-		if optionalQuestionsNumber > 0 {
-			chosenOptionalQuestions := make([]*Question, len(optionalQuestions))
-			copy(chosenOptionalQuestions, optionalQuestions)
-			rand.Shuffle(len(chosenOptionalQuestions), func(i, j int) {
-				chosenOptionalQuestions[i], chosenOptionalQuestions[j] = chosenOptionalQuestions[j], chosenOptionalQuestions[i]
-			})
-
-			for i, question := range chosenOptionalQuestions {
-				questionsResponse.Questions[i+len(requiredQuestions)] = *question
-				if i == optionalQuestionsNumber-1 {
-					break
-				}
-			}
-		}
+		return common.InternalServerError("[retrieve questions]: number of questions too small")
 	}
 
+	copy(tmpQuestions, requiredQuestions)
+
+	// for i, question := range requiredQuestions {
+	// 	tmpQuestions[i] = question
+	// 	// questionsResponse.Questions[i] = *question
+	// }
+
+	// questionConfig.Questions = append(questionConfig.Questions, optionalQuestions...)
+	if numberOfOptionalQuestions == -1 {
+		// send all opntional questions
+		tmpQuestions = append(tmpQuestions, optionalQuestions...)
+	} else if numberOfOptionalQuestions > 0 {
+		// shuffle optional questions
+		chosenOptionalQuestions := make([]*Question, len(optionalQuestions))
+		copy(chosenOptionalQuestions, optionalQuestions)
+		rand.Shuffle(len(chosenOptionalQuestions), func(i, j int) {
+			chosenOptionalQuestions[i], chosenOptionalQuestions[j] = chosenOptionalQuestions[j], chosenOptionalQuestions[i]
+		})
+
+		tmpQuestions = append(tmpQuestions, chosenOptionalQuestions[:numberOfOptionalQuestions]...)
+	}
+
+	if numberOfCampusQuestions == -1 {
+		// send all campus questions
+		tmpQuestions = append(tmpQuestions, campusQuestions...)
+	} else if numberOfCampusQuestions > 0 {
+		// shuffle campus questions
+		chosenCampusQuestions := make([]*Question, len(campusQuestions))
+		copy(chosenCampusQuestions, campusQuestions)
+		rand.Shuffle(len(chosenCampusQuestions), func(i, j int) {
+			chosenCampusQuestions[i], chosenCampusQuestions[j] = chosenCampusQuestions[j], chosenCampusQuestions[i]
+		})
+
+		tmpQuestions = append(tmpQuestions, chosenCampusQuestions[:numberOfCampusQuestions]...)
+	}
+
+	
+
 	if !inOrder {
-		rand.Shuffle(len(questionsResponse.Questions), func(i, j int) {
-			questionsResponse.Questions[i], questionsResponse.Questions[j] = questionsResponse.Questions[j], questionsResponse.Questions[i]
+		rand.Shuffle(len(tmpQuestions), func(i, j int) {
+			tmpQuestions[i], tmpQuestions[j] = tmpQuestions[j], tmpQuestions[i]
 		})
 	} else {
-		sort.Slice(questionsResponse.Questions, func(i, j int) bool {
-			return questionsResponse.Questions[i].ID < questionsResponse.Questions[j].ID
+		sort.Slice(tmpQuestions, func(i, j int) bool {
+			return tmpQuestions[i].ID < tmpQuestions[j].ID
 		})
+	}
+
+	for i, question := range tmpQuestions {
+		questionsResponse.Questions[i] = *question
 	}
 
 	// shuffle options
@@ -127,8 +154,12 @@ func RetrieveQuestions(c *fiber.Ctx) (err error) {
 
 	// clear analysis and answer
 	for i := range questionsResponse.Questions {
+		if questionsResponse.Questions[i].Group == "campus" {
+			questionsResponse.Questions[i].Group = "optional"
+		}
 		questionsResponse.Questions[i].Analysis = ""
 		questionsResponse.Questions[i].Answer = nil
+		questionsResponse.Questions[i].Option = questionsResponse.Questions[i].Options
 	}
 
 	return c.JSON(questionsResponse)
@@ -183,8 +214,9 @@ func AnswerQuestions(c *fiber.Ctx) (err error) {
 	var (
 		questions         = questionConfig.Questions
 		requiredQuestions = questionConfig.RequiredQuestions
-		number            = questionConfig.Spec.NumberOfQuestions
 	)
+
+	number := len(requiredQuestions) + questionConfig.Spec.NumberOfOptionalQuestions + questionConfig.Spec.NumberOfCampusQuestions
 
 	// get all submitted question number and required question number
 	submittedQuestionNumber := len(body.Answers)
@@ -253,6 +285,9 @@ func AnswerQuestions(c *fiber.Ctx) (err error) {
 	}
 
 	accessToken, refreshToken, err := user.CreateJWTToken()
+	if err != nil {
+		return
+	}
 
 	return c.JSON(SubmitResponse{
 		Correct: true,

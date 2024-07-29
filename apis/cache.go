@@ -115,28 +115,45 @@ LOAD_FILES:
 			currentQuestion := &questionConfig.Questions[i]
 			if currentQuestion.Group == "required" {
 				questionConfig.RequiredQuestions = append(questionConfig.RequiredQuestions, currentQuestion)
-			} else {
+			} else if currentQuestion.Group == "optional" {
 				questionConfig.OptionalQuestions = append(questionConfig.OptionalQuestions, currentQuestion)
+			} else if currentQuestion.Group == "campus" {
+				questionConfig.CampusQuestions = append(questionConfig.CampusQuestions, currentQuestion)
 			}
 		}
 
-		if questionConfig.Spec.NumberOfQuestions > 0 {
-			if questionConfig.Spec.NumberOfQuestions < len(questionConfig.RequiredQuestions) {
+		if questionConfig.Spec.NumberOfOptionalQuestions > 0 {
+			if questionConfig.Spec.NumberOfOptionalQuestions > len(questionConfig.OptionalQuestions) {
 				log.Warn().
 					Str("filename", file.Name()).
-					Int("number_of_questions", questionConfig.Spec.NumberOfQuestions).
-					Int("number_of_required_questions", len(questionConfig.RequiredQuestions)).
-					Msg("expected number of questions is less than number of required questions")
+					Int("number_of_optional_questions", questionConfig.Spec.NumberOfOptionalQuestions).
+					Int("number_of_optional_questions", len(questionConfig.OptionalQuestions)).
+					Msg("expected number of optional questions is greater than number of optional questions")
 				continue LOAD_FILES
 			}
-			if questionConfig.Spec.NumberOfQuestions > len(questionConfig.Questions) {
+		} else if questionConfig.Spec.NumberOfOptionalQuestions < -1 {
+			log.Warn().
+				Str("filename", file.Name()).
+				Int("number_of_optional_questions", questionConfig.Spec.NumberOfOptionalQuestions).
+				Msg("expected number of optional questions is less than -1")
+			continue LOAD_FILES
+		}
+
+		if questionConfig.Spec.NumberOfCampusQuestions > 0 {
+			if questionConfig.Spec.NumberOfCampusQuestions > len(questionConfig.CampusQuestions) {
 				log.Warn().
 					Str("filename", file.Name()).
-					Int("number_of_questions", questionConfig.Spec.NumberOfQuestions).
-					Int("number_of_questions", len(questionConfig.Questions)).
-					Msg("expected number of questions is greater than number of questions")
+					Int("number_of_campus_questions", questionConfig.Spec.NumberOfCampusQuestions).
+					Int("number_of_campus_questions", len(questionConfig.CampusQuestions)).
+					Msg("expected number of campus questions is greater than number of campus questions")
 				continue LOAD_FILES
 			}
+		} else if questionConfig.Spec.NumberOfCampusQuestions < -1 {
+			log.Warn().
+				Str("filename", file.Name()).
+				Int("number_of_campus_questions", questionConfig.Spec.NumberOfCampusQuestions).
+				Msg("expected number of campus questions is less than 0")
+			continue LOAD_FILES
 		}
 
 		valid := true
