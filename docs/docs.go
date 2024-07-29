@@ -1597,12 +1597,20 @@ const docTemplate = `{
                     "type": "string",
                     "enum": [
                         "optional",
-                        "required"
+                        "required",
+                        "campus"
                     ]
                 },
                 "id": {
                     "description": "题目 ID，题库解析时自动生成，题库中不必填写，发送给客户端时必须包含",
                     "type": "integer"
+                },
+                "option": {
+                    "description": "椰树 swift",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "options": {
                     "description": "选项描述，单选、判断、多选\n有一个或多个选项，如果是判断题，则选项只能是 true 或者 false\n如果 Answer 中的答案不在 Options 中，则会在解析时加到 Options 中",
@@ -1665,8 +1673,16 @@ const docTemplate = `{
                     "description": "表示是否由题目声明顺序由上到下顺序出题，默认为 false，即乱序出题",
                     "type": "boolean"
                 },
+                "number_of_campus_questions": {
+                    "description": "校园题的数量\n其余规则同可选题",
+                    "type": "integer"
+                },
+                "number_of_optional_questions": {
+                    "description": "可选题的题目数量\n发送题目时，题库中的必做题都会发送，可选题会根据题目数量随机发送\n如果可选题的题目数量大于题库中的可选题数量，将会在解析时返回错误\n如果设置为 0 或者不设置，可选题不会发送\n如果设置为 -1，则题库中的可选题都会发送",
+                    "type": "integer"
+                },
                 "number_of_questions": {
-                    "description": "表示总的题目数量。\n发送题目时，题库中的必做题都会发送，可选题会根据题目数量随机发送。\n如果总的题目数量小于题库中的必做题数量，将会在解析时返回错误。\n如果设置为 0 或者不设置，则题库中的所有题目都会发送\n如果设置为 -1，则题库中的必做题都会发送，可选题不会发送",
+                    "description": "总题目数量\nDeprecated",
                     "type": "integer"
                 }
             }
