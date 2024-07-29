@@ -227,6 +227,8 @@ LOAD_FILES:
 	GlobalQuestionConfig.Lock()
 	GlobalQuestionConfig.Questions = newQuestions
 	GlobalQuestionConfig.CurrentVersion = newQuestionCurrentVersion
+	jsonQuestions, _ := json.Marshal(GlobalQuestionConfig.Questions)
+	log.Debug().Msgf("questionsResponse: %s", string(jsonQuestions))
 	GlobalQuestionConfig.Unlock()
 
 	return nil
