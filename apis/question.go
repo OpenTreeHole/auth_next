@@ -94,7 +94,7 @@ func RetrieveQuestions(c *fiber.Ctx) (err error) {
 		return common.InternalServerError("[retrieve questions]: number of questions too small")
 	}
 
-	copy(tmpQuestions, requiredQuestions)
+	tmpQuestions = append(tmpQuestions, requiredQuestions...)
 
 	jsonTmpQuestions, _ := json.Marshal(questionConfig)
 	log.Debug().Msgf("questionsResponse: %s", string(jsonTmpQuestions))
