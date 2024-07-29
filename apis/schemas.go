@@ -104,7 +104,7 @@ type Question struct {
 	Type QuestionType `json:"type" yaml:"type" validate:"oneof=single-selection true-or-false multi-selection"`
 
 	// 题目分组，可选或必选
-	Group string `json:"group" yaml:"group" validate:"oneof=optional required"`
+	Group string `json:"group" yaml:"group" validate:"oneof=optional required campus"`
 
 	// 问题描述
 	Question string `json:"question" yaml:"question" validate:"required"`
@@ -122,6 +122,9 @@ type Question struct {
 	// 有一个或多个选项，如果是判断题，则选项只能是 true 或者 false
 	// 如果 Answer 中的答案不在 Options 中，则会在解析时加到 Options 中
 	Options []string `json:"options" yaml:"options"`
+	
+	// 椰树 swift
+	Option []string `json:"option" yaml:"option"`
 
 	// 题目解析，预留，可选
 	Analysis string `json:"analysis,omitempty" yaml:"analysis,omitempty"`
@@ -129,12 +132,17 @@ type Question struct {
 
 // QuestionSpec 题库的发题、判题的规格 schema
 type QuestionSpec struct {
-	// 表示总的题目数量。
+	NumberOfQuestions int `json:"number_of_questions" yaml:"number_of_questions"`
+
+	// 表示可选题的题目数量。
 	// 发送题目时，题库中的必做题都会发送，可选题会根据题目数量随机发送。
 	// 如果总的题目数量小于题库中的必做题数量，将会在解析时返回错误。
 	// 如果设置为 0 或者不设置，则题库中的所有题目都会发送
 	// 如果设置为 -1，则题库中的必做题都会发送，可选题不会发送
-	NumberOfQuestions int `json:"number_of_questions" yaml:"number_of_questions"`
+	NumberOfOptionalQuestions int `json:"number_of_optional_questions" yaml:"number_of_optional_questions"`
+
+	// 校园题的数量
+	NumberOfCampusQuestions int `json:"number_of_campus_questions" yaml:"number_of_campus_questions"`
 
 	// 表示是否由题目声明顺序由上到下顺序出题，默认为 false，即乱序出题
 	InOrder bool `json:"in_order" yaml:"in_order"`
@@ -154,6 +162,7 @@ type QuestionConfig struct {
 	// 辅助信息，不需要填写
 	RequiredQuestions []*Question `json:"-" yaml:"-"`
 	OptionalQuestions []*Question `json:"-" yaml:"-"`
+	CampusQuestions   []*Question `json:"-" yaml:"-"`
 }
 
 // SubmitAnswer 提交的答案 schema.
