@@ -286,9 +286,9 @@ func register(c *fiber.Ctx, email, password string, batch bool) error {
 		return err
 	}
 
-	if !config.Config.EnableRegisterQuestions {
-		user.HasAnsweredQuestions = true
-	}
+	// if !config.Config.EnableRegisterQuestions {
+	// 	user.HasAnsweredQuestions = true
+	// }
 
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		err = tx.Create(&user).Error
@@ -548,7 +548,7 @@ func verifyWithEmail(c *fiber.Ctx, email, givenScope string, check bool) error {
 // @Failure 409 {object} common.MessageResponse "用户已注册"
 // @Failure 500 {object} common.MessageResponse
 func VerifyWithApikey(_ *fiber.Ctx) error {
-	return common.Forbidden("快捷登录/注册已停用，请返回并使用旦夕账户直接登录。注册账户请前往 https://auth.fduhole.com")
+	return common.Forbidden("快捷登录/注册已停用，请返回并使用旦挞账户直接登录。注册账户请前往 https://auth.fduhole.com")
 
 	//var query ApikeyRequest
 	//err := common.ValidateQuery(c, &query)
@@ -558,7 +558,7 @@ func VerifyWithApikey(_ *fiber.Ctx) error {
 	//
 	//scope := "register"
 	//if !auth.CheckApikey(query.Apikey) {
-	//	return common.Forbidden("API Key 不正确，您可以选择使用旦夕账号登录，或者在 auth.fduhole.com 注册旦夕账户")
+	//	return common.Forbidden("API Key 不正确，您可以选择使用旦挞账号登录，或者在 auth.fduhole.com 注册旦挞账户")
 	//}
 	//ok, err := HasRegisteredEmail(DB, query.Email)
 	//if err != nil {
