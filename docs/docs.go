@@ -320,7 +320,9 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
+            }
+        },
+        "/register/_webvpn": {
             "patch": {
                 "description": "reset password, reset jwt credential",
                 "consumes": [
@@ -753,7 +755,9 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
+            }
+        },
+        "/shamir/refresh/_webvpn": {
             "patch": {
                 "tags": [
                     "shamir"
@@ -1239,7 +1243,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/{user_id}/_modify": {
+        "/users/{user_id}/_webvpn": {
             "patch": {
                 "description": "modify user, owner or admin",
                 "produces": [

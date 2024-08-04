@@ -337,7 +337,7 @@ func register(c *fiber.Ctx, email, password string, batch bool) error {
 // @Accept json
 // @Produce json
 // @Router /register [put]
-// @Router /register [patch]
+// @Router /register/_webvpn [patch]
 // @Param json body RegisterRequest true "json"
 // @Success 200 {object} TokenResponse
 // @Failure 400 {object} common.MessageResponse "验证码错误"
