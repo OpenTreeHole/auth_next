@@ -314,7 +314,9 @@
                         }
                     }
                 }
-            },
+            }
+        },
+        "/register/_webvpn": {
             "patch": {
                 "description": "reset password, reset jwt credential",
                 "consumes": [
@@ -747,7 +749,9 @@
                         }
                     }
                 }
-            },
+            }
+        },
+        "/shamir/refresh/_webvpn": {
             "patch": {
                 "tags": [
                     "shamir"
@@ -1233,7 +1237,7 @@
                 }
             }
         },
-        "/users/{user_id}/_modify": {
+        "/users/{user_id}/_webvpn": {
             "patch": {
                 "description": "modify user, owner or admin",
                 "produces": [

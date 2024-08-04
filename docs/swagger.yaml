@@ -538,35 +538,6 @@ paths:
       tags:
       - token
   /register:
-    patch:
-      consumes:
-      - application/json
-      description: reset password, reset jwt credential
-      parameters:
-      - description: json
-        in: body
-        name: json
-        required: true
-        schema:
-          $ref: '#/definitions/apis.RegisterRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/apis.TokenResponse'
-        "400":
-          description: 验证码错误
-          schema:
-            $ref: '#/definitions/common.MessageResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/common.MessageResponse'
-      summary: reset password
-      tags:
-      - account
     post:
       consumes:
       - application/json
@@ -597,6 +568,36 @@ paths:
       tags:
       - account
     put:
+      consumes:
+      - application/json
+      description: reset password, reset jwt credential
+      parameters:
+      - description: json
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/apis.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apis.TokenResponse'
+        "400":
+          description: 验证码错误
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.MessageResponse'
+      summary: reset password
+      tags:
+      - account
+  /register/_webvpn:
+    patch:
       consumes:
       - application/json
       description: reset password, reset jwt credential
@@ -891,7 +892,7 @@ paths:
       tags:
       - shamir
   /shamir/refresh:
-    patch:
+    put:
       responses:
         "204":
           description: No Content
@@ -906,7 +907,8 @@ paths:
       summary: trigger for refresh uploaded shares
       tags:
       - shamir
-    put:
+  /shamir/refresh/_webvpn:
+    patch:
       responses:
         "204":
           description: No Content
@@ -1117,7 +1119,7 @@ paths:
       summary: modify user
       tags:
       - user
-  /users/{user_id}/_modify:
+  /users/{user_id}/_webvpn:
     patch:
       description: modify user, owner or admin
       parameters:

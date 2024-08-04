@@ -32,7 +32,7 @@ func RegisterRoutes(app *fiber.App) {
 	routes.Get("/verify/apikey", VerifyWithApikey)
 	routes.Post("/register", Register)
 	routes.Put("/register", ChangePassword)
-	routes.Patch("/register", ChangePassword)
+	routes.Patch("/register/_webvpn", ChangePassword)
 	routes.Delete("/users/me", DeleteUser)
 	routes.Delete("/users/:id", DeleteUserByID)
 
@@ -53,7 +53,7 @@ func RegisterRoutes(app *fiber.App) {
 	routes.Get("/users/:id", GetUserByID)
 	routes.Get("/users", ListUsers)
 	routes.Put("/users/:id", ModifyUser)
-	routes.Patch("/users/:id<int>/_modify", ModifyUser)
+	routes.Patch("/users/:id<int>/_webvpn", ModifyUser)
 
 	// shamir
 	routes.Get("/shamir/status", GetShamirStatus)
@@ -63,7 +63,7 @@ func RegisterRoutes(app *fiber.App) {
 	routes.Post("/shamir/key", UploadPublicKey)
 	routes.Post("/shamir/update", UpdateShamir)
 	routes.Put("/shamir/refresh", RefreshShamir)
-	routes.Patch("/shamir/refresh", RefreshShamir)
+	routes.Patch("/shamir/refresh/_webvpn", RefreshShamir)
 	routes.Post("/shamir/decrypt", UploadUserShares)
 	routes.Get("/shamir/decrypt/:id", GetDecryptedUserEmail)
 	routes.Get("/shamir/decrypt/status/:id", GetDecryptStatusbyUserID)
