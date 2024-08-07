@@ -108,8 +108,8 @@ github.com/mattn/go-runewidth v0.0.16 h1:E5ScNMtiwvlvB5paMFdw9p4kSQzbXFikJ5SQO6T
 github.com/mattn/go-runewidth v0.0.16/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
 github.com/mattn/go-sqlite3 v1.14.22 h1:2gZY6PC6kBnID23Tichd1K+Z0oS6nE/XwU+Vz/5o4kU=
 github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
-github.com/opentreehole/go-common v0.1.4 h1:j+rrXR1z3FJeboE5fQKcI7waLw6Ag+Tk5c1JVjNV4ZY=
-github.com/opentreehole/go-common v0.1.4/go.mod h1:0Ob6KqJUg+/he80cC3OdSokx4U35f2kgdGk73rrjWFo=
+github.com/opentreehole/go-common v0.1.6 h1:EFoh1HUSTMZePhq7ibhHzlJ1v2TlWxB76To2JFhQPRs=
+github.com/opentreehole/go-common v0.1.6/go.mod h1:0Ob6KqJUg+/he80cC3OdSokx4U35f2kgdGk73rrjWFo=
 github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaRUnok+kx1WdO15EQc=
 github.com/patrickmn/go-cache v2.1.0+incompatible/go.mod h1:3Qf8kWWT7OJRJbdiICTKqZju1ZixQ/KpMGzzAfe6+WQ=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
