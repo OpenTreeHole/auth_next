@@ -393,10 +393,13 @@ func ChangePassword(c *fiber.Ctx) error {
 	}
 
 	if !config.Config.Standalone {
-		err = kong.DeleteJwtCredential(user.ID)
-		if err != nil {
-			return err
-		}
+		userID := user.ID
+		go func() {
+			err = kong.DeleteJwtCredential(userID)
+			if err != nil {
+				log.Warn().Err(err).Int("user_id", userID).Msg("failed to delete jwt credential")
+			}
+		}()
 	}
 
 	accessToken, refreshToken, err := user.CreateJWTToken()
