@@ -4,7 +4,7 @@
 
 //	@contact.name	Maintainer Chen Ke
 //	@contact.url	https://danxi.fduhole.com/about
-//	@contact.email	dev@fduhole.com
+//	@contact.email	dev@danta.tech
 
 //	@license.name	Apache 2.0
 //	@license.url	https://www.apache.org/licenses/LICENSE-2.0.html

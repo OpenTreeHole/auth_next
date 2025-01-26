@@ -26,7 +26,7 @@ Environment Variables
 | VALIDATE_EMAIL_WHITELIST  |                 |                              | use ',' to separate emails; the emails in it will not be checked for year vs. suffix |
 | EMAIL_SERVER_NO_REPLY_URL |                 |                              |     required in "production" mode; if not set, unable to send verification email     |
 |       EMAIL_DOMAIN        |                 |                              |     required in "production" mode; if not set, unable to send verification email     |
-|         EMAIL_DEV         | dev@fduhole.com |                              |                          send email if shamir update failed                          |
+|         EMAIL_DEV         | dev@danta.tech |                              |                          send email if shamir update failed                          |
 |      SHAMIR_FEATURE       |      true       |                              |       if enabled, check email shamir encryption when users register and login        |
 |        STANDALONE         |      false      |                              |              if not set, this application not required to set KONG_URL               |
 | VERIFICATION_CODE_EXPIRES |       10        |           integers           |                      register verification code expiration time                      |

@@ -392,7 +392,7 @@ definitions:
 host: localhost:8000
 info:
   contact:
-    email: dev@fduhole.com
+    email: dev@danta.tech
     name: Maintainer Chen Ke
     url: https://danxi.fduhole.com/about
   description: Next Generation of Auth microservice integrated with kong for registration

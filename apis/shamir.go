@@ -51,7 +51,7 @@ func GetPGPMessageByUserID(c *fiber.Ctx) error {
 	}
 
 	if !IsShamirAdmin(userID) {
-		return common.Forbidden("only admin can get pgp message")
+		return common.Forbidden("only shamir admin can get pgp message")
 	}
 
 	// get target user id
@@ -109,7 +109,7 @@ func ListPGPMessages(c *fiber.Ctx) error {
 	}
 
 	if !IsShamirAdmin(userID) {
-		return common.Forbidden("only admin can get pgp message")
+		return common.Forbidden("only shamir admin can get pgp message")
 	}
 
 	// list pgp messages
@@ -157,7 +157,7 @@ func UploadAllShares(c *fiber.Ctx) error {
 	}
 
 	if !IsShamirAdmin(userID) {
-		return common.Forbidden("only admin can upload shares")
+		return common.Forbidden("only shamir admin can upload shares")
 	}
 
 	// lock
@@ -219,7 +219,7 @@ func UploadPublicKey(c *fiber.Ctx) error {
 	}
 
 	if !IsShamirAdmin(userID) {
-		return common.Forbidden("only admin can upload public keys")
+		return common.Forbidden("only shamir admin can upload public keys")
 	}
 
 	GlobalUploadShamirStatus.Lock()
@@ -276,7 +276,7 @@ func GetShamirStatus(c *fiber.Ctx) error {
 	}
 
 	if !IsShamirAdmin(userID) {
-		return common.Forbidden("only admin can get shamir status")
+		return common.Forbidden("only shamir admin can get shamir status")
 	}
 
 	GlobalUploadShamirStatus.Lock()
@@ -303,7 +303,7 @@ func UpdateShamir(c *fiber.Ctx) error {
 	}
 
 	if !IsShamirAdmin(userID) {
-		return common.Forbidden("only admin can update shamir")
+		return common.Forbidden("only shamir admin can update shamir")
 	}
 
 	GlobalUploadShamirStatus.Lock()
@@ -345,7 +345,7 @@ func RefreshShamir(c *fiber.Ctx) error {
 	}
 
 	if !IsShamirAdmin(userID) {
-		return common.Forbidden("only admin can refresh shamir")
+		return common.Forbidden("only shamir admin can refresh shamir")
 	}
 
 	GlobalUploadShamirStatus.Lock()
@@ -602,7 +602,7 @@ func UploadUserShares(c *fiber.Ctx) error {
 	}
 
 	if !IsShamirAdmin(userID) {
-		return common.Forbidden("only admin can upload user shares")
+		return common.Forbidden("only shamir admin can upload user shares")
 	}
 
 	GlobalUserSharesStatus.Lock()
@@ -651,7 +651,7 @@ func GetDecryptedUserEmail(c *fiber.Ctx) error {
 	}
 
 	if !IsShamirAdmin(userID) {
-		return common.Forbidden("only admin can decrypt email")
+		return common.Forbidden("only shamir admin can decrypt email")
 	}
 
 	// get target user id
@@ -716,7 +716,7 @@ func GetDecryptStatusbyUserID(c *fiber.Ctx) error {
 	}
 
 	if !IsShamirAdmin(userID) {
-		return common.Forbidden("only admin can get decrypt status")
+		return common.Forbidden("only shamir admin can get decrypt status")
 	}
 
 	// get target user id

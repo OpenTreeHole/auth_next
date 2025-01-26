@@ -24,7 +24,7 @@ var Config struct {
 	ValidateEmailWhitelist  []string
 	EmailServerNoReplyUrl   url.URL `env:"EMAIL_SERVER_NO_REPLY_URL"`
 	EmailDomain             string
-	EmailDev                string `envDefault:"dev@fduhole.com"`
+	EmailDev                string `envDefault:"dev@danta.tech"`
 	ShamirFeature           bool   `envDefault:"true"`
 	Standalone              bool
 	VerificationCodeExpires int    `envDefault:"10"`
