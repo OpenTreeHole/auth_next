@@ -37,7 +37,7 @@ func ValidateEmailFudan(email string) error {
 	}
 	emailSplit := strings.Split(email, "@")
 
-	const messageSuffix = `如果您的邮箱不满足此规则，可以尝试邮箱别名，或发送您的学邮和情况说明到 dev@fduhole.com ，我们为您手动处理`
+	const messageSuffix = `如果您的邮箱不满足此规则，可以尝试邮箱别名，或发送您的学邮和情况说明到 dev@danta.tech ，我们为您手动处理`
 
 	if emailSplit[1] == "fudan.edu.cn" {
 		if year >= 21 {
