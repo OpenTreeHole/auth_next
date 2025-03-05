@@ -393,15 +393,14 @@ func ChangePassword(c *fiber.Ctx) error {
 	}
 
 	if !config.Config.Standalone {
-		userID := user.ID
-		go func() {
-			err = kong.DeleteJwtCredential(userID)
-			if err != nil {
-				log.Warn().Err(err).Int("user_id", userID).Msg("failed to delete jwt credential")
-			}
-		}()
+		err = kong.DeleteJwtCredential(user.ID)
+		if err != nil {
+			// When deleting a JWT, if the JWT does not exist, no error is thrown.
+			log.Warn().Err(err).Int("user_id", user.ID).Msg("failed to delete jwt credential")
+		}
 	}
 
+	// Do NOT async deleteJwt to ensure that newly created JWTs are not deleted.
 	accessToken, refreshToken, err := user.CreateJWTToken()
 	if err != nil {
 		return err
