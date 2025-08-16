@@ -69,6 +69,14 @@ func Register(c *fiber.Ctx) (err error) {
 // @Failure 500 {object} common.MessageResponse
 // @Security ApiKeyAuth
 func RegisterDebug(c *fiber.Ctx) (err error) {
+	operatorID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+	if !IsAdmin(operatorID) {
+		return common.Forbidden()
+	}
+
 	var body LoginRequest
 	err = common.ValidateBody(c, &body)
 	if err != nil {
@@ -92,6 +100,14 @@ func RegisterDebug(c *fiber.Ctx) (err error) {
 // @Failure 500 {object} common.MessageResponse
 // @Security ApiKeyAuth
 func RegisterDebugInBatch(c *fiber.Ctx) (err error) {
+	operatorID, err := common.GetUserID(c)
+	if err != nil {
+		return err
+	}
+	if !IsAdmin(operatorID) {
+		return common.Forbidden()
+	}
+
 	const taskScope = "register_in_batch"
 	log.Info().Str("scope", taskScope).Msg("register in batch")
 
