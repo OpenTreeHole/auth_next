@@ -427,14 +427,13 @@ func ChangePassword(c *fiber.Ctx) error {
 // @Produce json
 // @Router /verify/email/{email} [get]
 // @Param email path string true "email"
-// @Param scope query string false "scope"
 // @Success 200 {object} EmailVerifyResponse
 // @Failure 400 {object} common.MessageResponse “email不在白名单中”
 // @Failure 500 {object} common.MessageResponse
 func VerifyWithEmailOld(c *fiber.Ctx) error {
 	email := c.Params("email")
-	scope := c.Query("scope")
-	return verifyWithEmail(c, email, scope, false)
+	// scope := c.Query("scope")
+	return verifyWithEmail(c, email, false)
 }
 
 // VerifyWithEmail godoc
@@ -445,7 +444,6 @@ func VerifyWithEmailOld(c *fiber.Ctx) error {
 // @Produce json
 // @Router /verify/email [get]
 // @Param email query string true "email"
-// @Param scope query string false "scope"
 // @Param check query bool false "check"
 // @Success 200 {object} EmailVerifyResponse
 // @Failure 400 {object} common.MessageResponse
@@ -453,12 +451,12 @@ func VerifyWithEmailOld(c *fiber.Ctx) error {
 // @Failure 500 {object} common.MessageResponse
 func VerifyWithEmail(c *fiber.Ctx) error {
 	email := c.Query("email")
-	scope := c.Query("scope")
+	// scope := c.Query("scope")
 	check := c.QueryBool("check")
-	return verifyWithEmail(c, email, scope, check)
+	return verifyWithEmail(c, email, check)
 }
 
-func verifyWithEmail(c *fiber.Ctx, email, givenScope string, check bool) error {
+func verifyWithEmail(c *fiber.Ctx, email string, check bool) error {
 	if !utils.ValidateEmail(email) {
 		return common.BadRequest("email invalid")
 	}
@@ -478,11 +476,9 @@ func verifyWithEmail(c *fiber.Ctx, email, givenScope string, check bool) error {
 		return err
 	}
 
-	var scope string
+	scope := "reset"
 	if !registered {
 		scope = "register"
-	} else {
-		scope = "reset"
 	}
 
 	if check {
@@ -497,11 +493,6 @@ func verifyWithEmail(c *fiber.Ctx, email, givenScope string, check bool) error {
 		})
 	}
 
-	if givenScope == "register" && scope == "reset" {
-		return common.BadRequest("该用户已注册，请使用重置密码功能")
-	} else if givenScope == "reset" && scope == "register" {
-		return common.BadRequest("该用户未注册，请先注册账户")
-	}
 	code, err := auth.SetVerificationCode(email, scope)
 	if err != nil {
 		return err
