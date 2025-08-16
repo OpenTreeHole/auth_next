@@ -12,7 +12,7 @@ const docTemplate = `{
         "contact": {
             "name": "Maintainer Chen Ke",
             "url": "https://danxi.fduhole.com/about",
-            "email": "dev@fduhole.com"
+            "email": "dev@danta.tech"
         },
         "license": {
             "name": "Apache 2.0",

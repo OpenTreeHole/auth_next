@@ -26,7 +26,7 @@ func Index(c *fiber.Ctx) error {
 		Homepage:    "https://github.com/opentreehole",
 		Repository:  "https://github.com/OpenTreeHole/auth_next",
 		Author:      "JingYiJun",
-		Email:       "dev@fduhole.com",
+		Email:       "dev@danta.tech",
 		License:     "Apache-2.0",
 	})
 }
