@@ -610,13 +610,22 @@ func UploadUserShares(c *fiber.Ctx) error {
 	status := &GlobalUserSharesStatus
 
 	// save Identity Names for User
-	if utils.InUnorderedSlice(status.UploadedSharesIdentityNames[body.UserID], body.IdentityName) {
-		return common.BadRequest("您已经上传过，请不要重复上传")
+	uploadedIdentityNames := status.UploadedSharesIdentityNames[body.UserID]
+	uploadedIndex := -1
+	for i, identityName := range uploadedIdentityNames {
+		if identityName == body.IdentityName {
+			uploadedIndex = i
+			break
+		}
 	}
-	status.UploadedSharesIdentityNames[body.UserID] = append(status.UploadedSharesIdentityNames[body.UserID], body.IdentityName)
 
 	// save shares
-	status.UploadedShares[body.UserID] = append(status.UploadedShares[body.UserID], body.Share)
+	if uploadedIndex >= 0 && uploadedIndex < len(status.UploadedShares[body.UserID]) {
+		status.UploadedShares[body.UserID][uploadedIndex] = body.Share
+	} else {
+		status.UploadedSharesIdentityNames[body.UserID] = append(uploadedIdentityNames, body.IdentityName)
+		status.UploadedShares[body.UserID] = append(status.UploadedShares[body.UserID], body.Share)
+	}
 
 	if len(status.UploadedSharesIdentityNames[body.UserID]) >= 4 {
 		status.ShamirUploadReady[body.UserID] = true
@@ -675,27 +684,60 @@ func GetDecryptedUserEmail(c *fiber.Ctx) error {
 		}
 	}
 
-	email := shamir.Decrypt(status.UploadedShares[targetUserID])
-	identityName := status.UploadedSharesIdentityNames[targetUserID]
+	response, ok := decryptUserEmailWithFourShares(
+		targetUserID,
+		status.UploadedShares[targetUserID],
+		status.UploadedSharesIdentityNames[targetUserID],
+	)
+	if !ok {
+		return common.BadRequest("解密失败，请重新输入坐标点")
+	}
 
 	delete(status.UploadedShares, targetUserID)
 	delete(status.UploadedSharesIdentityNames, targetUserID)
 	status.ShamirUploadReady[targetUserID] = false
 
-	response := DecryptedUserEmailResponse{
-		UserID:        targetUserID,
-		UserEmail:     email,
-		IdentityNames: identityName,
-	}
-
-	// validate email
-	validate := validator.New()
-	err = validate.Struct(response)
-	if err != nil {
-		return common.BadRequest("解密失败，请重新输入坐标点")
-	}
-
 	return c.JSON(response)
+}
+
+func decryptUserEmailWithFourShares(userID int, shares shamir.Shares, identityNames []string) (DecryptedUserEmailResponse, bool) {
+	n := len(shares)
+	if len(identityNames) < n {
+		n = len(identityNames)
+	}
+	if n < 4 {
+		return DecryptedUserEmailResponse{}, false
+	}
+
+	validate := validator.New()
+	for i := 0; i < n-3; i++ {
+		for j := i + 1; j < n-2; j++ {
+			for k := j + 1; k < n-1; k++ {
+				for l := k + 1; l < n; l++ {
+					response := DecryptedUserEmailResponse{
+						UserID: userID,
+						UserEmail: shamir.Decrypt(shamir.Shares{
+							shares[i],
+							shares[j],
+							shares[k],
+							shares[l],
+						}),
+						IdentityNames: []string{
+							identityNames[i],
+							identityNames[j],
+							identityNames[k],
+							identityNames[l],
+						},
+					}
+					if validate.Struct(response) == nil {
+						return response, true
+					}
+				}
+			}
+		}
+	}
+
+	return DecryptedUserEmailResponse{}, false
 }
 
 // GetDecryptStatusbyUserID godoc
