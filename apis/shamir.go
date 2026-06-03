@@ -24,6 +24,15 @@ import (
 	"auth_next/utils/shamir"
 )
 
+func currentShamirThreshold() int {
+	return config.ShamirThreshold(len(ShamirPublicKeys))
+}
+
+func canUpdateShamir(status *ShamirStatusResponse) bool {
+	return len(status.UploadedSharesIdentityNames) >= currentShamirThreshold() &&
+		config.IsValidShamirKeyCount(len(status.NewPublicKeys))
+}
+
 // GetPGPMessageByUserID godoc
 //
 // @Summary get shamir PGP message
@@ -181,7 +190,7 @@ func UploadAllShares(c *fiber.Ctx) error {
 		status.UploadedShares[userID] = append(status.UploadedShares[userID], userShare.Share)
 	}
 
-	if len(status.UploadedSharesIdentityNames) >= 4 && len(status.NewPublicKeys) == 7 {
+	if canUpdateShamir(&status.ShamirStatusResponse) {
 		status.ShamirUpdateReady = true
 	}
 
@@ -226,8 +235,13 @@ func UploadPublicKey(c *fiber.Ctx) error {
 	defer GlobalUploadShamirStatus.Unlock()
 	status := &GlobalUploadShamirStatus
 
+	if !config.IsValidShamirKeyCount(len(body.Data)) {
+		return common.BadRequest("公钥数量必须是大于 1 的奇数")
+	}
+
 	// save public keys
 	status.NewPublicKeys = nil
+	identityNames := make(map[string]struct{}, len(body.Data))
 	for i, armoredPublicKey := range body.Data {
 		// try parse
 		publicKey, err := crypto.NewKeyFromArmored(armoredPublicKey)
@@ -238,17 +252,22 @@ func UploadPublicKey(c *fiber.Ctx) error {
 		if err != nil {
 			return common.BadRequest(fmt.Sprintf("load public key error: %v\n", armoredPublicKey))
 		}
+		identityName := publicKey.GetEntity().PrimaryIdentity().Name
+		if _, ok := identityNames[identityName]; ok {
+			return common.BadRequest(fmt.Sprintf("duplicate public key identity name: %v", identityName))
+		}
+		identityNames[identityName] = struct{}{}
 
 		// save new public keys with assigned id, for save to database
 		status.NewPublicKeys = append(status.NewPublicKeys, ShamirPublicKey{
 			ID:               i + 1,
-			IdentityName:     publicKey.GetEntity().PrimaryIdentity().Name,
+			IdentityName:     identityName,
 			ArmoredPublicKey: armoredPublicKey,
 			PublicKey:        publicKeyRing,
 		})
 	}
 
-	if len(status.UploadedSharesIdentityNames) >= 4 && len(status.NewPublicKeys) == 7 {
+	if canUpdateShamir(&status.ShamirStatusResponse) {
 		status.ShamirUpdateReady = true
 	}
 
@@ -314,10 +333,10 @@ func UpdateShamir(c *fiber.Ctx) error {
 		return common.BadRequest("正在重新加解密，请不要重复触发")
 	}
 	if !status.ShamirUpdateReady {
-		if len(status.UploadedSharesIdentityNames) < 4 {
+		if len(status.UploadedSharesIdentityNames) < currentShamirThreshold() {
 			return common.BadRequest("坐标点数量不够，无法解密")
-		} else if len(status.NewPublicKeys) < 7 {
-			return common.BadRequest("公钥数量不够，无法重新加密")
+		} else if !config.IsValidShamirKeyCount(len(status.NewPublicKeys)) {
+			return common.BadRequest("公钥数量必须是大于 1 的奇数")
 		} else {
 			return common.BadRequest("无法解密")
 		}
@@ -389,6 +408,7 @@ func updateShamir() {
 
 	// backup old public keys
 	oldShamirPublicKey := ShamirPublicKeys
+	decryptThreshold := config.ShamirThreshold(len(oldShamirPublicKey))
 
 	// copy new public keys
 	ShamirPublicKeys = GlobalUploadShamirStatus.NewPublicKeys
@@ -449,7 +469,7 @@ func updateShamir() {
 				userID := userID
 				// get shares
 				shares := allShares[userID]
-				if len(shares) < 4 {
+				if len(shares) < decryptThreshold {
 					warningMessageChan <- fmt.Sprintf("user %v don't have enough shares\n", userID)
 					continue
 				}
@@ -457,7 +477,11 @@ func updateShamir() {
 				taskChan <- func() {
 
 					// decrypt email
-					email := shamir.Decrypt(shares)
+					email, ok := decryptEmailWithThreshold(shares, decryptThreshold)
+					if !ok {
+						errChan <- fmt.Errorf("[email decrypt error] invalid shares, user_id = %d", userID)
+						return
+					}
 					if !utils.ValidateEmail(email) {
 						if !utils.IsEmail(email) {
 							// decrypt error
@@ -528,7 +552,11 @@ func updateShamir() {
 			}
 
 			// save new public keys
-			err = tx.Save(ShamirPublicKeys).Error
+			err = tx.Where("1 = 1").Delete(&ShamirPublicKey{}).Error
+			if err != nil {
+				return err
+			}
+			err = tx.Create(ShamirPublicKeys).Error
 			if err != nil {
 				return err
 			}
@@ -627,7 +655,7 @@ func UploadUserShares(c *fiber.Ctx) error {
 		status.UploadedShares[body.UserID] = append(status.UploadedShares[body.UserID], body.Share)
 	}
 
-	if len(status.UploadedSharesIdentityNames[body.UserID]) >= 4 {
+	if len(status.UploadedSharesIdentityNames[body.UserID]) >= currentShamirThreshold() {
 		status.ShamirUploadReady[body.UserID] = true
 	}
 
@@ -677,17 +705,18 @@ func GetDecryptedUserEmail(c *fiber.Ctx) error {
 	status := &GlobalUserSharesStatus
 
 	if !status.ShamirUploadReady[targetUserID] {
-		if len(status.UploadedSharesIdentityNames[targetUserID]) < 4 {
+		if len(status.UploadedSharesIdentityNames[targetUserID]) < currentShamirThreshold() {
 			return common.BadRequest("坐标点数量不够，无法解密")
 		} else {
 			return common.BadRequest("无法解密")
 		}
 	}
 
-	response, ok := decryptUserEmailWithFourShares(
+	response, ok := decryptUserEmailWithThreshold(
 		targetUserID,
 		status.UploadedShares[targetUserID],
 		status.UploadedSharesIdentityNames[targetUserID],
+		currentShamirThreshold(),
 	)
 	if !ok {
 		return common.BadRequest("解密失败，请重新输入坐标点")
@@ -700,44 +729,100 @@ func GetDecryptedUserEmail(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
-func decryptUserEmailWithFourShares(userID int, shares shamir.Shares, identityNames []string) (DecryptedUserEmailResponse, bool) {
+func decryptEmailWithThreshold(shares shamir.Shares, threshold int) (string, bool) {
+	n := len(shares)
+	if n < threshold {
+		return "", false
+	}
+
+	validate := validator.New()
+	var result string
+	ok := forEachShareCombination(n, threshold, func(selected []int) bool {
+		email := shamir.Decrypt(selectedShares(shares, selected))
+		if validate.Var(email, "required,email") == nil {
+			result = email
+			return false
+		}
+		return true
+	})
+	if !ok {
+		return result, true
+	}
+
+	return "", false
+}
+
+func decryptUserEmailWithThreshold(userID int, shares shamir.Shares, identityNames []string, threshold int) (DecryptedUserEmailResponse, bool) {
 	n := len(shares)
 	if len(identityNames) < n {
 		n = len(identityNames)
 	}
-	if n < 4 {
+	if n < threshold {
 		return DecryptedUserEmailResponse{}, false
 	}
 
 	validate := validator.New()
-	for i := 0; i < n-3; i++ {
-		for j := i + 1; j < n-2; j++ {
-			for k := j + 1; k < n-1; k++ {
-				for l := k + 1; l < n; l++ {
-					response := DecryptedUserEmailResponse{
-						UserID: userID,
-						UserEmail: shamir.Decrypt(shamir.Shares{
-							shares[i],
-							shares[j],
-							shares[k],
-							shares[l],
-						}),
-						IdentityNames: []string{
-							identityNames[i],
-							identityNames[j],
-							identityNames[k],
-							identityNames[l],
-						},
-					}
-					if validate.Struct(response) == nil {
-						return response, true
-					}
-				}
-			}
+	var result DecryptedUserEmailResponse
+	ok := forEachShareCombination(n, threshold, func(selected []int) bool {
+		response := DecryptedUserEmailResponse{
+			UserID:        userID,
+			UserEmail:     shamir.Decrypt(selectedShares(shares, selected)),
+			IdentityNames: selectedIdentityNames(identityNames, selected),
 		}
+		if validate.Struct(response) == nil {
+			result = response
+			return false
+		}
+		return true
+	})
+	if !ok {
+		return result, true
 	}
 
 	return DecryptedUserEmailResponse{}, false
+}
+
+func forEachShareCombination(n, threshold int, fn func([]int) bool) bool {
+	if threshold <= 0 || threshold > n {
+		return true
+	}
+
+	selected := make([]int, 0, threshold)
+	var walk func(start int) bool
+	walk = func(start int) bool {
+		if len(selected) == threshold {
+			combination := make([]int, threshold)
+			copy(combination, selected)
+			return fn(combination)
+		}
+
+		remaining := threshold - len(selected)
+		for i := start; i <= n-remaining; i++ {
+			selected = append(selected, i)
+			if !walk(i + 1) {
+				return false
+			}
+			selected = selected[:len(selected)-1]
+		}
+		return true
+	}
+	return walk(0)
+}
+
+func selectedShares(shares shamir.Shares, selected []int) shamir.Shares {
+	result := make(shamir.Shares, 0, len(selected))
+	for _, i := range selected {
+		result = append(result, shares[i])
+	}
+	return result
+}
+
+func selectedIdentityNames(identityNames []string, selected []int) []string {
+	result := make([]string, 0, len(selected))
+	for _, i := range selected {
+		result = append(result, identityNames[i])
+	}
+	return result
 }
 
 // GetDecryptStatusbyUserID godoc

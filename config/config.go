@@ -14,6 +14,14 @@ const (
 	DefaultShamirKeyCount = 7
 )
 
+func IsValidShamirKeyCount(n int) bool {
+	return n > 1 && n%2 == 1
+}
+
+func ShamirThreshold(keyCount int) int {
+	return keyCount/2 + 1
+}
+
 var Config struct {
 	Mode                    string `envDefault:"dev"`
 	DbUrl                   string

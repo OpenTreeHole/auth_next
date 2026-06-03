@@ -35,11 +35,16 @@ func Init() {
 }
 
 func InitShamirStatus() {
+	keyCount := len(models.ShamirPublicKeys)
+	if keyCount == 0 {
+		keyCount = config.DefaultShamirKeyCount
+	}
+
 	GlobalUploadShamirStatus.ShamirStatusResponse = ShamirStatusResponse{
 		UploadedShares:              make(map[int]shamir.Shares, 0),
 		CurrentPublicKeys:           models.ShamirPublicKeys,
-		UploadedSharesIdentityNames: make([]string, 0, 7),
-		NewPublicKeys:               make([]models.ShamirPublicKey, 0, 7),
+		UploadedSharesIdentityNames: make([]string, 0, keyCount),
+		NewPublicKeys:               make([]models.ShamirPublicKey, 0, keyCount),
 	}
 }
 

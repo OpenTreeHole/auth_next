@@ -64,7 +64,7 @@ CREATE TABLE `shamir_public_key`
 );
 ```
 
-Insert at least 7 PGP key administrator info into this table
+Insert an odd number of PGP key administrator records greater than 1 into this table. The Shamir threshold is calculated as more than half of the current key count.
 
 `identity_name`: PGP identity name or `uid`, including username, ( comment ) and < email >
 

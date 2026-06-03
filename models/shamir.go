@@ -85,6 +85,12 @@ func InitShamirPublicKey() {
 			log.Fatal().Err(err).Msg("save default public key failed")
 		}
 	} else {
+		if !config.IsValidShamirKeyCount(len(ShamirPublicKeys)) {
+			log.Fatal().
+				Int("key_count", len(ShamirPublicKeys)).
+				Msg("invalid shamir public key count, must be an odd number greater than 1")
+		}
+
 		// check public key validity
 		for i := range ShamirPublicKeys {
 			identityName := ShamirPublicKeys[i].IdentityName
@@ -125,7 +131,7 @@ func CreateShamirEmails(tx *gorm.DB, userID int, email string) error {
 
 func GenerateShamirEmails(userID int, email string) ([]ShamirEmail, error) {
 	num := len(ShamirPublicKeys)
-	threshold := num/2 + 1
+	threshold := config.ShamirThreshold(num)
 
 	shares, err := shamir.Encrypt(email, num, threshold)
 	if err != nil {

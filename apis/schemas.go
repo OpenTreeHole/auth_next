@@ -122,7 +122,7 @@ type Question struct {
 	// 有一个或多个选项，如果是判断题，则选项只能是 true 或者 false
 	// 如果 Answer 中的答案不在 Options 中，则会在解析时加到 Options 中
 	Options []string `json:"options" yaml:"options"`
-	
+
 	// 椰树 swift
 	Option []string `json:"option" yaml:"option"`
 
@@ -235,7 +235,7 @@ type UploadShareRequest struct {
 }
 
 type UploadPublicKeyRequest struct {
-	Data []string `json:"data" validate:"required,len=7"` // all standalone public keys
+	Data []string `json:"data" validate:"required"` // all standalone public keys
 }
 
 type IdentityNameResponse struct {
