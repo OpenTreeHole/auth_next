@@ -149,7 +149,21 @@ func TestUpdateShamirPersistsFiveKeyLocalSQLite(t *testing.T) {
 		t.Fatal(err)
 	}
 	if newEmailCount != 5 {
-		t.Fatalf("expected 5 new shamir email rows, got %d", newEmailCount)
+		t.Fatalf("expected successful user to keep only 5 new shamir email rows, got %d", newEmailCount)
+	}
+
+	currentIdentityNames := make([]string, 0, 5)
+	for _, publicKey := range publicKeys[:5] {
+		currentIdentityNames = append(currentIdentityNames, publicKey.IdentityName)
+	}
+	var currentEmailCount int64
+	if err := db.Model(&models.ShamirEmail{}).
+		Where("user_id = ? AND encrypted_by IN ?", userID, currentIdentityNames).
+		Count(&currentEmailCount).Error; err != nil {
+		t.Fatal(err)
+	}
+	if currentEmailCount != 5 {
+		t.Fatalf("expected 5 current shamir email rows, got %d", currentEmailCount)
 	}
 
 	newShares := make(shamir.Shares, 0, 3)
@@ -177,6 +191,193 @@ func TestUpdateShamirPersistsFiveKeyLocalSQLite(t *testing.T) {
 	}
 	if got := config.ShamirThreshold(len(models.ShamirPublicKeys)); got != 3 {
 		t.Fatalf("expected 3-of-5 threshold after reload, got %d", got)
+	}
+}
+
+func TestUpdateShamirInvalidShareDoesNotPanic(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "auth_next_shamir_invalid_share_test.db")
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{SingularTable: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+
+	if err := db.AutoMigrate(models.ShamirEmail{}, models.ShamirPublicKey{}); err != nil {
+		t.Fatal(err)
+	}
+
+	oldDB := models.DB
+	oldPublicKeys := models.ShamirPublicKeys
+	oldShamirFeature := config.Config.ShamirFeature
+	t.Cleanup(func() {
+		models.DB = oldDB
+		models.ShamirPublicKeys = oldPublicKeys
+		config.Config.ShamirFeature = oldShamirFeature
+		InitShamirStatus()
+	})
+
+	models.DB = db
+	config.Config.ShamirFeature = true
+
+	publicKeys, _ := generateTestKeySet(t, 5)
+	models.ShamirPublicKeys = publicKeys
+	if err := db.Create(&publicKeys).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	const email = "invalid-share@example.com"
+	for userID := 1; userID <= 20; userID++ {
+		if err := models.CreateShamirEmails(db, userID, email); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	validShares, err := shamir.Encrypt(email, 5, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	invalidShares := append(shamir.Shares(nil), validShares[:3]...)
+	invalidShares[0] = shamir.Share{
+		X: big.NewInt(12345),
+		Y: big.NewInt(67890),
+	}
+
+	InitShamirStatus()
+	GlobalUploadShamirStatus.UploadedSharesIdentityNames = []string{"key-1", "key-2", "key-3"}
+	GlobalUploadShamirStatus.UploadedShares[1] = invalidShares
+	for userID := 2; userID <= 20; userID++ {
+		GlobalUploadShamirStatus.UploadedShares[userID] = validShares[:3]
+	}
+	GlobalUploadShamirStatus.NewPublicKeys = publicKeys
+	GlobalUploadShamirStatus.ShamirUpdateReady = true
+
+	updateShamir()
+
+	if GlobalUploadShamirStatus.FailMessage == "" {
+		t.Fatal("expected updateShamir to record invalid share failure")
+	}
+
+	var emailCount int64
+	if err := db.Model(&models.ShamirEmail{}).Count(&emailCount).Error; err != nil {
+		t.Fatal(err)
+	}
+	if emailCount != 100 {
+		t.Fatalf("expected old shamir email rows to remain, got %d", emailCount)
+	}
+}
+
+func TestUpdateShamirPartialUpdateAllowedAtNinetyNinePercent(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "auth_next_shamir_partial_update_test.db")
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{SingularTable: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+
+	if err := db.AutoMigrate(models.ShamirEmail{}, models.ShamirPublicKey{}); err != nil {
+		t.Fatal(err)
+	}
+
+	oldDB := models.DB
+	oldPublicKeys := models.ShamirPublicKeys
+	oldShamirFeature := config.Config.ShamirFeature
+	t.Cleanup(func() {
+		models.DB = oldDB
+		models.ShamirPublicKeys = oldPublicKeys
+		config.Config.ShamirFeature = oldShamirFeature
+		InitShamirStatus()
+	})
+
+	models.DB = db
+	config.Config.ShamirFeature = true
+
+	publicKeys, _ := generateTestKeySet(t, 5)
+	models.ShamirPublicKeys = publicKeys
+	if err := db.Create(&publicKeys).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	const email = "partial-update@example.com"
+	for userID := 1; userID <= 100; userID++ {
+		if err := models.CreateShamirEmails(db, userID, email); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	validShares, err := shamir.Encrypt(email, 5, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	invalidShares := append(shamir.Shares(nil), validShares[:3]...)
+	invalidShares[0] = shamir.Share{
+		X: big.NewInt(12345),
+		Y: big.NewInt(67890),
+	}
+
+	InitShamirStatus()
+	GlobalUploadShamirStatus.UploadedSharesIdentityNames = []string{"key-1", "key-2", "key-3"}
+	GlobalUploadShamirStatus.UploadedShares[1] = invalidShares
+	for userID := 2; userID <= 100; userID++ {
+		GlobalUploadShamirStatus.UploadedShares[userID] = validShares[:3]
+	}
+	GlobalUploadShamirStatus.NewPublicKeys = publicKeys[:3]
+	GlobalUploadShamirStatus.ShamirUpdateReady = true
+
+	updateShamir()
+
+	if GlobalUploadShamirStatus.FailMessage != "" {
+		t.Fatalf("expected partial update to succeed, got fail message: %s", GlobalUploadShamirStatus.FailMessage)
+	}
+	if GlobalUploadShamirStatus.WarningMessage == "" {
+		t.Fatal("expected skipped user warning")
+	}
+
+	var persistedKeyCount int64
+	if err := db.Model(&models.ShamirPublicKey{}).Count(&persistedKeyCount).Error; err != nil {
+		t.Fatal(err)
+	}
+	if persistedKeyCount != 3 {
+		t.Fatalf("expected 3 persisted public keys after partial update, got %d", persistedKeyCount)
+	}
+
+	var emailCount int64
+	if err := db.Model(&models.ShamirEmail{}).Count(&emailCount).Error; err != nil {
+		t.Fatal(err)
+	}
+	if emailCount != 302 {
+		t.Fatalf("expected skipped user to keep old rows and successful users to be replaced, got %d shamir email rows", emailCount)
+	}
+
+	var skippedUserEmailCount int64
+	if err := db.Model(&models.ShamirEmail{}).Where("user_id = ?", 1).Count(&skippedUserEmailCount).Error; err != nil {
+		t.Fatal(err)
+	}
+	if skippedUserEmailCount != 5 {
+		t.Fatalf("expected skipped user to keep 5 old shamir email rows, got %d", skippedUserEmailCount)
+	}
+
+	var successfulUserEmailCount int64
+	if err := db.Model(&models.ShamirEmail{}).Where("user_id = ?", 2).Count(&successfulUserEmailCount).Error; err != nil {
+		t.Fatal(err)
+	}
+	if successfulUserEmailCount != 3 {
+		t.Fatalf("expected successful user to keep only 3 new shamir email rows, got %d", successfulUserEmailCount)
 	}
 }
 

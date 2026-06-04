@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/go-playground/validator/v10"
@@ -434,89 +435,111 @@ func updateShamir() {
 
 	var warningMessage strings.Builder
 
-	const shamirTableName = "shamir_email"
-
 	shamirEmails := make([]ShamirEmail, 0, len(ShamirPublicKeys)*len(userIDs))
 
 	err = func() (err error) {
 		// concurrently compute
-		taskChan := make(chan func(), 100)
-		errChan := make(chan error)
-		warningMessageChan := make(chan string, 1000)
-		shamirEmailResultChan := make(chan []ShamirEmail, 100)
-		defer func() {
-			close(taskChan)
-			close(errChan)
-			close(warningMessageChan)
-			close(shamirEmailResultChan)
-		}()
+		type updateResult struct {
+			userID  int
+			emails  []ShamirEmail
+			warning string
+			err     error
+		}
+
+		taskChan := make(chan int)
+		resultChan := make(chan updateResult, 100)
 
 		// task executor
+		var wg sync.WaitGroup
 		for i := 0; i < runtime.NumCPU(); i++ {
+			wg.Add(1)
 			go func() {
-				for task := range taskChan {
-					task()
+				defer wg.Done()
+				for userID := range taskChan {
+					// get shares
+					shares := allShares[userID]
+					if len(shares) < decryptThreshold {
+						resultChan <- updateResult{
+							userID:  userID,
+							warning: fmt.Sprintf("user %v don't have enough shares\n", userID),
+						}
+						continue
+					}
+
+					// decrypt email
+					email, ok := decryptEmailWithThreshold(shares, decryptThreshold)
+					if !ok {
+						resultChan <- updateResult{
+							userID: userID,
+							err:    fmt.Errorf("[email decrypt error] invalid shares, user_id = %d", userID),
+						}
+						continue
+					}
+					if !utils.ValidateEmail(email) {
+						if !utils.IsEmail(email) {
+							// decrypt error
+							resultChan <- updateResult{
+								userID: userID,
+								err:    fmt.Errorf("[email decrypt error] invalid email, user_id = %d, email: %v", userID, email),
+							}
+							continue
+						}
+
+						// filter invalid emails
+						resultChan <- updateResult{
+							userID:  userID,
+							warning: fmt.Sprintf("user %v don't have valid email: %v\n", userID, email),
+						}
+						continue
+					}
+
+					// generate shamir emails
+					innerShamirEmails, innerErr := GenerateShamirEmails(userID, email)
+					if innerErr != nil {
+						resultChan <- updateResult{userID: userID, err: innerErr}
+						continue
+					}
+
+					resultChan <- updateResult{userID: userID, emails: innerShamirEmails}
 				}
 			}()
 		}
 
 		// task sender
 		go func() {
-
-			// main loop
 			for _, userID := range userIDs {
-
-				userID := userID
-				// get shares
-				shares := allShares[userID]
-				if len(shares) < decryptThreshold {
-					warningMessageChan <- fmt.Sprintf("user %v don't have enough shares\n", userID)
-					continue
-				}
-
-				taskChan <- func() {
-
-					// decrypt email
-					email, ok := decryptEmailWithThreshold(shares, decryptThreshold)
-					if !ok {
-						errChan <- fmt.Errorf("[email decrypt error] invalid shares, user_id = %d", userID)
-						return
-					}
-					if !utils.ValidateEmail(email) {
-						if !utils.IsEmail(email) {
-							// decrypt error
-							errChan <- fmt.Errorf("[email decrypt error] invalid email, user_id = %d, email: %v", userID, email)
-							return
-						} else {
-							// filter invalid emails
-							warningMessageChan <- fmt.Sprintf("user %v don't have valid email: %v\n", userID, email)
-							return
-						}
-					}
-
-					// generate shamir emails
-					var innerShamirEmails []ShamirEmail
-					innerShamirEmails, err = GenerateShamirEmails(userID, email)
-					if err != nil {
-						errChan <- err
-						return
-					}
-
-					shamirEmailResultChan <- innerShamirEmails
-				}
+				taskChan <- userID
 			}
+			close(taskChan)
+			wg.Wait()
+			close(resultChan)
 		}()
 
 		// receive task results
 		taskCount := 0
-		for range userIDs {
-			select {
-			case err = <-errChan:
-				return err
-			case innerWarningMessage := <-warningMessageChan:
-				warningMessage.WriteString(innerWarningMessage)
-			case innerShamirEmails := <-shamirEmailResultChan:
-				shamirEmails = append(shamirEmails, innerShamirEmails...)
+		successCount := 0
+		skippedCount := 0
+		for result := range resultChan {
+			if result.err != nil {
+				skippedCount++
+				log.Warn().
+					Err(result.err).
+					Int("user_id", result.userID).
+					Str("scope", taskScope).
+					Msg("skip user during shamir update")
+				warningMessage.WriteString(result.err.Error())
+				warningMessage.WriteByte('\n')
+			} else if result.warning != "" {
+				skippedCount++
+				log.Warn().
+					Int("user_id", result.userID).
+					Str("warning", result.warning).
+					Str("scope", taskScope).
+					Msg("skip user during shamir update")
+				warningMessage.WriteString(result.warning)
+			} else if result.emails != nil {
+				successCount++
+				shamirEmails = append(shamirEmails, result.emails...)
 			}
 			taskCount++
 			if taskCount%1000 == 0 {
@@ -526,6 +549,30 @@ func updateShamir() {
 			GlobalUploadShamirStatus.NowUserID = taskCount
 			GlobalUploadShamirStatus.Unlock()
 		}
+		if successCount*100 < len(userIDs)*99 {
+			err = fmt.Errorf(
+				"shamir update success rate below 99%%: success=%d skipped=%d total=%d",
+				successCount,
+				skippedCount,
+				len(userIDs),
+			)
+			log.Error().
+				Err(err).
+				Int("success_count", successCount).
+				Int("skipped_count", skippedCount).
+				Int("total_count", len(userIDs)).
+				Str("scope", taskScope).
+				Msg("abort shamir update")
+			return err
+		}
+		if skippedCount > 0 {
+			log.Warn().
+				Int("success_count", successCount).
+				Int("skipped_count", skippedCount).
+				Int("total_count", len(userIDs)).
+				Str("scope", taskScope).
+				Msg("continue shamir update with skipped users")
+		}
 
 		return DB.Session(&gorm.Session{
 			Logger:            DB.Logger.LogMode(logger.Warn),
@@ -534,15 +581,28 @@ func updateShamir() {
 			CreateBatchSize:   1000,
 		}).Transaction(func(tx *gorm.DB) error {
 
-			// delete old table
-			if tx.Dialector.Name() == "sqlite" {
-				//goland:noinspection SqlWithoutWhere
-				err = tx.Exec(`DELETE FROM ` + shamirTableName).Error
-			} else {
-				err = tx.Exec(`TRUNCATE ` + shamirTableName).Error
+			// Replace only successful users. Skipped users keep their existing rows
+			// for manual cleanup or later regeneration.
+			successfulUserIDs := make([]int, 0, successCount)
+			successfulUserIDSet := make(map[int]struct{}, successCount)
+			for _, shamirEmail := range shamirEmails {
+				if _, ok := successfulUserIDSet[shamirEmail.UserID]; !ok {
+					successfulUserIDSet[shamirEmail.UserID] = struct{}{}
+					successfulUserIDs = append(successfulUserIDs, shamirEmail.UserID)
+				}
 			}
-			if err != nil {
-				return err
+
+			if len(successfulUserIDs) > 0 {
+				for start := 0; start < len(successfulUserIDs); start += 1000 {
+					end := min(start+1000, len(successfulUserIDs))
+					err = tx.
+						Where("user_id IN ?", successfulUserIDs[start:end]).
+						Delete(&ShamirEmail{}).
+						Error
+					if err != nil {
+						return err
+					}
+				}
 			}
 
 			// insert new shamir emails
@@ -591,6 +651,7 @@ func updateShamir() {
 
 		subject = "shamir update failed"
 	} else {
+		status.FailMessage = ""
 		subject = "shamir update success"
 	}
 
