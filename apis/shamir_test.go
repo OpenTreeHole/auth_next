@@ -18,6 +18,8 @@ import (
 )
 
 func TestDecryptUserEmailWithThresholdSkipsBadShare(t *testing.T) {
+	allowAnyEmailDomain(t)
+
 	const email = "test@example.com"
 
 	shares, err := shamir.Encrypt(email, 5, 4)
@@ -45,6 +47,8 @@ func TestDecryptUserEmailWithThresholdSkipsBadShare(t *testing.T) {
 }
 
 func TestDecryptUserEmailWithThreeOfFive(t *testing.T) {
+	allowAnyEmailDomain(t)
+
 	const email = "test@example.com"
 
 	shares, err := shamir.Encrypt(email, 5, 3)
@@ -87,15 +91,18 @@ func TestUpdateShamirPersistsFiveKeyLocalSQLite(t *testing.T) {
 	oldDB := models.DB
 	oldPublicKeys := models.ShamirPublicKeys
 	oldShamirFeature := config.Config.ShamirFeature
+	oldEmailWhitelist := config.Config.EmailWhitelist
 	t.Cleanup(func() {
 		models.DB = oldDB
 		models.ShamirPublicKeys = oldPublicKeys
 		config.Config.ShamirFeature = oldShamirFeature
+		config.Config.EmailWhitelist = oldEmailWhitelist
 		InitShamirStatus()
 	})
 
 	models.DB = db
 	config.Config.ShamirFeature = true
+	config.Config.EmailWhitelist = nil
 
 	publicKeys, privateKeyRings := generateTestKeySet(t, 7)
 	models.ShamirPublicKeys = publicKeys
@@ -217,15 +224,18 @@ func TestUpdateShamirInvalidShareDoesNotPanic(t *testing.T) {
 	oldDB := models.DB
 	oldPublicKeys := models.ShamirPublicKeys
 	oldShamirFeature := config.Config.ShamirFeature
+	oldEmailWhitelist := config.Config.EmailWhitelist
 	t.Cleanup(func() {
 		models.DB = oldDB
 		models.ShamirPublicKeys = oldPublicKeys
 		config.Config.ShamirFeature = oldShamirFeature
+		config.Config.EmailWhitelist = oldEmailWhitelist
 		InitShamirStatus()
 	})
 
 	models.DB = db
 	config.Config.ShamirFeature = true
+	config.Config.EmailWhitelist = nil
 
 	publicKeys, _ := generateTestKeySet(t, 5)
 	models.ShamirPublicKeys = publicKeys
@@ -297,15 +307,18 @@ func TestUpdateShamirPartialUpdateAllowedAtNinetyNinePercent(t *testing.T) {
 	oldDB := models.DB
 	oldPublicKeys := models.ShamirPublicKeys
 	oldShamirFeature := config.Config.ShamirFeature
+	oldEmailWhitelist := config.Config.EmailWhitelist
 	t.Cleanup(func() {
 		models.DB = oldDB
 		models.ShamirPublicKeys = oldPublicKeys
 		config.Config.ShamirFeature = oldShamirFeature
+		config.Config.EmailWhitelist = oldEmailWhitelist
 		InitShamirStatus()
 	})
 
 	models.DB = db
 	config.Config.ShamirFeature = true
+	config.Config.EmailWhitelist = nil
 
 	publicKeys, _ := generateTestKeySet(t, 5)
 	models.ShamirPublicKeys = publicKeys
@@ -428,6 +441,16 @@ func generateTestKeySet(t *testing.T, n int) ([]models.ShamirPublicKey, []*crypt
 	}
 
 	return publicKeys, privateKeyRings
+}
+
+func allowAnyEmailDomain(t *testing.T) {
+	t.Helper()
+
+	oldEmailWhitelist := config.Config.EmailWhitelist
+	config.Config.EmailWhitelist = nil
+	t.Cleanup(func() {
+		config.Config.EmailWhitelist = oldEmailWhitelist
+	})
 }
 
 func decryptTestShare(privateKeyRing *crypto.KeyRing, armoredPGPMessage string) (shamir.Share, error) {

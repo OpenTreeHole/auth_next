@@ -15,6 +15,9 @@ func TestValidateEmail(t *testing.T) {
 	assert.Equal(t, ValidateEmail("abcd@fudan.edu.cn"), true)
 	assert.Equal(t, ValidateEmail("abcd@qq.com"), false)
 	assert.Equal(t, ValidateEmail("123345"), false)
+	assert.Equal(t, ValidateEmail(" abcd@fudan.edu.cn"), false)
+	assert.Equal(t, ValidateEmail("abcd @fudan.edu.cn"), false)
+	assert.Equal(t, ValidateEmail("\tabcd@fudan.edu.cn"), false)
 }
 
 func TestValidateEmailFudan(t *testing.T) {
@@ -32,4 +35,6 @@ func TestValidateAll(t *testing.T) {
 	config.Config.EmailWhitelist = []string{"fudan.edu.cn", "m.fudan.edu.cn"}
 	err := common.ValidateStruct(TempStruct{Email: "abcd@fudan.edu.cn"})
 	assert.Equal(t, err, nil)
+	err = common.ValidateStruct(TempStruct{Email: " abcd@fudan.edu.cn"})
+	assert.NotEqual(t, err, nil)
 }

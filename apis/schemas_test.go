@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/opentreehole/go-common"
+
+	"auth_next/config"
 )
 
 type VerificationModel struct {
@@ -24,5 +28,26 @@ func TestVerificationModel(t *testing.T) {
 			t.Error(err)
 		}
 		fmt.Println(model.Verification)
+	}
+}
+
+func TestRegisterRequestRejectsWhitespaceEmail(t *testing.T) {
+	config.Config.EmailWhitelist = []string{"fudan.edu.cn", "m.fudan.edu.cn"}
+
+	for _, email := range []string{
+		" student001@m.fudan.edu.cn",
+		"student002 @m.fudan.edu.cn",
+		"\tstudent003@fudan.edu.cn",
+	} {
+		body := RegisterRequest{
+			LoginRequest: LoginRequest{
+				EmailModel: EmailModel{Email: email},
+				Password:   "password123",
+			},
+			Verification: "000000",
+		}
+		if err := common.ValidateStruct(body); err == nil {
+			t.Fatalf("expected validation error for email %q", email)
+		}
 	}
 }

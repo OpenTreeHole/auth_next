@@ -11,7 +11,6 @@ import (
 	"sync"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/opentreehole/go-common"
 	"github.com/rs/zerolog/log"
@@ -796,11 +795,10 @@ func decryptEmailWithThreshold(shares shamir.Shares, threshold int) (string, boo
 		return "", false
 	}
 
-	validate := validator.New()
 	var result string
 	ok := forEachShareCombination(n, threshold, func(selected []int) bool {
 		email := shamir.Decrypt(selectedShares(shares, selected))
-		if validate.Var(email, "required,email") == nil {
+		if utils.ValidateEmail(email) {
 			result = email
 			return false
 		}
@@ -822,7 +820,6 @@ func decryptUserEmailWithThreshold(userID int, shares shamir.Shares, identityNam
 		return DecryptedUserEmailResponse{}, false
 	}
 
-	validate := validator.New()
 	var result DecryptedUserEmailResponse
 	ok := forEachShareCombination(n, threshold, func(selected []int) bool {
 		response := DecryptedUserEmailResponse{
@@ -830,7 +827,7 @@ func decryptUserEmailWithThreshold(userID int, shares shamir.Shares, identityNam
 			UserEmail:     shamir.Decrypt(selectedShares(shares, selected)),
 			IdentityNames: selectedIdentityNames(identityNames, selected),
 		}
-		if validate.Struct(response) == nil {
+		if utils.ValidateEmail(response.UserEmail) {
 			result = response
 			return false
 		}

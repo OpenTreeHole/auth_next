@@ -20,6 +20,10 @@ func init() {
 }
 
 func ValidateEmail(email string) bool {
+	if err := common.Validate.Var(email, "required,email"); err != nil {
+		return false
+	}
+
 	emailSplit := strings.Split(email, "@")
 	if len(emailSplit) != 2 {
 		return false
