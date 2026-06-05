@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	. "math/big"
+	"strings"
 
 	"auth_next/utils"
 )
@@ -30,9 +31,17 @@ func (share Share) ToString() string {
 
 func FromString(rawShare string) (Share, error) {
 	share := Share{new(Int), new(Int)}
-	_, err := fmt.Sscanf(rawShare, "%v\n%v", share.X, share.Y)
-	if err != nil {
-		return share, err
+
+	fields := strings.Fields(rawShare)
+	if len(fields) != 2 {
+		return share, fmt.Errorf("invalid share format: expected exactly two decimal integer coordinates, got %d", len(fields))
+	}
+
+	if _, ok := share.X.SetString(fields[0], 10); !ok {
+		return share, errors.New("invalid share x coordinate: expected a decimal integer")
+	}
+	if _, ok := share.Y.SetString(fields[1], 10); !ok {
+		return share, errors.New("invalid share y coordinate: expected a decimal integer")
 	}
 	return share, nil
 }
