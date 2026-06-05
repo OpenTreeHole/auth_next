@@ -18,6 +18,7 @@ func TestValidateEmail(t *testing.T) {
 	assert.Equal(t, ValidateEmail(" abcd@fudan.edu.cn"), false)
 	assert.Equal(t, ValidateEmail("abcd @fudan.edu.cn"), false)
 	assert.Equal(t, ValidateEmail("\tabcd@fudan.edu.cn"), false)
+	assert.Equal(t, ValidateEmail("\"abc def\"@fudan.edu.cn"), false)
 }
 
 func TestValidateEmailFudan(t *testing.T) {

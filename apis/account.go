@@ -37,6 +37,9 @@ func Register(c *fiber.Ctx) (err error) {
 	if err != nil {
 		return err
 	}
+	if err = validateAccountEmail(body.Email); err != nil {
+		return err
+	}
 
 	// check verification code
 	ok := auth.CheckVerificationCode(body.Email, scope, string(body.Verification))
@@ -115,6 +118,11 @@ func RegisterDebugInBatch(c *fiber.Ctx) (err error) {
 	err = common.ValidateBody(c, &body)
 	if err != nil {
 		return err
+	}
+	for _, data := range body.Data {
+		if err := validateAccountEmail(data.Email); err != nil {
+			return err
+		}
 	}
 
 	// check registered
@@ -276,6 +284,10 @@ func RegisterDebugInBatch(c *fiber.Ctx) (err error) {
 }
 
 func register(c *fiber.Ctx, email, password string, batch bool) error {
+	if err := validateAccountEmail(email); err != nil {
+		return err
+	}
+
 	registered, err := HasRegisteredEmail(DB, email)
 	if err != nil {
 		return err
@@ -365,6 +377,9 @@ func ChangePassword(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	if err = validateAccountEmail(body.Email); err != nil {
+		return err
+	}
 
 	registered, err := HasRegisteredEmail(DB, body.Email)
 	if err != nil {
@@ -397,7 +412,10 @@ func ChangePassword(c *fiber.Ctx) error {
 			return err
 		}
 
-		user.IsActive = true
+		if !user.IsActive {
+			return common.Forbidden("账号已停用")
+		}
+
 		user.Password, err = auth.MakePassword(body.Password)
 		if err != nil {
 			return err
@@ -473,10 +491,7 @@ func VerifyWithEmail(c *fiber.Ctx) error {
 }
 
 func verifyWithEmail(c *fiber.Ctx, email string, check bool) error {
-	if !utils.ValidateEmail(email) {
-		return common.BadRequest("email invalid")
-	}
-	err := utils.ValidateEmailFudan(email)
+	err := validateAccountEmail(email)
 	if err != nil {
 		return err
 	}
@@ -540,6 +555,13 @@ func verifyWithEmail(c *fiber.Ctx, email string, check bool) error {
 		Registered: registered,
 		Scope:      scope,
 	})
+}
+
+func validateAccountEmail(email string) error {
+	if !utils.ValidateEmail(email) {
+		return common.BadRequest("email invalid")
+	}
+	return utils.ValidateEmailFudan(email)
 }
 
 // VerifyWithApikey godoc

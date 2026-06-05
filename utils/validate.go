@@ -4,6 +4,7 @@ import (
 	"golang.org/x/exp/slices"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/opentreehole/go-common"
@@ -20,6 +21,10 @@ func init() {
 }
 
 func ValidateEmail(email string) bool {
+	if strings.ContainsFunc(email, unicode.IsSpace) {
+		return false
+	}
+
 	if err := common.Validate.Var(email, "required,email"); err != nil {
 		return false
 	}
